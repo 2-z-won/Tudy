@@ -21,6 +21,7 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setNickname(nickname);
         user.setMajor(major);
+        user.setCoinBalance(0);
         return userRepository.save(user);
     }
 
