@@ -26,4 +26,6 @@ public class User {
     private String major;
 
     private String profileImage;
+
+    private Integer coinBalance = 0;
 }
