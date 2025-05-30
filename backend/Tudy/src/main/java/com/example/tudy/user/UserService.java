@@ -50,4 +50,10 @@ public class UserService {
         user.setProfileImage(imagePath);
         userRepository.save(user);
     }
+
+        public void addCoins(Long userId, int amount) {
+        User user = userRepository.findById(userId).orElseThrow();
+        user.setCoinBalance(user.getCoinBalance() + amount);
+        userRepository.save(user);
+    }
 }
