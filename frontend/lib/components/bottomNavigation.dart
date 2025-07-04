@@ -26,6 +26,7 @@ class MyBottomNavigation extends GetView<MyBottomNavigationController> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
         ),
         child: Stack(
+          clipBehavior: Clip.none,
           alignment: Alignment.center,
           children: [
             // 아이콘 4개 (0~3)
