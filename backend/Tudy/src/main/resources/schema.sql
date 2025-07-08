@@ -1,7 +1,19 @@
 CREATE TABLE colleges (
   id SERIAL PRIMARY KEY,
-  name VARCHAR NOT NULL UNIQUE
-    -- 단과대 이름
+  name VARCHAR(100) NOT NULL UNIQUE,
+  code VARCHAR(10) NOT NULL UNIQUE,
+  description VARCHAR(255),
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE departments (
+  id SERIAL PRIMARY KEY,
+  college_id INTEGER NOT NULL REFERENCES colleges(id),
+  name VARCHAR(100) NOT NULL,
+  code VARCHAR(10) NOT NULL,
+  created_at TIMESTAMP DEFAULT now(),
+  updated_at TIMESTAMP DEFAULT now()
 );
 
 CREATE TABLE users (

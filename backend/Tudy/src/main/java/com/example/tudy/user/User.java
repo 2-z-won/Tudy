@@ -1,5 +1,6 @@
 package com.example.tudy.user;
 
+import com.example.tudy.college.College;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,4 +29,8 @@ public class User {
     private String profileImage;
 
     private Integer coinBalance = 0;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "college_id")
+    private College college;
 }
