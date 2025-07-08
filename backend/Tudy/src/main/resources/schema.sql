@@ -22,6 +22,7 @@ CREATE TABLE users (
   password_hash VARCHAR NOT NULL,
   nickname VARCHAR,
   college_id INTEGER REFERENCES colleges(id),
+  department_id INTEGER REFERENCES departments(id),
   major VARCHAR,
   profile_image VARCHAR,
   coin_balance INTEGER DEFAULT 0,

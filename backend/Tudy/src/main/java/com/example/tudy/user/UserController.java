@@ -3,6 +3,7 @@ package com.example.tudy.user;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -56,6 +57,17 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/{id}/college")
+    public ResponseEntity<Void> changeCollege(@PathVariable Long id,
+                                              @RequestBody CollegeRequest request,
+                                              @RequestHeader(value = "X-USER-ID", required = false) Long currentUser) {
+        if (currentUser == null || !currentUser.equals(id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        userService.updateCollege(id, request.getCollegeId(), request.getDepartmentId());
+        return ResponseEntity.ok().build();
+    }
+
     @Data
     private static class SignUpRequest {
         private String email;
@@ -94,5 +106,11 @@ public class UserController {
     @Data
     private static class MajorRequest {
         private String major;
+    }
+
+    @Data
+    private static class CollegeRequest {
+        private Long collegeId;
+        private Long departmentId;
     }
 }

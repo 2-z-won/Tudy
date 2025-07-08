@@ -1,5 +1,10 @@
 package com.example.tudy.user;
 
+import com.example.tudy.college.College;
+import com.example.tudy.college.CollegeRepository;
+import com.example.tudy.college.Department;
+import com.example.tudy.college.DepartmentRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,6 +15,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final CollegeRepository collegeRepository;
+    private final DepartmentRepository departmentRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public User signUp(String email, String password, String nickname, String major) {
@@ -69,7 +76,24 @@ public class UserService {
         userRepository.save(user);
     }
 
-        public void addCoins(Long userId, int amount) {
+    public void updateCollege(Long userId, Long collegeId, Long departmentId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        College college = collegeRepository.findById(collegeId)
+                .orElseThrow(() -> new EntityNotFoundException("College not found"));
+        Department department = null;
+        if (departmentId != null) {
+            department = departmentRepository.findById(departmentId)
+                    .orElseThrow(() -> new EntityNotFoundException("Department not found"));
+            if (!department.getCollege().getId().equals(collegeId)) {
+                throw new IllegalArgumentException("Department does not belong to college");
+            }
+        }
+        user.setCollege(college);
+        user.setDepartment(department);
+        userRepository.save(user);
+    }
+
+    public void addCoins(Long userId, int amount) {
         User user = userRepository.findById(userId).orElseThrow();
         user.setCoinBalance(user.getCoinBalance() + amount);
         userRepository.save(user);
