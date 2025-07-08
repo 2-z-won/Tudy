@@ -44,6 +44,18 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/{id}/email")
+    public ResponseEntity<Void> changeEmail(@PathVariable Long id, @RequestBody EmailRequest request) {
+        userService.updateEmail(id, request.getEmail());
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/major")
+    public ResponseEntity<Void> changeMajor(@PathVariable Long id, @RequestBody MajorRequest request) {
+        userService.updateMajor(id, request.getMajor());
+        return ResponseEntity.ok().build();
+    }
+
     @Data
     private static class SignUpRequest {
         private String email;
@@ -72,5 +84,15 @@ public class UserController {
     @Data
     private static class ProfileImageRequest {
         private String imagePath;
+    }
+
+    @Data
+    private static class EmailRequest {
+        private String email;
+    }
+
+    @Data
+    private static class MajorRequest {
+        private String major;
     }
 }

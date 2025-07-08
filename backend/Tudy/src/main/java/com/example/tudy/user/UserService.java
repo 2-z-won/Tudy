@@ -51,6 +51,24 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public void updateEmail(Long userId, String newEmail) {
+        if (newEmail == null || !newEmail.matches("^[^@]+@[^@]+\\.[^@]+$")) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
+        userRepository.findByEmail(newEmail).ifPresent(u -> {
+            throw new IllegalArgumentException("Email already exists");
+        });
+        User user = userRepository.findById(userId).orElseThrow();
+        user.setEmail(newEmail);
+        userRepository.save(user);
+    }
+
+    public void updateMajor(Long userId, String major) {
+        User user = userRepository.findById(userId).orElseThrow();
+        user.setMajor(major);
+        userRepository.save(user);
+    }
+
         public void addCoins(Long userId, int amount) {
         User user = userRepository.findById(userId).orElseThrow();
         user.setCoinBalance(user.getCoinBalance() + amount);
