@@ -49,6 +49,12 @@ public class GoalController {
         return ResponseEntity.ok(goalService.listGoals(userId, category));
     }
 
+    @GetMapping("/by-date")
+    public ResponseEntity<List<Goal>> listByDate(@RequestParam Long userId, @RequestParam("date") String dateStr) {
+        LocalDate date = LocalDate.parse(dateStr);
+        return ResponseEntity.ok(goalService.listGoalsByDate(userId, date));
+    }
+
     @Data
     private static class GoalRequest {
         private Long userId;

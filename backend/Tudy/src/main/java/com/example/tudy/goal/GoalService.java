@@ -65,4 +65,9 @@ public class GoalService {
             return goalRepository.findByUserAndCategory(user, category);
         }
     }
+
+    public List<Goal> listGoalsByDate(Long userId, java.time.LocalDate date) {
+        User user = userRepository.findById(userId).orElseThrow();
+        return goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date, date);
+    }
 }
