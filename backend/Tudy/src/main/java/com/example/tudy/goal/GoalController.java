@@ -16,13 +16,13 @@ public class GoalController {
 
     @PostMapping
     public ResponseEntity<Goal> create(@RequestBody GoalRequest req) {
-        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategory(), req.getStartDate(), req.getEndDate());
+        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategory(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId());
         return ResponseEntity.ok(goal);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Goal> update(@PathVariable Long id, @RequestBody GoalRequest req) {
-        Goal goal = goalService.updateGoal(id, req.getTitle(), req.getCategory(), req.getStartDate(), req.getEndDate());
+        Goal goal = goalService.updateGoal(id, req.getTitle(), req.getCategory(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId());
         return ResponseEntity.ok(goal);
     }
 
@@ -49,6 +49,12 @@ public class GoalController {
         return ResponseEntity.ok(goalService.listGoals(userId, category));
     }
 
+    @GetMapping("/by-date")
+    public ResponseEntity<List<Goal>> listByDate(@RequestParam Long userId, @RequestParam("date") String dateStr) {
+        LocalDate date = LocalDate.parse(dateStr);
+        return ResponseEntity.ok(goalService.listGoalsByDate(userId, date));
+    }
+
     @Data
     private static class GoalRequest {
         private Long userId;
@@ -56,6 +62,8 @@ public class GoalController {
         private String category;
         private LocalDate startDate;
         private LocalDate endDate;
+        private Boolean isGroupGoal;
+        private Long groupId;
     }
 
     @Data

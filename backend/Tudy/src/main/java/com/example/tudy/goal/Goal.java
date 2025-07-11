@@ -26,4 +26,6 @@ public class Goal {
     private LocalDate endDate;
     private boolean completed = false;
     private String proofImage;
+    private Boolean isGroupGoal = false;
+    private Long groupId;
 }
