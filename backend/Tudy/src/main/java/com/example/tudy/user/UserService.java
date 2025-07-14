@@ -21,6 +21,7 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setNickname(nickname);
         user.setMajor(major);
+        user.setCollege(null);
         user.setCoinBalance(0);
         return userRepository.save(user);
     }
@@ -49,6 +50,27 @@ public class UserService {
         User user = userRepository.findById(userId).orElseThrow();
         user.setProfileImage(imagePath);
         userRepository.save(user);
+    }
+
+    public User updateEmail(Long userId, String email) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+        User user = userRepository.findById(userId).orElseThrow();
+        user.setEmail(email);
+        return userRepository.save(user);
+    }
+
+    public User updateMajor(Long userId, String major) {
+        User user = userRepository.findById(userId).orElseThrow();
+        user.setMajor(major);
+        return userRepository.save(user);
+    }
+
+    public User updateCollege(Long userId, String college) {
+        User user = userRepository.findById(userId).orElseThrow();
+        user.setCollege(college);
+        return userRepository.save(user);
     }
 
         public void addCoins(Long userId, int amount) {

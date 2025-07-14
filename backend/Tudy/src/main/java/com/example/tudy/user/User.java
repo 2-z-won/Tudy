@@ -25,6 +25,8 @@ public class User {
 
     private String major;
 
+    private String college;
+
     private String profileImage;
 
     private Integer coinBalance = 0;

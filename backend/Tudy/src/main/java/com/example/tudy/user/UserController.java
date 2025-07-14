@@ -2,6 +2,7 @@ package com.example.tudy.user;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import com.example.tudy.auth.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +13,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final AuthService authService;
 
     @PostMapping("/signup")
     public ResponseEntity<User> signUp(@RequestBody SignUpRequest request) {
@@ -22,8 +24,8 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest request) {
         return userService.login(request.getEmail(), request.getPassword())
-                .map(u -> ResponseEntity.ok(Map.of("status", "success")))
-                .orElseGet(() -> ResponseEntity.status(401).body(Map.of("status", "fail")));
+                .map(u -> ResponseEntity.ok(Map.of("token", authService.generateToken(u))))
+                .orElseGet(() -> ResponseEntity.status(401).body(Map.of("error", "Invalid credentials")));
     }
 
     @PutMapping("/{id}/nickname")
@@ -42,6 +44,44 @@ public class UserController {
     public ResponseEntity<Void> changeProfileImage(@PathVariable Long id, @RequestBody ProfileImageRequest request) {
         userService.updateProfileImage(id, request.getImagePath());
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/email")
+    public ResponseEntity<?> changeEmail(@PathVariable Long id, @RequestBody EmailRequest request,
+                                         @RequestHeader("Authorization") String auth) {
+        Long userId = authService.verify(auth);
+        if (!userId.equals(id)) {
+            return ResponseEntity.status(403).build();
+        }
+        if (request.getEmail() == null || !request.getEmail().contains("@")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid email"));
+        }
+        try {
+            User user = userService.updateEmail(id, request.getEmail());
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(409).body(Map.of("error", "Email already exists"));
+        }
+    }
+
+    @PutMapping("/{id}/major")
+    public ResponseEntity<User> changeMajor(@PathVariable Long id, @RequestBody ValueRequest request,
+                                            @RequestHeader("Authorization") String auth) {
+        Long userId = authService.verify(auth);
+        if (!userId.equals(id)) {
+            return ResponseEntity.status(403).build();
+        }
+        return ResponseEntity.ok(userService.updateMajor(id, request.getValue()));
+    }
+
+    @PutMapping("/{id}/college")
+    public ResponseEntity<User> changeCollege(@PathVariable Long id, @RequestBody ValueRequest request,
+                                              @RequestHeader("Authorization") String auth) {
+        Long userId = authService.verify(auth);
+        if (!userId.equals(id)) {
+            return ResponseEntity.status(403).build();
+        }
+        return ResponseEntity.ok(userService.updateCollege(id, request.getValue()));
     }
 
     @Data
@@ -72,5 +112,15 @@ public class UserController {
     @Data
     private static class ProfileImageRequest {
         private String imagePath;
+    }
+
+    @Data
+    private static class EmailRequest {
+        private String email;
+    }
+
+    @Data
+    private static class ValueRequest {
+        private String value;
     }
 }

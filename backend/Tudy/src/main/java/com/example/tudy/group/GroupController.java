@@ -4,12 +4,27 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/groups")
 @RequiredArgsConstructor
 public class GroupController {
     private final GroupService groupService;
+
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> list(@RequestParam("public") boolean isPublic,
+                                                    @RequestParam(required = false) String password,
+                                                    @RequestParam(defaultValue = "0") int page,
+                                                    @RequestParam(defaultValue = "10") int size) {
+        var result = groupService.search(isPublic, password, org.springframework.data.domain.PageRequest.of(page, size));
+        return ResponseEntity.ok(Map.of(
+                "content", result.getContent(),
+                "page", result.getNumber(),
+                "size", result.getSize(),
+                "totalElements", result.getTotalElements()
+        ));
+    }
 
     @PostMapping
     public ResponseEntity<Group> create(@RequestBody GroupRequest req) {

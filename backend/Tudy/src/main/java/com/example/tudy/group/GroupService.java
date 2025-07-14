@@ -13,6 +13,17 @@ public class GroupService {
     private final UserRepository userRepository;
     private final GroupMemberRepository groupMemberRepository;
 
+    public org.springframework.data.domain.Page<Group> search(boolean isPublic, String password, org.springframework.data.domain.Pageable pageable) {
+        if (isPublic) {
+            return groupRepository.findByPasswordIsNull(pageable);
+        } else {
+            if (password == null) {
+                throw new IllegalArgumentException("password required");
+            }
+            return groupRepository.findByPassword(password, pageable);
+        }
+    }
+
     public Group createGroup(String name, String password) {
         Group group = new Group();
         group.setName(name);
