@@ -25,6 +25,7 @@ CREATE TABLE users (
   nickname VARCHAR(255),
   college_id INTEGER REFERENCES colleges(id),
   major VARCHAR(255),
+  college VARCHAR(255),
   profile_image VARCHAR(255),
   coin_balance INTEGER DEFAULT 0,
   created_at TIMESTAMP DEFAULT now()

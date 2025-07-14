@@ -21,6 +21,17 @@ public class GroupController {
         }
     }
 
+    @GetMapping
+    public ResponseEntity<?> list(@RequestParam(name = "public") Boolean isPublic,
+                                  @RequestParam(required = false) String password,
+                                  @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(defaultValue = "10") int size) {
+        if (isPublic == null) {
+            return ResponseEntity.badRequest().body("public parameter is required");
+        }
+        return ResponseEntity.ok(groupService.searchGroups(isPublic, password, page, size));
+    }
+
     @PostMapping("/join")
     public ResponseEntity<String> join(@RequestBody JoinRequest req) {
         boolean success = groupService.joinGroup(req.getGroupId(), req.getUserId(), req.getPassword());

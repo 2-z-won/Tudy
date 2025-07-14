@@ -30,6 +30,28 @@ public class UserService {
                 .filter(u -> passwordEncoder.matches(password, u.getPasswordHash()));
     }
 
+    public boolean emailExists(String email) {
+        return userRepository.findByEmail(email).isPresent();
+    }
+
+    public User updateEmail(Long userId, String email) {
+        User user = userRepository.findById(userId).orElseThrow();
+        user.setEmail(email);
+        return userRepository.save(user);
+    }
+
+    public User updateMajor(Long userId, String major) {
+        User user = userRepository.findById(userId).orElseThrow();
+        user.setMajor(major);
+        return userRepository.save(user);
+    }
+
+    public User updateCollege(Long userId, String college) {
+        User user = userRepository.findById(userId).orElseThrow();
+        user.setCollege(college);
+        return userRepository.save(user);
+    }
+
     public void updateNickname(Long userId, String nickname) {
         User user = userRepository.findById(userId).orElseThrow();
         user.setNickname(nickname);
