@@ -14,5 +14,9 @@ public class Group {
     private Long id;
 
     private String name;
+
+    @Column(name = "is_private")
+    private boolean isPrivate = false;
+
     private String password;
 } 
