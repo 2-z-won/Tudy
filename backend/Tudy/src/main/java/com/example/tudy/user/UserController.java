@@ -1,5 +1,6 @@
 package com.example.tudy.user;
 
+import com.example.tudy.auth.TokenService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final TokenService tokenService;
 
     @PostMapping("/signup")
     public ResponseEntity<User> signUp(@RequestBody SignUpRequest request) {
@@ -22,8 +24,51 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest request) {
         return userService.login(request.getEmail(), request.getPassword())
-                .map(u -> ResponseEntity.ok(Map.of("status", "success")))
-                .orElseGet(() -> ResponseEntity.status(401).body(Map.of("status", "fail")));
+                .map(u -> ResponseEntity.ok(Map.of("token", tokenService.generateToken(u.getId()))))
+                .orElseGet(() -> ResponseEntity.status(401).body(Map.of("error", "invalid")));
+    }
+
+    @PutMapping("/{id}/email")
+    public ResponseEntity<?> changeEmail(@PathVariable Long id,
+                                         @RequestBody EmailRequest request,
+                                         @RequestHeader(value = "Authorization", required = false) String auth) {
+        Long uid = tokenService.resolveUserId(auth);
+        if (uid == null) {
+            return ResponseEntity.status(401).build();
+        }
+        if (!uid.equals(id)) {
+            return ResponseEntity.status(403).build();
+        }
+        if (request.getEmail() == null || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (userService.emailExists(request.getEmail())) {
+            return ResponseEntity.status(409).body(Map.of("error", "Email already exists"));
+        }
+        User user = userService.updateEmail(id, request.getEmail());
+        return ResponseEntity.ok(user);
+    }
+
+    @PutMapping("/{id}/major")
+    public ResponseEntity<?> changeMajor(@PathVariable Long id,
+                                         @RequestBody ValueRequest request,
+                                         @RequestHeader(value = "Authorization", required = false) String auth) {
+        Long uid = tokenService.resolveUserId(auth);
+        if (uid == null) return ResponseEntity.status(401).build();
+        if (!uid.equals(id)) return ResponseEntity.status(403).build();
+        User user = userService.updateMajor(id, request.getValue());
+        return ResponseEntity.ok(user);
+    }
+
+    @PutMapping("/{id}/college")
+    public ResponseEntity<?> changeCollege(@PathVariable Long id,
+                                           @RequestBody ValueRequest request,
+                                           @RequestHeader(value = "Authorization", required = false) String auth) {
+        Long uid = tokenService.resolveUserId(auth);
+        if (uid == null) return ResponseEntity.status(401).build();
+        if (!uid.equals(id)) return ResponseEntity.status(403).build();
+        User user = userService.updateCollege(id, request.getValue());
+        return ResponseEntity.ok(user);
     }
 
     @PutMapping("/{id}/nickname")
@@ -72,5 +117,15 @@ public class UserController {
     @Data
     private static class ProfileImageRequest {
         private String imagePath;
+    }
+
+    @Data
+    private static class EmailRequest {
+        private String email;
+    }
+
+    @Data
+    private static class ValueRequest {
+        private String value;
     }
 }
