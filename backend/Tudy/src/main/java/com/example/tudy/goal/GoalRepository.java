@@ -8,4 +8,5 @@ import java.util.List;
 public interface GoalRepository extends JpaRepository<Goal, Long> {
     List<Goal> findByUser(User user);
     List<Goal> findByUserAndCategory(User user, String category);
+    List<Goal> findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(User user, java.time.LocalDate date1, java.time.LocalDate date2);
 }

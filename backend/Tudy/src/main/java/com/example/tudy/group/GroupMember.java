@@ -1,19 +1,15 @@
-package com.example.tudy.study;
+package com.example.tudy.group;
 
-import com.example.tudy.goal.Goal;
 import com.example.tudy.user.User;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name = "study_sessions")
-public class StudySession {
+@Table(name = "group_members")
+public class GroupMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,10 +19,6 @@ public class StudySession {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "goal_id")
-    private Goal goal;
-
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
-    private Integer duration; // seconds
-}
+    @JoinColumn(name = "group_id")
+    private Group group;
+} 
