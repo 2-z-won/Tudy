@@ -16,13 +16,13 @@ public class GoalController {
 
     @PostMapping
     public ResponseEntity<Goal> create(@RequestBody GoalRequest req) {
-        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategory(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId());
+        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId());
         return ResponseEntity.ok(goal);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Goal> update(@PathVariable Long id, @RequestBody GoalRequest req) {
-        Goal goal = goalService.updateGoal(id, req.getTitle(), req.getCategory(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId());
+        Goal goal = goalService.updateGoal(id, req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId());
         return ResponseEntity.ok(goal);
     }
 
@@ -45,21 +45,21 @@ public class GoalController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Goal>> list(@RequestParam Long userId, @RequestParam(required = false) String category) {
-        return ResponseEntity.ok(goalService.listGoals(userId, category));
+    public ResponseEntity<List<Goal>> list(@RequestParam Long userId, @RequestParam(required = false) String categoryName) {
+        return ResponseEntity.ok(goalService.listGoals(userId, categoryName));
     }
 
     @GetMapping("/by-date")
-    public ResponseEntity<List<Goal>> listByDate(@RequestParam Long userId, @RequestParam("date") String dateStr) {
+    public ResponseEntity<List<Goal>> listByDate(@RequestParam Long userId, @RequestParam("date") String dateStr, @RequestParam(required = false) String categoryName) {
         LocalDate date = LocalDate.parse(dateStr);
-        return ResponseEntity.ok(goalService.listGoalsByDate(userId, date));
+        return ResponseEntity.ok(goalService.listGoalsByDate(userId, date, categoryName));
     }
 
     @Data
     private static class GoalRequest {
         private Long userId;
         private String title;
-        private String category;
+        private String categoryName;
         private LocalDate startDate;
         private LocalDate endDate;
         private Boolean isGroupGoal;
