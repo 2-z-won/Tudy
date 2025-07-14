@@ -14,6 +14,12 @@ public class GroupService {
     private final GroupMemberRepository groupMemberRepository;
 
     public Group createGroup(String name, String password) {
+        if (groupRepository.existsByName(name)) {
+            throw new IllegalArgumentException("이미 존재하는 그룹 이름입니다.");
+        }
+        if (password == null || password.length() != 6) {
+            throw new IllegalArgumentException("비밀번호는 6자리여야 합니다.");
+        }
         Group group = new Group();
         group.setName(name);
         group.setPassword(password);
@@ -34,5 +40,9 @@ public class GroupService {
             groupMemberRepository.save(member);
         }
         return true;
+    }
+
+    public boolean existsByName(String name) {
+        return groupRepository.existsByName(name);
     }
 } 

@@ -1,6 +1,7 @@
 package com.example.tudy.goal;
 
 import com.example.tudy.user.User;
+import com.example.tudy.category.Category;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,7 +22,9 @@ public class Goal {
     private User user;
 
     private String title;
-    private String category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
     private LocalDate startDate;
     private LocalDate endDate;
     private boolean completed = false;
