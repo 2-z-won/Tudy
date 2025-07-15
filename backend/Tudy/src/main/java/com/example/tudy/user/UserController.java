@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import com.example.tudy.friendship.FriendshipService;
+import com.example.tudy.friendship.UserWithFriendCountResponse;
 
 @RestController
 @RequestMapping("/api/users")
@@ -14,6 +16,7 @@ import java.util.Map;
 public class UserController {
     private final UserService userService;
     private final TokenService tokenService;
+    private final FriendshipService friendshipService;
 
     @PostMapping("/signup")
     public ResponseEntity<User> signUp(@RequestBody SignUpRequest request) {
@@ -89,6 +92,15 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<UserWithFriendCountResponse> getUserWithFriendCount(@PathVariable Long id) {
+        User user = userService.findById(id);
+        // 친구 수 계산 (FriendshipService 사용)
+        long friendCount = friendshipService.getFriendCount(id);
+        UserWithFriendCountResponse response = new UserWithFriendCountResponse(user, friendCount);
+        return ResponseEntity.ok(response);
+    }
+
     @Data
     private static class SignUpRequest {
         private String email;
@@ -127,5 +139,28 @@ public class UserController {
     @Data
     private static class ValueRequest {
         private String value;
+    }
+
+    @Data
+    public static class UserWithFriendCountResponse {
+        private Long id;
+        private String email;
+        private String nickname;
+        private String major;
+        private String college;
+        private String profileImage;
+        private Integer coinBalance;
+        private long friendCount;
+
+        public UserWithFriendCountResponse(User user, long friendCount) {
+            this.id = user.getId();
+            this.email = user.getEmail();
+            this.nickname = user.getNickname();
+            this.major = user.getMajor();
+            this.college = user.getCollege();
+            this.profileImage = user.getProfileImage();
+            this.coinBalance = user.getCoinBalance();
+            this.friendCount = friendCount;
+        }
     }
 }
