@@ -34,8 +34,34 @@ public class GoalGroupAndDateApiTests {
     @DisplayName("그룹 목표 생성 시 그룹원별 카테고리 자동 생성 및 목표 생성")
     void createGroupGoalAndCheckMemberGoals() throws Exception {
         // 그룹장, 그룹원 생성
-        User leader = userRepository.save(new User(null, "leader@tudy.com", "pw", "리더", null, null, 0));
-        User member = userRepository.save(new User(null, "member@tudy.com", "pw", "멤버", null, null, 0));
+        User leader = userRepository.save(
+                new User(
+                        null, // id
+                        "test1@tudy.com", // email
+                        "test1",      // userId (로그인용 아이디)
+                        "pw",              // passwordHash
+                        "테스터",   // name
+                        "2000.01.01",      // birth
+                        "컴퓨터공학",       // major
+                        "공과대학",        // college
+                        null,              // profileImage
+                        0                  // coinBalance
+                )
+        );
+        User member = userRepository.save(
+                new User(
+                        null, // id
+                        "test2@tudy.com", // email
+                        "test2",      // userId (로그인용 아이디)
+                        "pw",              // passwordHash
+                        "테스터",   // name
+                        "2000.01.01",      // birth
+                        "컴퓨터공학",       // major
+                        "공과대학",        // college
+                        null,              // profileImage
+                        0                  // coinBalance
+                )
+        );
         Group group = new Group();
         group.setName("테스트그룹");
         group.setPassword("123456");
@@ -72,7 +98,21 @@ public class GoalGroupAndDateApiTests {
     @Test
     @DisplayName("날짜별+카테고리명으로 목표 조회")
     void listGoalsByDateAndCategoryName() throws Exception {
-        User user = userRepository.save(new User(null, "dategoal@tudy.com", "pw", "날짜테스터", null, null, 0));
+        //User user = userRepository.save(new User(null, "dategoal@tudy.com", "pw", "날짜테스터", null, null, 0));
+        User user = userRepository.save(
+                new User(
+                        null, // id
+                        "datagoal@tudy.com", // email
+                        "catapiuser",      // userId (로그인용 아이디)
+                        "pw",              // passwordHash
+                        "날짜테스터",   // name
+                        "2000.01.01",      // birth
+                        "컴퓨터공학",       // major
+                        "공과대학",        // college
+                        null,              // profileImage
+                        0                  // coinBalance
+                )
+        );
         String categoryName = "날짜카테고리";
         String title = "날짜별 목표";
         String startDate = LocalDate.now().toString();

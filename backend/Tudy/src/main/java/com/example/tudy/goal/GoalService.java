@@ -20,7 +20,7 @@ public class GoalService {
     private final CategoryRepository categoryRepository;
     private static final int REWARD_COINS = 10;
 
-    public Goal createGoal(Long userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId) {
+    public Goal createGoal(Long userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendNickname) {
         User user = userRepository.findById(userId).orElseThrow();
         Category category = getOrCreateCategory(user, categoryName);
         Goal goal = new Goal();
@@ -49,6 +49,21 @@ public class GoalService {
                 }
             }
         }
+        // 친구와 함께하기 기능 (isFriendGoal이 true이고 friendNickname이 있을 때만)
+        if (Boolean.TRUE.equals(isFriendGoal) && friendNickname != null && !friendNickname.isBlank()) {
+            userRepository.findByUserId(friendNickname).ifPresent(friend -> {
+                Category friendCategory = getOrCreateCategory(friend, categoryName);
+                Goal friendGoal = new Goal();
+                friendGoal.setUser(friend);
+                friendGoal.setTitle(title);
+                friendGoal.setCategory(friendCategory);
+                friendGoal.setStartDate(startDate);
+                friendGoal.setEndDate(endDate);
+                friendGoal.setIsGroupGoal(false);
+                friendGoal.setGroupId(null);
+                goalRepository.save(friendGoal);
+            });
+        }
         return savedGoal;
     }
 
@@ -62,23 +77,7 @@ public class GoalService {
         goal.setIsGroupGoal(isGroupGoal);
         goal.setGroupId(groupId);
         Goal savedGoal = goalRepository.save(goal);
-        // 그룹 목표라면 그룹원 모두에게 동일 목표 수정(간단화: 새로 생성)
-        if (Boolean.TRUE.equals(isGroupGoal) && groupId != null) {
-            for (GroupMember member : groupMemberRepository.findAllByGroupId(groupId)) {
-                if (!member.getUser().getId().equals(goal.getUser().getId())) {
-                    Category memberCategory = getOrCreateCategory(member.getUser(), categoryName);
-                    Goal groupGoal = new Goal();
-                    groupGoal.setUser(member.getUser());
-                    groupGoal.setTitle(title);
-                    groupGoal.setCategory(memberCategory);
-                    groupGoal.setStartDate(startDate);
-                    groupGoal.setEndDate(endDate);
-                    groupGoal.setIsGroupGoal(true);
-                    groupGoal.setGroupId(groupId);
-                    goalRepository.save(groupGoal);
-                }
-            }
-        }
+
         return savedGoal;
     }
 

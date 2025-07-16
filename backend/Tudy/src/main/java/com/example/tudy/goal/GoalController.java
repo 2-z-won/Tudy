@@ -16,7 +16,7 @@ public class GoalController {
 
     @PostMapping
     public ResponseEntity<Goal> create(@RequestBody GoalRequest req) {
-        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId());
+        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendNickname());
         return ResponseEntity.ok(goal);
     }
 
@@ -64,6 +64,8 @@ public class GoalController {
         private LocalDate endDate;
         private Boolean isGroupGoal;
         private Long groupId;
+        private Boolean isFriendGoal;
+        private String friendNickname;
     }
 
     @Data

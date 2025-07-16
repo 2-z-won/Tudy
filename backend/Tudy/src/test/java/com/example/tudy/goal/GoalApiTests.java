@@ -29,7 +29,20 @@ public class GoalApiTests {
     @Test
     @DisplayName("목표 생성 및 카테고리명으로 조회")
     void createAndListGoalByCategoryName() throws Exception {
-        User user = userRepository.save(new User(null, "goaltest@tudy.com", "pw", "테스터", null, null, 0));
+        User user = userRepository.save(
+                new User(
+                        null, // id
+                        "catapi@tudy.com", // email
+                        "catapiuser",      // userId (로그인용 아이디)
+                        "pw",              // passwordHash
+                        "카테고리테스터",   // name
+                        "2000.01.01",      // birth
+                        "컴퓨터공학",       // major
+                        "공과대학",        // college
+                        null,              // profileImage
+                        0                  // coinBalance
+                )
+        );
         String categoryName = "운동";
         String title = "아침 운동";
         String startDate = LocalDate.now().toString();
