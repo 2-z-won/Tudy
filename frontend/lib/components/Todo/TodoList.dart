@@ -1,46 +1,33 @@
 import 'package:flutter/material.dart';
 
-Color getSubColor(Color mainColor) {
-  final r = mainColor.red;
-  final g = mainColor.green;
-  final b = mainColor.blue;
-
-  if (r >= g && r >= b) {
-    return Color.fromARGB(255, r, 0xE1, 0xE1);
-  } else if (g >= r && g >= b) {
-    return Color.fromARGB(255, 0xE1, g, 0xE1);
-  } else {
-    return Color.fromARGB(255, 0xE1, 0xE1, b);
-  }
-}
-
 class TodoItemCard extends StatelessWidget {
   final String text;
   final bool isGroup;
   final bool isDone;
-  final Color mainColor;
+  final Color subColor;
 
   const TodoItemCard({
     super.key,
     required this.text,
     required this.isGroup,
     required this.isDone,
-    required this.mainColor,
+    required this.subColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Color subColor = getSubColor(mainColor); // ✅ 서브컬러 계산
-
     final Color bgColor = isDone ? subColor : Colors.white;
     final Color border = subColor;
     final Color iconBg = isDone ? Colors.white : Colors.transparent;
     final Color iconColor = subColor;
 
+    final EdgeInsets contentPadding = isDone
+        ? const EdgeInsets.fromLTRB(5 + 3, 5, 15, 5) // border가 없으므로 보정
+        : const EdgeInsets.fromLTRB(5, 5, 12, 5);
+
     return Container(
       height: 40,
-      margin: const EdgeInsets.only(bottom: 5),
-      padding: const EdgeInsets.fromLTRB(5, 5, 15, 5),
+      padding: contentPadding,
       decoration: BoxDecoration(
         color: bgColor,
         border: isDone ? null : Border.all(color: border, width: 3),

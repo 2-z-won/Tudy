@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/components/bottomNavigationController.dart';
+import 'package:frontend/components/bottomNavigation/bottomNavigationController.dart';
 import 'package:get/get.dart';
 
 class MyBottomNavigation extends GetView<MyBottomNavigationController> {
@@ -61,9 +61,7 @@ class MyBottomNavigation extends GetView<MyBottomNavigationController> {
                     child: Icon(
                       _icons[displayIndex],
                       size: 30,
-                      color: isSelected
-                          ? Color.fromARGB(255, 238, 213, 170)
-                          : Color(0xFF3F3B33),
+                      color: isSelected ? Color(0xFF005AA9) : Color(0xFF3F3B33),
                     ),
                   ),
                 );
@@ -86,13 +84,13 @@ class MyBottomNavigation extends GetView<MyBottomNavigationController> {
                       shape: BoxShape.circle,
                       color: Colors.white,
                       image: const DecorationImage(
-                        image: AssetImage('lib/images/pnu_logo.png'),
+                        image: AssetImage('assets/images/pnu_logo.png'),
                         fit: BoxFit.contain,
                       ),
                       boxShadow: showShadow
                           ? [
                               BoxShadow(
-                                color: Color(0xFFF2E9DA),
+                                color: Color(0x26005AA9),
                                 blurRadius: 16,
                                 spreadRadius: 4,
                                 offset: const Offset(0, 4),

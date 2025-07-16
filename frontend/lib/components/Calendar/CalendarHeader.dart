@@ -17,11 +17,7 @@ class CalendarHeader extends StatelessWidget {
         children: [
           Text(
             DateFormat('MM').format(date),
-            style: const TextStyle(
-              fontSize: 50,
-              color: CalendarColor,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 50, color: CalendarColor),
           ),
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -35,19 +31,11 @@ class CalendarHeader extends StatelessWidget {
             children: [
               Text(
                 DateFormat('MMMM').format(date),
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: CalendarColor,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontSize: 15, color: CalendarColor),
               ),
               Text(
                 DateFormat('yyyy').format(date),
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: CalendarColor,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontSize: 15, color: CalendarColor),
               ),
             ],
           ),

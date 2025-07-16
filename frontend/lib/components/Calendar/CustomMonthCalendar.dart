@@ -70,29 +70,26 @@ class _CustomMonthCalendarState extends State<CustomMonthCalendar> {
           ],
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 5),
 
         // 요일 헤더
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        GridView.count(
+          shrinkWrap: true,
+          crossAxisCount: 7,
+          crossAxisSpacing: 17, // 날짜와 동일
+          mainAxisSpacing: 0,
+          physics: const NeverScrollableScrollPhysics(),
           children: ['월', '화', '수', '목', '금', '토', '일']
               .map(
-                (day) => Expanded(
-                  child: Center(
-                    child: Text(
-                      day,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: CalendarColor,
-                      ),
-                    ),
+                (day) => Center(
+                  child: Text(
+                    day,
+                    style: const TextStyle(fontSize: 12, color: SubTextColor),
                   ),
                 ),
               )
               .toList(),
         ),
-
-        const SizedBox(height: 8),
 
         // 날짜 그리기
         GridView.builder(
@@ -117,16 +114,19 @@ class _CustomMonthCalendarState extends State<CustomMonthCalendar> {
 
               return Center(
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 30,
+                  height: 30,
                   decoration: isToday
                       ? BoxDecoration(
-                          color: const Color(0xFFEEE0C2),
+                          color: const Color(0xFFFFE5E5),
                           shape: BoxShape.circle,
                         )
                       : null,
-                  child: Text(
-                    '$day',
-                    style: const TextStyle(fontSize: 14, color: CalendarColor),
+                  child: Center(
+                    child: Text(
+                      '$day',
+                      style: const TextStyle(fontSize: 14, color: SubTextColor),
+                    ),
                   ),
                 ),
               );

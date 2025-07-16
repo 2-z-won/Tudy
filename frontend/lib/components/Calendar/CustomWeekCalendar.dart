@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:frontend/constants/colors.dart';
 import 'package:frontend/components/Calendar/CalendarHeader.dart';
 
 class CustomWeekCalendar extends StatefulWidget {
-  const CustomWeekCalendar({super.key});
+  final void Function(DateTime)? onDateSelected;
+  const CustomWeekCalendar({super.key, this.onDateSelected});
 
   @override
   State<CustomWeekCalendar> createState() => _CustomWeekCalendarState();
@@ -68,31 +68,33 @@ class _CustomWeekCalendarState extends State<CustomWeekCalendar> {
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 5),
 
         // 요일 헤더
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        GridView.count(
+          shrinkWrap: true,
+          crossAxisCount: 7,
+          crossAxisSpacing: 17, // 날짜와 동일
+          mainAxisSpacing: 0,
+          physics: const NeverScrollableScrollPhysics(),
           children: ['월', '화', '수', '목', '금', '토', '일']
               .map(
-                (day) => Expanded(
-                  child: Center(
-                    child: Text(
-                      day,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: CalendarColor,
-                      ),
-                    ),
+                (day) => Center(
+                  child: Text(
+                    day,
+                    style: const TextStyle(fontSize: 12, color: SubTextColor),
                   ),
                 ),
               )
               .toList(),
         ),
 
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        GridView.count(
+          crossAxisCount: 7,
+          crossAxisSpacing: 17,
+          mainAxisSpacing: 0,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           children: List.generate(7, (index) {
             final date = weekStart.add(Duration(days: index));
             final isToday =
@@ -100,19 +102,25 @@ class _CustomWeekCalendarState extends State<CustomWeekCalendar> {
                 date.month == today.month &&
                 date.day == today.day;
 
-            return Expanded(
-              child: Center(
+            return Center(
+              child: GestureDetector(
+                onTap: () {
+                  widget.onDateSelected?.call(date); // ✅ 날짜 선택 콜백 실행
+                },
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 30,
+                  height: 30,
                   decoration: isToday
                       ? BoxDecoration(
-                          color: const Color(0xFFEEE0C2),
+                          color: const Color(0xFFFFE5E5),
                           shape: BoxShape.circle,
                         )
                       : null,
-                  child: Text(
-                    '${date.day}',
-                    style: const TextStyle(fontSize: 14, color: CalendarColor),
+                  child: Center(
+                    child: Text(
+                      '${date.day}',
+                      style: const TextStyle(fontSize: 14, color: SubTextColor),
+                    ),
                   ),
                 ),
               ),
