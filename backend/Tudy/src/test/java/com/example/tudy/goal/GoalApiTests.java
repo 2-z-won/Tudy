@@ -2,6 +2,8 @@ package com.example.tudy.goal;
 
 import com.example.tudy.user.User;
 import com.example.tudy.user.UserRepository;
+import com.example.tudy.study.StudySession;
+import com.example.tudy.study.StudySessionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -25,6 +26,7 @@ public class GoalApiTests {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired UserRepository userRepository;
+    @Autowired StudySessionRepository studySessionRepository;
 
     @Test
     @DisplayName("목표 생성 및 카테고리명으로 조회")
@@ -69,4 +71,70 @@ public class GoalApiTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title").value(title));
     }
-} 
+
+    @Test
+    @DisplayName("사진 인증으로 목표 완료")
+    void completeWithProofImage() throws Exception {
+        User user = userRepository.save(new User(null, "proof@tudy.com", "proofuser", "pw",
+                "사진테스터", "2000.01.01", "컴퓨터공학", "공과대학", null, 0));
+
+        String reqJson = "{" +
+                "\"userId\":" + user.getId() + "," +
+                "\"title\":\"title\"," +
+                "\"categoryName\":\"cat\"," +
+                "\"startDate\":\"" + LocalDate.now() + "\"," +
+                "\"endDate\":\"" + LocalDate.now().plusDays(1) + "\"," +
+                "\"isGroupGoal\":false," +
+                "\"groupId\":null" +
+                "}";
+
+        String res = mockMvc.perform(post("/api/goals")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqJson))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        Goal goal = objectMapper.readValue(res, Goal.class);
+
+        mockMvc.perform(post("/api/goals/" + goal.getId() + "/complete")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"proofImage\":\"img.png\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.completed").value(true));
+    }
+
+    @Test
+    @DisplayName("2시간 공부 후 목표 완료")
+    void completeWithStudyTime() throws Exception {
+        User user = userRepository.save(new User(null, "time@tudy.com", "timeuser", "pw",
+                "시간테스터", "2000.01.01", "컴퓨터공학", "공과대학", null, 0));
+
+        String reqJson = "{" +
+                "\"userId\":" + user.getId() + "," +
+                "\"title\":\"title\"," +
+                "\"categoryName\":\"cat\"," +
+                "\"startDate\":\"" + LocalDate.now() + "\"," +
+                "\"endDate\":\"" + LocalDate.now().plusDays(1) + "\"," +
+                "\"isGroupGoal\":false," +
+                "\"groupId\":null" +
+                "}";
+
+        String res = mockMvc.perform(post("/api/goals")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(reqJson))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        Goal goal = objectMapper.readValue(res, Goal.class);
+
+        StudySession session = new StudySession();
+        session.setUser(user);
+        session.setGoal(goal);
+        session.setStartTime(java.time.LocalDateTime.now());
+        session.setEndTime(java.time.LocalDateTime.now());
+        session.setDuration(7200);
+        studySessionRepository.save(session);
+
+        mockMvc.perform(post("/api/goals/" + goal.getId() + "/complete"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.completed").value(true));
+    }
+}
