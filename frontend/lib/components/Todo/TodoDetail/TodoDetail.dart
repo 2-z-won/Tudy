@@ -4,7 +4,7 @@ import 'package:frontend/components/check.dart';
 
 class TodoDetail extends StatelessWidget {
   final VoidCallback onClose;
-  final String title; // ✅ 카테고리명
+  final String category; // ✅ 카테고리명
   final String group;
   final Color mainColor; // ✅ 메인색
   final Color subColor;
@@ -15,7 +15,7 @@ class TodoDetail extends StatelessWidget {
   const TodoDetail({
     super.key,
     required this.onClose,
-    required this.title,
+    required this.category,
     required this.group,
     required this.mainColor,
     required this.subColor,
@@ -51,7 +51,7 @@ class TodoDetail extends StatelessWidget {
                 ),
               ),
               Text(
-                "$title ($group)",
+                "$category ($group)",
                 style: const TextStyle(fontSize: 12, color: Colors.black),
               ),
               const Spacer(),

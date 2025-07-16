@@ -3,6 +3,7 @@ import 'package:frontend/pages/Inside/InsidePage.dart';
 import 'package:frontend/pages/LoginSignup/LoginPage.dart';
 import 'package:frontend/pages/LoginSignup/SignupPage_Email.dart';
 import 'package:frontend/pages/LoginSignup/SingUpPage.dart';
+import 'package:frontend/pages/MyPage/EditMyPage.dart';
 import 'package:frontend/pages/MyPage/FriendPage.dart';
 import 'package:frontend/pages/MyPage/GroupPage.dart';
 import 'package:frontend/pages/MyPage/MyPage.dart';
@@ -55,6 +56,10 @@ class MainRouter {
     GetPage(
       name: '/inside',
       page: () => NoLayout(child: InsidePageView()),
+    ),
+    GetPage(
+      name: '/editMypage',
+      page: () => NoLayout(child: EditMypageView()),
     ),
   ];
 }
