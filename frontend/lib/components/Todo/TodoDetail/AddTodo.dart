@@ -3,14 +3,14 @@ import 'package:frontend/components/check.dart';
 
 class AddTodo extends StatefulWidget {
   final VoidCallback onClose;
-  final String title;
+  final String category;
   final Color mainColor;
   final Color subColor;
 
   const AddTodo({
     super.key,
     required this.onClose,
-    required this.title,
+    required this.category,
     required this.mainColor,
     required this.subColor,
   });
@@ -50,7 +50,7 @@ class _TodoDetailState extends State<AddTodo> {
                 ),
               ),
               Text(
-                widget.title,
+                widget.category,
                 style: const TextStyle(fontSize: 12, color: Colors.black),
               ),
               Spacer(),

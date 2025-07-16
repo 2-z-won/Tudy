@@ -4,7 +4,9 @@ import 'package:frontend/constants/colors.dart';
 import 'package:frontend/components/Calendar/CalendarHeader.dart';
 
 class CustomMonthCalendar extends StatefulWidget {
-  const CustomMonthCalendar({super.key});
+  final void Function(DateTime date) onDateSelected;
+
+  const CustomMonthCalendar({super.key, required this.onDateSelected});
 
   @override
   State<CustomMonthCalendar> createState() => _CustomMonthCalendarState();
@@ -112,20 +114,29 @@ class _CustomMonthCalendarState extends State<CustomMonthCalendar> {
                   today.month == month &&
                   today.day == day;
 
-              return Center(
-                child: Container(
-                  width: 30,
-                  height: 30,
-                  decoration: isToday
-                      ? BoxDecoration(
-                          color: const Color(0xFFFFE5E5),
-                          shape: BoxShape.circle,
-                        )
-                      : null,
-                  child: Center(
-                    child: Text(
-                      '$day',
-                      style: const TextStyle(fontSize: 14, color: SubTextColor),
+              return GestureDetector(
+                onTap: () {
+                  final selectedDate = DateTime(year, month, day);
+                  widget.onDateSelected(selectedDate);
+                },
+                child: Center(
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: isToday
+                        ? BoxDecoration(
+                            color: const Color(0xFFFFE5E5),
+                            shape: BoxShape.circle,
+                          )
+                        : null,
+                    child: Center(
+                      child: Text(
+                        '$day',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: SubTextColor,
+                        ),
+                      ),
                     ),
                   ),
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/api/SignupLogin/controller/signup_controller.dart';
 import 'package:get/get.dart';
 import 'package:frontend/pages/LoginSignup/component.dart';
 
@@ -10,11 +11,7 @@ class SingupPage extends StatefulWidget {
 }
 
 class _SingupPageState extends State<SingupPage> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _idController = TextEditingController();
-  final TextEditingController _pwController = TextEditingController();
-  final TextEditingController _birthController = TextEditingController();
-  final TextEditingController _deptController = TextEditingController();
+  final SignUpController controller = Get.put(SignUpController());
 
   Widget buildCollegeField() {
     final List<String> colleges = [
@@ -77,7 +74,7 @@ class _SingupPageState extends State<SingupPage> {
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
-                    selectedCollege = value!;
+                    controller.selectedCollege.value = value!;
                   });
                 },
 
@@ -117,14 +114,14 @@ class _SingupPageState extends State<SingupPage> {
 
             buildInputField(
               title: "NAME",
-              controller: _nameController,
+              controller: controller.nameController,
               obscureText: false,
             ),
             //
             const SizedBox(height: 20),
             buildInputButtonField(
               title: "NAME",
-              controller: _idController,
+              controller: controller.idController,
               obscureText: false,
               button: "중복확인",
             ),
@@ -132,7 +129,7 @@ class _SingupPageState extends State<SingupPage> {
             const SizedBox(height: 20),
             buildInputField(
               title: "Password",
-              controller: _pwController,
+              controller: controller.pwController,
               obscureText: false,
               hintText: "영어 8글자 이상, 특수문자 하나 이상 포함",
             ),
@@ -140,7 +137,7 @@ class _SingupPageState extends State<SingupPage> {
             //
             buildInputField(
               title: "Birth",
-              controller: _birthController,
+              controller: controller.birthController,
               obscureText: false,
               hintText: "####.##.##",
             ),
@@ -152,10 +149,26 @@ class _SingupPageState extends State<SingupPage> {
             const SizedBox(height: 20),
             buildInputField(
               title: "학과/학부",
-              controller: _deptController,
+              controller: controller.deptController,
               obscureText: false,
             ),
-            const SizedBox(height: 40),
+            Obx(() {
+              final msg = controller.errorMessage.value;
+              return msg.isEmpty
+                  ? const SizedBox(height: 13)
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 5),
+                      child: Text(
+                        msg,
+                        style: const TextStyle(
+                          color: Color(0xFFE94F4F),
+                          fontSize: 12,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    );
+            }),
+            const SizedBox(height: 27),
             buildButton(
               button: "SIGN UP",
               onTap: () {

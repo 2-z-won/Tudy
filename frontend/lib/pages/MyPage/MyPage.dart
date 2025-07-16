@@ -13,19 +13,24 @@ class MyPageView extends StatelessWidget {
         padding: EdgeInsets.only(left: 40, right: 40, top: 60),
         child: Column(
           children: [
-            StudentCard(
-              name: "아무개",
-              birth: "2004.12.25",
-              college: "정보의생명공학대학",
-              department: "정보컴퓨터공학부",
-              profileImageAsset: 'images/profile.jpg',
-              qrImageAsset: 'images/profile.jpg',
+            GestureDetector(
+              onTap: () {
+                Get.toNamed("/editMypage");
+              },
+              child: StudentCard(
+                name: "아무개",
+                birth: "2004.12.25",
+                college: "정보의생명공학대학",
+                department: "정보컴퓨터공학부",
+                profileImageAsset: 'images/profile.jpg',
+                qrImageAsset: 'images/profile.jpg',
+              ),
             ),
             SizedBox(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _statItem(10, '오늘의목표', () => Get.toNamed('/todo')),
+                _statItem(10, '오늘의목표', () => Get.toNamed('/Todo')),
                 _statItem(10, '친구', () => Get.toNamed('/friend')),
                 _statItem(10, '그룹', () => Get.toNamed('/group')),
               ],

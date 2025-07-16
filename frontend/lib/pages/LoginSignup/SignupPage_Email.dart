@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/api/SignupLogin/controller/email_verify_controller.dart';
+import 'package:frontend/constants/colors.dart';
 import 'package:get/get.dart';
 import 'package:frontend/pages/LoginSignup/SingUpPage.dart';
 import 'package:frontend/pages/LoginSignup/component.dart';
@@ -11,6 +13,10 @@ class SignUpEmailPage extends StatefulWidget {
 }
 
 class _SignUpEmailPageState extends State<SignUpEmailPage> {
+  final EmailVerifyController _verifyController = Get.put(
+    EmailVerifyController(),
+  );
+
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _numController = TextEditingController();
 
@@ -18,60 +24,98 @@ class _SignUpEmailPageState extends State<SignUpEmailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 150),
-            const Center(
-              child: Text(
-                'SIGN UP',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                  color: Color(0xFF595959),
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 150),
+                const Center(
+                  child: Text(
+                    'SIGN UP',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                      color: Color(0xFF595959),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 100),
-            buildInputButtonField(
-              title: "E-mail",
-              controller: _emailController,
-              obscureText: false,
-              button: "전송",
-              hintText: "####@pusan.ac.kr",
-            ),
-            const SizedBox(height: 15),
-            buildInputField(
-              title: "인증번호",
-              controller: _numController,
-              obscureText: false,
-            ),
-            SizedBox(height: 2),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: const Text(
-                '인증번호가 틀렸습니다',
-                style: TextStyle(
-                  decoration: TextDecoration.underline,
-                  fontSize: 10,
-                  color: Color(0xFFE94F4F),
+                const SizedBox(height: 100),
+                buildInputButtonField(
+                  title: "E-mail",
+                  controller: _emailController,
+                  obscureText: false,
+                  button: "전송",
+                  hintText: "####@pusan.ac.kr",
+                  onTap: () {
+                    _verifyController.sendCode(_emailController.text.trim());
+                  },
                 ),
-              ),
-            ),
+                const SizedBox(height: 15),
+                buildInputField(
+                  title: "인증번호",
+                  controller: _numController,
+                  obscureText: false,
+                ),
+                SizedBox(height: 2),
 
-            const SizedBox(height: 30),
-            buildButton(
-              button: "Next",
-              onTap: () {
-                Get.toNamed("/signup");
-              },
+                Obx(
+                  () => _verifyController.errorMessage.value.isNotEmpty
+                      ? Align(
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            children: [
+                              SizedBox(width: 5),
+                              Text(
+                                _verifyController.errorMessage.value,
+                                style: TextStyle(
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Color(0xFFE94F4F),
+                                  fontSize: 10,
+                                  color: Color(0xFFE94F4F),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : SizedBox(height: 13),
+                ),
+
+                const SizedBox(height: 30),
+                buildButton(
+                  button: "Next",
+                  onTap: () async {
+                    await _verifyController.verifyEmail(
+                      _emailController.text.trim(),
+                      _numController.text.trim(),
+                    );
+                    if (_verifyController.isVerified.value) {
+                      Get.toNamed("/signup");
+                    }
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            top: 15,
+            left: 15,
+            child: GestureDetector(
+              onTap: () {
+                Get.back();
+              },
+              child: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 20,
+                color: SubTextColor,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

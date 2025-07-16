@@ -50,6 +50,7 @@ Widget buildInputButtonField({
   required bool obscureText,
   required button,
   String hintText = '',
+  void Function()? onTap,
 }) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,21 +88,24 @@ Widget buildInputButtonField({
                 ),
               ),
             ),
-            Container(
-              height: double.infinity,
-              decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFFE1DDD4), width: 2),
-                color: Color(0xFFFFF6E5),
-                borderRadius: BorderRadius.circular(3),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Center(
-                child: Text(
-                  button,
-                  style: TextStyle(
-                    fontSize: 12,
-                    letterSpacing: 0.1,
-                    color: Color(0xFF565656),
+            GestureDetector(
+              onTap: onTap,
+              child: Container(
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFE1DDD4), width: 2),
+                  color: Color(0xFFFFF6E5),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Center(
+                  child: Text(
+                    button,
+                    style: TextStyle(
+                      fontSize: 12,
+                      letterSpacing: 0.1,
+                      color: Color(0xFF565656),
+                    ),
                   ),
                 ),
               ),
