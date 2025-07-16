@@ -12,26 +12,36 @@ public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public User signUp(String email, String password, String nickname, String major) {
+    public User signUp(String email, String userId, String password, String name, String birth, String college, String major) {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Email already exists");
         }
+        if (userRepository.findByUserId(userId).isPresent()) {
+            throw new IllegalArgumentException("UserId already exists");
+        }
         User user = new User();
         user.setEmail(email);
+        user.setUserId(userId);
         user.setPasswordHash(passwordEncoder.encode(password));
-        user.setNickname(nickname);
+        user.setName(name);
+        user.setBirth(birth);
+        user.setCollege(college);
         user.setMajor(major);
         user.setCoinBalance(0);
         return userRepository.save(user);
     }
 
-    public Optional<User> login(String email, String password) {
-        return userRepository.findByEmail(email)
+    public Optional<User> login(String userId, String password) {
+        return userRepository.findByUserId(userId)
                 .filter(u -> passwordEncoder.matches(password, u.getPasswordHash()));
     }
 
     public boolean emailExists(String email) {
         return userRepository.findByEmail(email).isPresent();
+    }
+
+    public boolean userIdExists(String userId) {
+        return userRepository.findByUserId(userId).isPresent();
     }
 
     public User updateEmail(Long userId, String email) {
@@ -50,12 +60,6 @@ public class UserService {
         User user = userRepository.findById(userId).orElseThrow();
         user.setCollege(college);
         return userRepository.save(user);
-    }
-
-    public void updateNickname(Long userId, String nickname) {
-        User user = userRepository.findById(userId).orElseThrow();
-        user.setNickname(nickname);
-        userRepository.save(user);
     }
 
     public void updatePassword(Long userId, String currentPassword, String newPassword) {
@@ -77,5 +81,9 @@ public class UserService {
         User user = userRepository.findById(userId).orElseThrow();
         user.setCoinBalance(user.getCoinBalance() + amount);
         userRepository.save(user);
+    }
+
+    public User findById(Long id) {
+        return userRepository.findById(id).orElseThrow();
     }
 }

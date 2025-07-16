@@ -16,10 +16,16 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(nullable = false, unique = true)
+    private String userId; // 로그인용 아이디
+
     @Column(nullable = false)
     private String passwordHash;
 
-    private String nickname;
+    @Column(nullable = false)
+    private String name; // 이름
+
+    private String birth; // yyyy.mm.dd
 
     private String major;
 
@@ -29,13 +35,15 @@ public class User {
 
     private Integer coinBalance = 0;
 
-    public User(Long id, String email, String passwordHash, String nickname,
-                String major, String profileImage, Integer coinBalance) {
+    public User(Long id, String email, String userId, String passwordHash, String name, String birth, String major, String college, String profileImage, Integer coinBalance) {
         this.id = id;
         this.email = email;
+        this.userId = userId;
         this.passwordHash = passwordHash;
-        this.nickname = nickname;
+        this.name = name;
+        this.birth = birth;
         this.major = major;
+        this.college = college;
         this.profileImage = profileImage;
         this.coinBalance = coinBalance;
     }

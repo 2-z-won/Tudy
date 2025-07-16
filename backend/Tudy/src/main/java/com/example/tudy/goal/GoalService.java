@@ -51,7 +51,7 @@ public class GoalService {
         }
         // 친구와 함께하기 기능 (isFriendGoal이 true이고 friendNickname이 있을 때만)
         if (Boolean.TRUE.equals(isFriendGoal) && friendNickname != null && !friendNickname.isBlank()) {
-            userRepository.findByNickname(friendNickname).ifPresent(friend -> {
+            userRepository.findByUserId(friendNickname).ifPresent(friend -> {
                 Category friendCategory = getOrCreateCategory(friend, categoryName);
                 Goal friendGoal = new Goal();
                 friendGoal.setUser(friend);

@@ -15,8 +15,8 @@ public class FriendshipController {
     }
 
     @PostMapping("/request") // 친구 신청
-    public Map<String, Boolean> sendFriendRequest(@RequestParam Long userId, @RequestParam String toNickname) {
-        boolean result = friendshipService.sendFriendRequest(userId, toNickname);
+    public Map<String, Boolean> sendFriendRequest(@RequestParam Long userId, @RequestParam String toUserId) {
+        boolean result = friendshipService.sendFriendRequest(userId, toUserId);
         return Map.of("success", result);
     }
 

@@ -18,9 +18,9 @@ public class FriendshipService {
     }
 
     @Transactional
-    public boolean sendFriendRequest(Long fromUserId, String toNickname) {
+    public boolean sendFriendRequest(Long fromUserId, String toUserId) {
         Optional<User> fromUserOpt = userRepository.findById(fromUserId);
-        Optional<User> toUserOpt = userRepository.findByNickname(toNickname);
+        Optional<User> toUserOpt = userRepository.findByUserId(toUserId);
         if (fromUserOpt.isEmpty() || toUserOpt.isEmpty()) {
             return false;
         }

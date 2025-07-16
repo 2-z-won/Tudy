@@ -7,8 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import com.example.tudy.friendship.FriendshipService;
-import com.example.tudy.friendship.UserWithFriendCountResponse;
+import com.example.tudy.friend.FriendshipService;
 
 @RestController
 @RequestMapping("/api/users")
@@ -20,14 +19,14 @@ public class UserController {
 
     @PostMapping("/signup")
     public ResponseEntity<User> signUp(@RequestBody SignUpRequest request) {
-        User user = userService.signUp(request.getEmail(), request.getPassword(), request.getNickname(), request.getMajor());
+        User user = userService.signUp(request.getEmail(), request.getUserId(), request.getPassword(), request.getName(), request.getBirth(), request.getCollege(), request.getMajor());
         return ResponseEntity.ok(user);
     }
 
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest request) {
-        return userService.login(request.getEmail(), request.getPassword())
-                .map(u -> ResponseEntity.ok(Map.of("token", tokenService.generateToken(u.getId()))))
+        return userService.login(request.getUserId(), request.getPassword())
+                .map(u -> ResponseEntity.ok(Map.of("token", tokenService.generateToken(u.getId()))) )
                 .orElseGet(() -> ResponseEntity.status(401).body(Map.of("error", "invalid")));
     }
 
@@ -74,12 +73,6 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/{id}/nickname")
-    public ResponseEntity<Void> changeNickname(@PathVariable Long id, @RequestBody NicknameRequest request) {
-        userService.updateNickname(id, request.getNickname());
-        return ResponseEntity.ok().build();
-    }
-
     @PutMapping("/{id}/password")
     public ResponseEntity<Void> changePassword(@PathVariable Long id, @RequestBody PasswordRequest request) {
         userService.updatePassword(id, request.getCurrentPassword(), request.getNewPassword());
@@ -101,17 +94,26 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/exists/userid")
+    public ResponseEntity<Boolean> existsByUserId(@RequestParam String userId) {
+        boolean exists = userService.userIdExists(userId);
+        return ResponseEntity.ok(exists);
+    }
+
     @Data
     private static class SignUpRequest {
         private String email;
+        private String userId;
         private String password;
-        private String nickname;
+        private String name;
+        private String birth;
+        private String college;
         private String major;
     }
 
     @Data
     private static class LoginRequest {
-        private String email;
+        private String userId;
         private String password;
     }
 
@@ -145,7 +147,7 @@ public class UserController {
     public static class UserWithFriendCountResponse {
         private Long id;
         private String email;
-        private String nickname;
+        private String name;
         private String major;
         private String college;
         private String profileImage;
@@ -155,7 +157,7 @@ public class UserController {
         public UserWithFriendCountResponse(User user, long friendCount) {
             this.id = user.getId();
             this.email = user.getEmail();
-            this.nickname = user.getNickname();
+            this.name = user.getName();
             this.major = user.getMajor();
             this.college = user.getCollege();
             this.profileImage = user.getProfileImage();
