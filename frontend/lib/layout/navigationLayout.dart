@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:frontend/components/bottomNavigation.dart';
-import 'package:frontend/components/bottomNavigationController.dart';
+import 'package:frontend/components/bottomNavigation/bottomNavigation.dart';
+import 'package:frontend/components/bottomNavigation/bottomNavigationController.dart';
 
 class NavigationLayout extends StatelessWidget {
   final Widget child;
