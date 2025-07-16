@@ -1,13 +1,11 @@
 package com.example.tudy.user;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "users")
 public class User {
@@ -25,7 +23,20 @@ public class User {
 
     private String major;
 
+    private String college;
+
     private String profileImage;
 
     private Integer coinBalance = 0;
+
+    public User(Long id, String email, String passwordHash, String nickname,
+                String major, String profileImage, Integer coinBalance) {
+        this.id = id;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.nickname = nickname;
+        this.major = major;
+        this.profileImage = profileImage;
+        this.coinBalance = coinBalance;
+    }
 }

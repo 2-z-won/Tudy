@@ -12,9 +12,24 @@ public class GroupController {
     private final GroupService groupService;
 
     @PostMapping
-    public ResponseEntity<Group> create(@RequestBody GroupRequest req) {
-        Group group = groupService.createGroup(req.getName(), req.getPassword());
-        return ResponseEntity.ok(group);
+    public ResponseEntity<?> create(@RequestBody GroupRequest req) {
+        try {
+            Group group = groupService.createGroup(req.getName(), req.getPassword());
+            return ResponseEntity.ok(group);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<?> list(@RequestParam(name = "public") Boolean isPublic,
+                                  @RequestParam(required = false) String password,
+                                  @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(defaultValue = "10") int size) {
+        if (isPublic == null) {
+            return ResponseEntity.badRequest().body("public parameter is required");
+        }
+        return ResponseEntity.ok(groupService.searchGroups(isPublic, password, page, size));
     }
 
     @PostMapping("/join")
@@ -25,6 +40,11 @@ public class GroupController {
         } else {
             return ResponseEntity.badRequest().body("비밀번호가 일치하지 않습니다.");
         }
+    }
+
+    @GetMapping("/exists")
+    public ResponseEntity<Boolean> existsByName(@RequestParam String name) {
+        return ResponseEntity.ok(groupService.existsByName(name));
     }
 
     @Data

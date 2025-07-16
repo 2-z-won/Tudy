@@ -14,10 +14,31 @@ public class GroupService {
     private final GroupMemberRepository groupMemberRepository;
 
     public Group createGroup(String name, String password) {
+        if (groupRepository.existsByName(name)) {
+            throw new IllegalArgumentException("이미 존재하는 그룹 이름입니다.");
+        }
         Group group = new Group();
         group.setName(name);
-        group.setPassword(password);
+        if (password != null) {
+            if (password.length() != 6) {
+                throw new IllegalArgumentException("비밀번호는 6자리여야 합니다.");
+            }
+            group.setPrivate(true);
+            group.setPassword(password);
+        }
         return groupRepository.save(group);
+    }
+
+    public org.springframework.data.domain.Page<Group> searchGroups(boolean isPublic, String password, int page, int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        if (isPublic) {
+            return groupRepository.findByIsPrivateFalse(pageable);
+        } else {
+            if (password == null) {
+                return org.springframework.data.domain.Page.empty(pageable);
+            }
+            return groupRepository.findByIsPrivateTrueAndPassword(password, pageable);
+        }
     }
 
     @Transactional
@@ -34,5 +55,9 @@ public class GroupService {
             groupMemberRepository.save(member);
         }
         return true;
+    }
+
+    public boolean existsByName(String name) {
+        return groupRepository.existsByName(name);
     }
 } 
