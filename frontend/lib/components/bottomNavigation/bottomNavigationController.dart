@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 class MyBottomNavigationController extends GetxController {
   static MyBottomNavigationController get to => Get.find();
 
-  final RxInt selectedIndex = 1.obs;
+  final RxInt selectedIndex = 2.obs;
 
   final RxInt shadowIndex = (-1).obs;
 
@@ -20,13 +20,18 @@ class MyBottomNavigationController extends GetxController {
 
     switch (index) {
       case 0:
-        Get.toNamed('/main');
+        Get.toNamed('/Todo');
         break;
       case 1:
         Get.toNamed('/main');
         break;
       case 2:
         Get.toNamed('/main');
+      case 3:
+        Get.toNamed('/diary');
+      case 4:
+        Get.toNamed('/mypage');
+
         break;
     }
   }

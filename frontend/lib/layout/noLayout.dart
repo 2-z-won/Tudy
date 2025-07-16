@@ -7,6 +7,9 @@ class NoLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: SafeArea(child: child));
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(child: child),
+    );
   }
 }
