@@ -27,7 +27,20 @@ public class CategoryApiTests {
     @Test
     @DisplayName("카테고리 생성 및 중복 체크")
     void createAndCheckCategory() throws Exception {
-        User user = userRepository.save(new User(null, "catapi@tudy.com", "pw", "카테고리테스터", null, null, 0));
+        User user = userRepository.save(
+                new User(
+                        null, // id
+                        "catapi@tudy.com", // email
+                        "catapiuser",      // userId (로그인용 아이디)
+                        "pw",              // passwordHash
+                        "카테고리테스터",   // name
+                        "2000.01.01",      // birth
+                        "컴퓨터공학",       // major
+                        "공과대학",        // college
+                        null,              // profileImage
+                        0                  // coinBalance
+                )
+        );
         String name = "공부";
         int color = 2;
         // 카테고리 생성
