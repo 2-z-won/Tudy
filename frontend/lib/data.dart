@@ -29,65 +29,65 @@ class TodoItem {
   });
 }
 
-final List<TodoItem> todoList = [
-  TodoItem(
-    title: '알고리즘 공부하기',
-    mainColor: Color(0xFF4D4AFF),
-    subTodos: [
-      SubTodo(
-        text: '1차시: 그리디 알고리즘',
-        isGroup: false,
-        isDone: false,
-        isPhotoRequired: false,
-        isTimerRequired: true,
-      ),
-      SubTodo(
-        text: '2차시: DP 기초',
-        isGroup: false,
-        isDone: true,
-        isPhotoRequired: true,
-        isTimerRequired: true,
-      ),
-    ],
-  ),
-  TodoItem(
-    title: '팀 스터디',
-    mainColor: Color(0xFFFF4A4A),
-    subTodos: [
-      SubTodo(
-        text: 'CS 면접 준비',
-        isGroup: true,
-        isDone: false,
-        isPhotoRequired: false,
-        isTimerRequired: true,
-      ),
-      SubTodo(
-        text: '기출 문제 리뷰',
-        isGroup: true,
-        isDone: true,
-        isPhotoRequired: false,
-        isTimerRequired: true,
-      ),
-    ],
-  ),
-  TodoItem(
-    title: '토익 공부',
-    mainColor: Color(0xFF00B894),
-    subTodos: [
-      SubTodo(
-        text: 'LC 실전모의고사 1회',
-        isGroup: false,
-        isDone: true,
-        isPhotoRequired: false,
-        isTimerRequired: true,
-      ),
-      SubTodo(
-        text: 'RC 문법 정리',
-        isGroup: false,
-        isDone: false,
-        isPhotoRequired: true,
-        isTimerRequired: false,
-      ),
-    ],
-  ),
-];
+// final List<TodoItem> todoList = [
+//   TodoItem(
+//     title: '알고리즘 공부하기',
+//     mainColor: Color(0xFF4D4AFF),
+//     subTodos: [
+//       SubTodo(
+//         text: '1차시: 그리디 알고리즘',
+//         isGroup: false,
+//         isDone: false,
+//         isPhotoRequired: false,
+//         isTimerRequired: true,
+//       ),
+//       SubTodo(
+//         text: '2차시: DP 기초',
+//         isGroup: false,
+//         isDone: true,
+//         isPhotoRequired: true,
+//         isTimerRequired: true,
+//       ),
+//     ],
+//   ),
+//   TodoItem(
+//     title: '팀 스터디',
+//     mainColor: Color(0xFFFF4A4A),
+//     subTodos: [
+//       SubTodo(
+//         text: 'CS 면접 준비',
+//         isGroup: true,
+//         isDone: false,
+//         isPhotoRequired: false,
+//         isTimerRequired: true,
+//       ),
+//       SubTodo(
+//         text: '기출 문제 리뷰',
+//         isGroup: true,
+//         isDone: true,
+//         isPhotoRequired: false,
+//         isTimerRequired: true,
+//       ),
+//     ],
+//   ),
+//   TodoItem(
+//     title: '토익 공부',
+//     mainColor: Color(0xFF00B894),
+//     subTodos: [
+//       SubTodo(
+//         text: 'LC 실전모의고사 1회',
+//         isGroup: false,
+//         isDone: true,
+//         isPhotoRequired: false,
+//         isTimerRequired: true,
+//       ),
+//       SubTodo(
+//         text: 'RC 문법 정리',
+//         isGroup: false,
+//         isDone: false,
+//         isPhotoRequired: true,
+//         isTimerRequired: false,
+//       ),
+//     ],
+//   ),
+// ];

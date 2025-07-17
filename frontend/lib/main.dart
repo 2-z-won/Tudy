@@ -4,7 +4,11 @@ import 'package:frontend/pages/MainPage.dart';
 import 'package:frontend/router/main_router.dart';
 import 'package:frontend/constants/colors.dart';
 
-void main() {
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   runApp(const MyApp());
 }
 

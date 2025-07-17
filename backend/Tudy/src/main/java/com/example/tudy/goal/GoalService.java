@@ -6,6 +6,8 @@ import com.example.tudy.group.GroupMemberRepository;
 import com.example.tudy.group.GroupMember;
 import com.example.tudy.category.Category;
 import com.example.tudy.category.CategoryRepository;
+import com.example.tudy.study.StudySession;
+import com.example.tudy.study.StudySessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ public class GoalService {
     private final UserRepository userRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final CategoryRepository categoryRepository;
+    private final StudySessionRepository studySessionRepository;
     private static final int REWARD_COINS = 10;
 
     public Goal createGoal(Long userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName) {
@@ -94,14 +97,28 @@ public class GoalService {
 
     public Goal completeGoal(Long id, String proofImage) {
         Goal goal = goalRepository.findById(id).orElseThrow();
+        int total = getTotalDuration(goal);
+        boolean proofOk = proofImage != null && !proofImage.isBlank();
+        if (!proofOk && total < 7200) {
+            throw new IllegalStateException("인증 요건을 충족하지 않았습니다.");
+        }
         goal.setCompleted(true);
-        goal.setProofImage(proofImage);
+        if (proofOk) {
+            goal.setProofImage(proofImage);
+        }
         goalRepository.save(goal);
         userRepository.findById(goal.getUser().getId()).ifPresent(u -> {
             u.setCoinBalance(u.getCoinBalance() + REWARD_COINS);
             userRepository.save(u);
         });
         return goal;
+    }
+
+    private int getTotalDuration(Goal goal) {
+        return studySessionRepository.findByGoal(goal).stream()
+                .filter(s -> s.getDuration() != null)
+                .mapToInt(StudySession::getDuration)
+                .sum();
     }
 
     public Goal cancelCompletion(Long id) {

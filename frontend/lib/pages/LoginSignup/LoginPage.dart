@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/api/SignupLogin/controller/login_controller.dart';
 import 'package:frontend/pages/LoginSignup/component.dart';
 import 'package:get/get.dart';
 
@@ -10,8 +11,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _idController = TextEditingController();
-  final TextEditingController _pwController = TextEditingController();
+  final LoginController controller = Get.put(LoginController());
 
   @override
   Widget build(BuildContext context) {
@@ -39,16 +39,37 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 100),
             buildInputField(
               title: "ID",
-              controller: _idController,
+              controller: controller.idController,
               obscureText: false,
             ),
             const SizedBox(height: 15),
             buildInputField(
               title: "Password",
-              controller: _pwController,
+              controller: controller.pwController,
               obscureText: true,
             ),
-            const SizedBox(height: 13),
+            // 에러 메시지 처리
+            Obx(() {
+              final hasError = controller.errorMessage.value.isNotEmpty;
+              return Column(
+                children: [
+                  SizedBox(height: hasError ? 2 : 13),
+                  if (hasError)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        controller.errorMessage.value,
+                        style: const TextStyle(
+                          decoration: TextDecoration.underline,
+                          fontSize: 10,
+                          color: Color(0xFFE94F4F),
+                          decorationColor: Color(0xFFE94F4F),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            }),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -71,12 +92,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
             const SizedBox(height: 7),
-            buildButton(
-              button: "LOGIN",
-              onTap: () {
-                Get.toNamed("/main");
-              },
-            ),
+            buildButton(button: "LOGIN", onTap: controller.login),
           ],
         ),
       ),

@@ -33,8 +33,10 @@ public class GoalController {
     }
 
     @PostMapping("/{id}/complete")
-    public ResponseEntity<Goal> complete(@PathVariable Long id, @RequestBody ProofRequest req) {
-        Goal goal = goalService.completeGoal(id, req.getProofImage());
+    public ResponseEntity<Goal> complete(@PathVariable Long id,
+                                         @RequestBody(required = false) ProofRequest req) {
+        String img = req != null ? req.getProofImage() : null;
+        Goal goal = goalService.completeGoal(id, img);
         return ResponseEntity.ok(goal);
     }
 
