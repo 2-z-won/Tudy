@@ -61,7 +61,8 @@ public class CategoryApiTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
         // 전체 목록
-        mockMvc.perform(get("/api/categories"))
+        mockMvc.perform(get("/api/categories")
+                .param("userId", user.getId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value(name));
     }
