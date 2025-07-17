@@ -55,7 +55,9 @@ public class GoalApiTests {
                 "\"startDate\":\"" + startDate + "\"," +
                 "\"endDate\":\"" + endDate + "\"," +
                 "\"isGroupGoal\":false," +
-                "\"groupId\":null" +
+                "\"groupId\":null," +
+                "\"isFriendGoal\":false," +
+                "\"friendName\":null" +
                 "}";
         mockMvc.perform(post("/api/goals")
                 .contentType(MediaType.APPLICATION_JSON)
