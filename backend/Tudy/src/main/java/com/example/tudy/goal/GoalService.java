@@ -20,7 +20,7 @@ public class GoalService {
     private final CategoryRepository categoryRepository;
     private static final int REWARD_COINS = 10;
 
-    public Goal createGoal(Long userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendNickname) {
+    public Goal createGoal(Long userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName) {
         User user = userRepository.findById(userId).orElseThrow();
         Category category = getOrCreateCategory(user, categoryName);
         Goal goal = new Goal();
@@ -31,6 +31,8 @@ public class GoalService {
         goal.setEndDate(endDate);
         goal.setIsGroupGoal(isGroupGoal);
         goal.setGroupId(groupId);
+        goal.setIsFriendGoal(isFriendGoal);
+        goal.setFriendName(friendName);
         Goal savedGoal = goalRepository.save(goal);
         // 그룹 목표라면 그룹원 모두에게 동일 목표 생성
         if (Boolean.TRUE.equals(isGroupGoal) && groupId != null) {
@@ -45,13 +47,15 @@ public class GoalService {
                     groupGoal.setEndDate(endDate);
                     groupGoal.setIsGroupGoal(true);
                     groupGoal.setGroupId(groupId);
+                    groupGoal.setIsFriendGoal(false);
+                    groupGoal.setFriendName(null);
                     goalRepository.save(groupGoal);
                 }
             }
         }
         // 친구와 함께하기 기능 (isFriendGoal이 true이고 friendNickname이 있을 때만)
-        if (Boolean.TRUE.equals(isFriendGoal) && friendNickname != null && !friendNickname.isBlank()) {
-            userRepository.findByUserId(friendNickname).ifPresent(friend -> {
+        if (Boolean.TRUE.equals(isFriendGoal) && friendName != null && !friendName.isBlank()) {
+            userRepository.findByUserId(friendName).ifPresent(friend -> {
                 Category friendCategory = getOrCreateCategory(friend, categoryName);
                 Goal friendGoal = new Goal();
                 friendGoal.setUser(friend);
@@ -61,13 +65,15 @@ public class GoalService {
                 friendGoal.setEndDate(endDate);
                 friendGoal.setIsGroupGoal(false);
                 friendGoal.setGroupId(null);
+                friendGoal.setIsFriendGoal(true);
+                friendGoal.setFriendName(user.getUserId());
                 goalRepository.save(friendGoal);
             });
         }
         return savedGoal;
     }
 
-    public Goal updateGoal(Long id, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId) {
+    public Goal updateGoal(Long id, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName) {
         Goal goal = goalRepository.findById(id).orElseThrow();
         Category category = getOrCreateCategory(goal.getUser(), categoryName);
         goal.setTitle(title);
@@ -76,8 +82,9 @@ public class GoalService {
         goal.setEndDate(endDate);
         goal.setIsGroupGoal(isGroupGoal);
         goal.setGroupId(groupId);
+        goal.setIsFriendGoal(isFriendGoal);
+        goal.setFriendName(friendName);
         Goal savedGoal = goalRepository.save(goal);
-
         return savedGoal;
     }
 
