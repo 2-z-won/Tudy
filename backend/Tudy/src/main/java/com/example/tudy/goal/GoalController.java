@@ -16,13 +16,13 @@ public class GoalController {
 
     @PostMapping
     public ResponseEntity<Goal> create(@RequestBody GoalRequest req) {
-        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendNickname());
+        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendName());
         return ResponseEntity.ok(goal);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Goal> update(@PathVariable Long id, @RequestBody GoalRequest req) {
-        Goal goal = goalService.updateGoal(id, req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId());
+        Goal goal = goalService.updateGoal(id, req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendName());
         return ResponseEntity.ok(goal);
     }
 
@@ -67,7 +67,7 @@ public class GoalController {
         private Boolean isGroupGoal;
         private Long groupId;
         private Boolean isFriendGoal;
-        private String friendNickname;
+        private String friendName;
     }
 
     @Data

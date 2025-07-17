@@ -39,8 +39,13 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Category>> list() {
-        return ResponseEntity.ok(categoryRepository.findAll());
+    public ResponseEntity<List<CategoryResponse>> list(@RequestParam Long userId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        List<Category> categories = categoryRepository.findByUser(user);
+        List<CategoryResponse> result = categories.stream()
+            .map(c -> new CategoryResponse(c.getId(), c.getName(), c.getColor()))
+            .toList();
+        return ResponseEntity.ok(result);
     }
 
     @Data
@@ -49,4 +54,18 @@ public class CategoryController {
         private String name;
         private Integer color;
     }
-} 
+
+    @Data
+    class CategoryResponse {
+        private Long id;
+        private String name;
+        private Integer color;
+
+        public CategoryResponse(Long id, String name, Integer color) {
+            this.id = id;
+            this.name = name;
+            this.color = color;
+        }
+    }
+}
+

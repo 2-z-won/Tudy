@@ -51,6 +51,17 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @PutMapping("/{id}/name")
+    public ResponseEntity<?> changeName(@PathVariable Long id,
+                                         @RequestBody ValueRequest request,
+                                         @RequestHeader(value = "Authorization", required = false) String auth) {
+        Long uid = tokenService.resolveUserId(auth);
+        if (uid == null) return ResponseEntity.status(401).build();
+        if (!uid.equals(id)) return ResponseEntity.status(403).build();
+        User user = userService.updateName(id, request.getValue());
+        return ResponseEntity.ok(user);
+    }
+
     @PutMapping("/{id}/major")
     public ResponseEntity<?> changeMajor(@PathVariable Long id,
                                          @RequestBody ValueRequest request,

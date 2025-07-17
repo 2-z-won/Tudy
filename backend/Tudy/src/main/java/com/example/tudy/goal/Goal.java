@@ -31,4 +31,6 @@ public class Goal {
     private String proofImage;
     private Boolean isGroupGoal = false;
     private Long groupId;
+    private Boolean isFriendGoal = false;
+    private String friendName;
 }

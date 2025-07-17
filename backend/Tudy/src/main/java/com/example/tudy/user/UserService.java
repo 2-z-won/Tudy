@@ -50,6 +50,12 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User updateName(Long userId, String name) {
+        User user = userRepository.findById(userId).orElseThrow();
+        user.setName(name);
+        return userRepository.save(user);
+    }
+
     public User updateMajor(Long userId, String major) {
         User user = userRepository.findById(userId).orElseThrow();
         user.setMajor(major);
