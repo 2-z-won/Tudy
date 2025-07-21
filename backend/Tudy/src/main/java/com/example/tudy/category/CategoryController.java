@@ -6,17 +6,24 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
+@Tag(name = "Category", description = "Category APIs")
 public class CategoryController {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
 
     @PostMapping
+    @Operation(summary = "Create category")
+    @ApiResponse(responseCode = "200", description = "Category created")
     public ResponseEntity<?> create(@RequestBody CategoryRequest req) {
         User user = userRepository.findById(req.getUserId()).orElseThrow();
         if (categoryRepository.existsByUserAndName(user, req.getName())) {
@@ -33,12 +40,16 @@ public class CategoryController {
     }
 
     @GetMapping("/exists")
+    @Operation(summary = "Check category name")
+    @ApiResponse(responseCode = "200", description = "Check completed")
     public ResponseEntity<Boolean> existsByName(@RequestParam Long userId, @RequestParam String name) {
         User user = userRepository.findById(userId).orElseThrow();
         return ResponseEntity.ok(categoryRepository.existsByUserAndName(user, name));
     }
 
     @GetMapping
+    @Operation(summary = "List categories")
+    @ApiResponse(responseCode = "200", description = "Categories listed")
     public ResponseEntity<List<CategoryResponse>> list(@RequestParam Long userId) {
         User user = userRepository.findById(userId).orElseThrow();
         List<Category> categories = categoryRepository.findByUser(user);
@@ -50,15 +61,21 @@ public class CategoryController {
 
     @Data
     private static class CategoryRequest {
+        @Schema(description = "User ID", example = "1")
         private Long userId;
+        @Schema(description = "Category name", example = "공부")
         private String name;
+        @Schema(description = "Color code", example = "1")
         private Integer color;
     }
 
     @Data
     class CategoryResponse {
+        @Schema(description = "Category ID", example = "1")
         private Long id;
+        @Schema(description = "Category name", example = "공부")
         private String name;
+        @Schema(description = "Color code", example = "1")
         private Integer color;
 
         public CategoryResponse(Long id, String name, Integer color) {
