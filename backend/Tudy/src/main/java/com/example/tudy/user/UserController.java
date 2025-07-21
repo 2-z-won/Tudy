@@ -128,14 +128,6 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/exists/userid")
-    @Operation(summary = "Check userId")
-    @ApiResponse(responseCode = "200", description = "Check completed")
-    public ResponseEntity<Boolean> existsByUserId(@RequestParam String userId) {
-        boolean exists = userService.userIdExists(userId);
-        return ResponseEntity.ok(exists);
-    }
-
     @Data
     private static class SignUpRequest {
         @Schema(description = "Email address", example = "user@pusan.ac.kr")
@@ -162,11 +154,6 @@ public class UserController {
         private String password;
     }
 
-    @Data
-    private static class NicknameRequest {
-        @Schema(description = "Nickname", example = "길동이")
-        private String nickname;
-    }
 
     @Data
     private static class PasswordRequest {

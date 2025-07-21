@@ -22,8 +22,8 @@ public class User {
     @Column(nullable = false)
     private String passwordHash;
 
-    @Column(nullable = false)
-    private String name; // 이름
+    @Column(nullable = false, unique = true)
+    private String name; // 이름 or 닉네임
 
     private String birth; // yyyy.mm.dd
 
