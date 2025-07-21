@@ -23,7 +23,7 @@ public class GoalController {
     @Operation(summary = "Create goal")
     @ApiResponse(responseCode = "200", description = "Goal created")
     public ResponseEntity<Goal> create(@RequestBody GoalRequest req) {
-        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendName());
+        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendName(), req.getProofType());
         return ResponseEntity.ok(goal);
     }
 
@@ -31,7 +31,7 @@ public class GoalController {
     @Operation(summary = "Update goal")
     @ApiResponse(responseCode = "200", description = "Goal updated")
     public ResponseEntity<Goal> update(@PathVariable Long id, @RequestBody GoalRequest req) {
-        Goal goal = goalService.updateGoal(id, req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendName());
+        Goal goal = goalService.updateGoal(id, req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendName(), req.getProofType());
         return ResponseEntity.ok(goal);
     }
 
@@ -41,24 +41,6 @@ public class GoalController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         goalService.deleteGoal(id);
         return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/{id}/complete")
-    @Operation(summary = "Complete goal")
-    @ApiResponse(responseCode = "200", description = "Goal completed")
-    public ResponseEntity<Goal> complete(@PathVariable Long id,
-                                         @RequestBody(required = false) ProofRequest req) {
-        String img = req != null ? req.getProofImage() : null;
-        Goal goal = goalService.completeGoal(id, img);
-        return ResponseEntity.ok(goal);
-    }
-
-    @PostMapping("/{id}/cancel")
-    @Operation(summary = "Cancel completion")
-    @ApiResponse(responseCode = "200", description = "Completion canceled")
-    public ResponseEntity<Goal> cancel(@PathVariable Long id) {
-        Goal goal = goalService.cancelCompletion(id);
-        return ResponseEntity.ok(goal);
     }
 
     @GetMapping
@@ -74,6 +56,15 @@ public class GoalController {
     public ResponseEntity<List<Goal>> listByDate(@RequestParam Long userId, @RequestParam("date") String dateStr, @RequestParam(required = false) String categoryName) {
         LocalDate date = LocalDate.parse(dateStr);
         return ResponseEntity.ok(goalService.listGoalsByDate(userId, date, categoryName));
+    }
+
+    // 이미지 인증 목표의 proofImage 업로드용 엔드포인트 예시 (실제 파일 업로드는 별도 구현 필요)
+    @PostMapping("/{id}/proof-image")
+    @Operation(summary = "Upload proof image for image proof goal")
+    @ApiResponse(responseCode = "200", description = "Proof image uploaded and goal completed")
+    public ResponseEntity<Goal> uploadProofImage(@PathVariable Long id, @RequestBody ProofRequest req) {
+        Goal goal = goalService.completeImageProofGoal(id, req.getProofImage());
+        return ResponseEntity.ok(goal);
     }
 
     @Data
@@ -96,6 +87,8 @@ public class GoalController {
         private Boolean isFriendGoal;
         @Schema(description = "Friend name", example = "친구")
         private String friendName;
+        @Schema(description = "Proof type", example = "TIME")
+        private Goal.ProofType proofType;
     }
 
     @Data

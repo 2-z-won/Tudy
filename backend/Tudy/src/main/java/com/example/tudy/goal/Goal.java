@@ -33,4 +33,10 @@ public class Goal {
     private Long groupId;
     private Boolean isFriendGoal = false;
     private String friendName;
+    @Enumerated(EnumType.STRING)
+    private ProofType proofType;
+
+    public enum ProofType {
+        TIME, IMAGE
+    }
 }

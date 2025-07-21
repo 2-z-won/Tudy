@@ -60,6 +60,7 @@ CREATE TABLE goals (
     proof_image VARCHAR(255),
     is_friend_goal BOOLEAN DEFAULT FALSE,
     friend_name VARCHAR(255),
+    proof_type VARCHAR(16),
     CONSTRAINT fk_goal_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_goal_category FOREIGN KEY (category_id) REFERENCES categories(id),
     CONSTRAINT fk_goal_group FOREIGN KEY (group_id) REFERENCES `groups`(id)
