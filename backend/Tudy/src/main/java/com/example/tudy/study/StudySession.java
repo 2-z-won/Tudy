@@ -25,7 +25,6 @@ public class StudySession {
     @JoinColumn(name = "goal_id")
     private Goal goal;
 
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private LocalDateTime createdAt;
     private Integer duration; // seconds
 }

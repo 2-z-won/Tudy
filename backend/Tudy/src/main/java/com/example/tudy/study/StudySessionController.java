@@ -1,13 +1,13 @@
 package com.example.tudy.study;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 import java.util.Map;
@@ -19,19 +19,22 @@ import java.util.Map;
 public class StudySessionController {
     private final StudySessionService service;
 
-    @PostMapping("/start")
-    @Operation(summary = "Start study session")
-    @ApiResponse(responseCode = "200", description = "Session started")
-    public ResponseEntity<StudySession> start(@RequestBody StartRequest req) {
-        StudySession session = service.startSession(req.getUserId(), req.getGoalId());
+    @PostMapping("/log")
+    @Operation(summary = "Log study time for a goal")
+    @ApiResponse(responseCode = "200", description = "Session time logged successfully")
+    public ResponseEntity<StudySession> log(@RequestBody LogRequest req) {
+        StudySession session = service.logSession(req.getUserId(), req.getGoalId(), req.getHours(), req.getMinutes());
         return ResponseEntity.ok(session);
     }
 
-    @PostMapping("/{id}/end")
-    @Operation(summary = "End study session")
-    @ApiResponse(responseCode = "200", description = "Session ended")
-    public ResponseEntity<StudySession> end(@PathVariable Long id) {
-        return ResponseEntity.ok(service.endSession(id));
+    @GetMapping("/goal/{goalId}/duration")
+    @Operation(summary = "Get total accumulated study duration for a goal")
+    @ApiResponse(responseCode = "200", description = "Total duration in hours and minutes returned")
+    public ResponseEntity<Map<String, Integer>> getDuration(@PathVariable Long goalId) {
+        Integer totalSeconds = service.getAccumulatedDuration(goalId);
+        int hours = totalSeconds / 3600;
+        int minutes = (totalSeconds % 3600) / 60;
+        return ResponseEntity.ok(Map.of("hours", hours, "minutes", minutes));
     }
 
     @GetMapping("/ranking")
@@ -41,18 +44,15 @@ public class StudySessionController {
         return ResponseEntity.ok(service.rankingByMajor());
     }
 
-    @GetMapping("/goal/{goalId}")
-    @Operation(summary = "Sessions for goal")
-    @ApiResponse(responseCode = "200", description = "Sessions returned")
-    public ResponseEntity<List<StudySession>> sessions(@PathVariable Long goalId) {
-        return ResponseEntity.ok(service.sessionsForGoal(goalId));
-    }
-
     @Data
-    private static class StartRequest {
+    private static class LogRequest {
         @Schema(description = "User ID", example = "1")
         private Long userId;
         @Schema(description = "Goal ID", example = "10")
         private Long goalId;
+        @Schema(description = "Hours of study", example = "1")
+        private Integer hours;
+        @Schema(description = "Minutes of study", example = "30")
+        private Integer minutes;
     }
 }

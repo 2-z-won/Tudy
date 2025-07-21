@@ -7,7 +7,6 @@ import com.example.tudy.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -20,30 +19,25 @@ public class StudySessionService {
     private final UserRepository userRepository;
     private final GoalRepository goalRepository;
 
-    public StudySession startSession(Long userId, Long goalId) {
+    public StudySession logSession(Long userId, Long goalId, Integer hours, Integer minutes) {
         User user = userRepository.findById(userId).orElseThrow();
         Goal goal = goalRepository.findById(goalId).orElseThrow();
         StudySession session = new StudySession();
         session.setUser(user);
         session.setGoal(goal);
-        session.setStartTime(LocalDateTime.now());
+        
+        int durationInSeconds = (hours * 3600) + (minutes * 60);
+        session.setDuration(durationInSeconds);
+        session.setCreatedAt(LocalDateTime.now());
         return studySessionRepository.save(session);
     }
 
-    public StudySession endSession(Long sessionId) {
-        StudySession session = studySessionRepository.findById(sessionId).orElseThrow();
-        session.setEndTime(LocalDateTime.now());
-        session.setDuration((int) Duration.between(session.getStartTime(), session.getEndTime()).getSeconds());
-        return studySessionRepository.save(session);
+    public Integer getAccumulatedDuration(Long goalId) {
+        return studySessionRepository.findTotalDurationByGoalId(goalId);
     }
 
     public Map<String, Long> rankingByMajor() {
         return studySessionRepository.totalDurationByMajor().stream()
                 .collect(Collectors.toMap(r -> (String) r[0], r -> (Long) r[1]));
-    }
-
-    public List<StudySession> sessionsForGoal(Long goalId) {
-        Goal goal = goalRepository.findById(goalId).orElseThrow();
-        return studySessionRepository.findByGoal(goal);
     }
 }
