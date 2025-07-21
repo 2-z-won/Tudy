@@ -23,7 +23,7 @@ public class GoalService {
     private final StudySessionRepository studySessionRepository;
     private static final int REWARD_COINS = 10;
 
-    public Goal createGoal(Long userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName) {
+    public Goal createGoal(Long userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType) {
         User user = userRepository.findById(userId).orElseThrow();
         Category category = getOrCreateCategory(user, categoryName);
         Goal goal = new Goal();
@@ -36,6 +36,11 @@ public class GoalService {
         goal.setGroupId(groupId);
         goal.setIsFriendGoal(isFriendGoal);
         goal.setFriendName(friendName);
+        goal.setProofType(proofType);
+        // 시간 인증 목표는 누적 2시간 이상이면 자동 완료
+        if (proofType == Goal.ProofType.TIME && getTotalDuration(goal) >= 7200) {
+            goal.setCompleted(true);
+        }
         Goal savedGoal = goalRepository.save(goal);
         // 그룹 목표라면 그룹원 모두에게 동일 목표 생성
         if (Boolean.TRUE.equals(isGroupGoal) && groupId != null) {
@@ -52,11 +57,15 @@ public class GoalService {
                     groupGoal.setGroupId(groupId);
                     groupGoal.setIsFriendGoal(false);
                     groupGoal.setFriendName(null);
+                    groupGoal.setProofType(proofType);
+                    if (proofType == Goal.ProofType.TIME && getTotalDuration(groupGoal) >= 7200) {
+                        groupGoal.setCompleted(true);
+                    }
                     goalRepository.save(groupGoal);
                 }
             }
         }
-        // 친구와 함께하기 기능 (isFriendGoal이 true이고 friendNickname이 있을 때만)
+        // 친구와 함께하기 기능 (isFriendGoal이 true이고 friendName이 있을 때만)
         if (Boolean.TRUE.equals(isFriendGoal) && friendName != null && !friendName.isBlank()) {
             userRepository.findByUserId(friendName).ifPresent(friend -> {
                 Category friendCategory = getOrCreateCategory(friend, categoryName);
@@ -70,13 +79,17 @@ public class GoalService {
                 friendGoal.setGroupId(null);
                 friendGoal.setIsFriendGoal(true);
                 friendGoal.setFriendName(user.getUserId());
+                friendGoal.setProofType(proofType);
+                if (proofType == Goal.ProofType.TIME && getTotalDuration(friendGoal) >= 7200) {
+                    friendGoal.setCompleted(true);
+                }
                 goalRepository.save(friendGoal);
             });
         }
         return savedGoal;
     }
 
-    public Goal updateGoal(Long id, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName) {
+    public Goal updateGoal(Long id, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType) {
         Goal goal = goalRepository.findById(id).orElseThrow();
         Category category = getOrCreateCategory(goal.getUser(), categoryName);
         goal.setTitle(title);
@@ -87,25 +100,31 @@ public class GoalService {
         goal.setGroupId(groupId);
         goal.setIsFriendGoal(isFriendGoal);
         goal.setFriendName(friendName);
+        goal.setProofType(proofType);
+        if (proofType == Goal.ProofType.TIME && getTotalDuration(goal) >= 7200) {
+            goal.setCompleted(true);
+        }
         Goal savedGoal = goalRepository.save(goal);
         return savedGoal;
     }
 
-    public void deleteGoal(Long id) {
-        goalRepository.deleteById(id);
+    public Goal deleteGoal(Long id) {
+        Goal goal = goalRepository.findById(id).orElseThrow();
+        goalRepository.delete(goal);
+        return goal;
     }
 
-    public Goal completeGoal(Long id, String proofImage) {
+    // 이미지 인증 목표의 proofImage 업로드 및 인증 처리
+    public Goal completeImageProofGoal(Long id, String proofImage) {
         Goal goal = goalRepository.findById(id).orElseThrow();
-        int total = getTotalDuration(goal);
-        boolean proofOk = proofImage != null && !proofImage.isBlank();
-        if (!proofOk && total < 7200) {
-            throw new IllegalStateException("인증 요건을 충족하지 않았습니다.");
+        if (goal.getProofType() != Goal.ProofType.IMAGE) {
+            throw new IllegalStateException("이미지 인증 목표가 아닙니다.");
         }
+        if (proofImage == null || proofImage.isBlank()) {
+            throw new IllegalArgumentException("이미지 경로가 필요합니다.");
+        }
+        goal.setProofImage(proofImage);
         goal.setCompleted(true);
-        if (proofOk) {
-            goal.setProofImage(proofImage);
-        }
         goalRepository.save(goal);
         userRepository.findById(goal.getUser().getId()).ifPresent(u -> {
             u.setCoinBalance(u.getCoinBalance() + REWARD_COINS);
@@ -119,13 +138,6 @@ public class GoalService {
                 .filter(s -> s.getDuration() != null)
                 .mapToInt(StudySession::getDuration)
                 .sum();
-    }
-
-    public Goal cancelCompletion(Long id) {
-        Goal goal = goalRepository.findById(id).orElseThrow();
-        goal.setCompleted(false);
-        goal.setProofImage(null);
-        return goalRepository.save(goal);
     }
 
     public List<Goal> listGoals(Long userId, String categoryName) {

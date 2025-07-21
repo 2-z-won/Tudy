@@ -19,6 +19,9 @@ public class UserService {
         if (userRepository.findByUserId(userId).isPresent()) {
             throw new IllegalArgumentException("UserId already exists");
         }
+        if (userRepository.findByName(name).isPresent()) {
+            throw new IllegalArgumentException("Name already exists");
+        }
         User user = new User();
         user.setEmail(email);
         user.setUserId(userId);
@@ -38,10 +41,6 @@ public class UserService {
 
     public boolean emailExists(String email) {
         return userRepository.findByEmail(email).isPresent();
-    }
-
-    public boolean userIdExists(String userId) {
-        return userRepository.findByUserId(userId).isPresent();
     }
 
     public User updateEmail(Long userId, String email) {
