@@ -53,7 +53,7 @@ public class GoalController {
     @GetMapping("/by-date")
     @Operation(summary = "List goals by date")
     @ApiResponse(responseCode = "200", description = "Goals listed")
-    public ResponseEntity<List<Goal>> listByDate(@RequestParam Long userId, @RequestParam("date") String dateStr, @RequestParam(required = false) String categoryName) {
+    public ResponseEntity<List<Goal>> listByDate(@RequestParam String userId, @RequestParam("date") String dateStr, @RequestParam(required = false) String categoryName) {
         LocalDate date = LocalDate.parse(dateStr);
         return ResponseEntity.ok(goalService.listGoalsByDate(userId, date, categoryName));
     }
