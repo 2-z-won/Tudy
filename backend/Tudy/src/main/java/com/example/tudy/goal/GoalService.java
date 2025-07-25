@@ -151,8 +151,8 @@ public class GoalService {
         }
     }
 
-    public List<Goal> listGoalsByDate(Long userId, java.time.LocalDate date, String categoryName) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public List<Goal> listGoalsByDate(String userId, java.time.LocalDate date, String categoryName) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         if (categoryName == null) {
             return goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date, date);
         } else {
