@@ -25,7 +25,7 @@ public class CategoryController {
     @Operation(summary = "Create category")
     @ApiResponse(responseCode = "200", description = "Category created")
     public ResponseEntity<?> create(@RequestBody CategoryRequest req) {
-        User user = userRepository.findById(req.getUserId()).orElseThrow();
+        User user = userRepository.findByUserId(req.getUserId()).orElseThrow();
         if (categoryRepository.existsByUserAndName(user, req.getName())) {
             return ResponseEntity.badRequest().body("이미 존재하는 카테고리명입니다.");
         }
@@ -62,7 +62,7 @@ public class CategoryController {
     @Data
     private static class CategoryRequest {
         @Schema(description = "User ID", example = "1")
-        private Long userId;
+        private String userId;
         @Schema(description = "Category name", example = "공부")
         private String name;
         @Schema(description = "Color code", example = "1")
