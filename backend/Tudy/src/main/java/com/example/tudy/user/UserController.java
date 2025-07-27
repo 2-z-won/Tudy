@@ -39,17 +39,18 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.status(401).body(Map.of("error", "invalid")));
     }
 
-    @PutMapping("/{id}/email")
+    @PutMapping("/{userId}/email")
     @Operation(summary = "Change email")
     @ApiResponse(responseCode = "200", description = "Email updated")
-    public ResponseEntity<?> changeEmail(@PathVariable Long id,
+    public ResponseEntity<?> changeEmail(@PathVariable String userId,
                                          @RequestBody EmailRequest request,
                                          @RequestHeader(value = "Authorization", required = false) String auth) {
         Long uid = tokenService.resolveUserId(auth);
         if (uid == null) {
             return ResponseEntity.status(401).build();
         }
-        if (!uid.equals(id)) {
+        User currentUser = userService.findByUserId(userId);
+        if (!uid.equals(currentUser.getId())) {
             return ResponseEntity.status(403).build();
         }
         if (request.getEmail() == null || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
@@ -58,72 +59,75 @@ public class UserController {
         if (userService.emailExists(request.getEmail())) {
             return ResponseEntity.status(409).body(Map.of("error", "Email already exists"));
         }
-        User user = userService.updateEmail(id, request.getEmail());
+        User user = userService.updateEmail(userId, request.getEmail());
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/{id}/name")
+    @PutMapping("/{userId}/name")
     @Operation(summary = "Change name")
     @ApiResponse(responseCode = "200", description = "Name updated")
-    public ResponseEntity<?> changeName(@PathVariable Long id,
+    public ResponseEntity<?> changeName(@PathVariable String userId,
                                          @RequestBody ValueRequest request,
                                          @RequestHeader(value = "Authorization", required = false) String auth) {
         Long uid = tokenService.resolveUserId(auth);
         if (uid == null) return ResponseEntity.status(401).build();
-        if (!uid.equals(id)) return ResponseEntity.status(403).build();
-        User user = userService.updateName(id, request.getValue());
+        User currentUser = userService.findByUserId(userId);
+        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        User user = userService.updateName(userId, request.getValue());
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/{id}/major")
+    @PutMapping("/{userId}/major")
     @Operation(summary = "Change major")
     @ApiResponse(responseCode = "200", description = "Major updated")
-    public ResponseEntity<?> changeMajor(@PathVariable Long id,
+    public ResponseEntity<?> changeMajor(@PathVariable String userId,
                                          @RequestBody ValueRequest request,
                                          @RequestHeader(value = "Authorization", required = false) String auth) {
         Long uid = tokenService.resolveUserId(auth);
         if (uid == null) return ResponseEntity.status(401).build();
-        if (!uid.equals(id)) return ResponseEntity.status(403).build();
-        User user = userService.updateMajor(id, request.getValue());
+        User currentUser = userService.findByUserId(userId);
+        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        User user = userService.updateMajor(userId, request.getValue());
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/{id}/college")
+    @PutMapping("/{userId}/college")
     @Operation(summary = "Change college")
     @ApiResponse(responseCode = "200", description = "College updated")
-    public ResponseEntity<?> changeCollege(@PathVariable Long id,
+    public ResponseEntity<?> changeCollege(@PathVariable String userId,
                                            @RequestBody ValueRequest request,
                                            @RequestHeader(value = "Authorization", required = false) String auth) {
         Long uid = tokenService.resolveUserId(auth);
         if (uid == null) return ResponseEntity.status(401).build();
-        if (!uid.equals(id)) return ResponseEntity.status(403).build();
-        User user = userService.updateCollege(id, request.getValue());
+        User currentUser = userService.findByUserId(userId);
+        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        User user = userService.updateCollege(userId, request.getValue());
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/{id}/password")
+    @PutMapping("/{userId}/password")
     @Operation(summary = "Change password")
     @ApiResponse(responseCode = "200", description = "Password updated")
-    public ResponseEntity<Void> changePassword(@PathVariable Long id, @RequestBody PasswordRequest request) {
-        userService.updatePassword(id, request.getCurrentPassword(), request.getNewPassword());
+    public ResponseEntity<Void> changePassword(@PathVariable String userId, @RequestBody PasswordRequest request) {
+        userService.updatePassword(userId, request.getCurrentPassword(), request.getNewPassword());
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{id}/profile-image")
+    @PutMapping("/{userId}/profile-image")
     @Operation(summary = "Change profile image")
     @ApiResponse(responseCode = "200", description = "Profile image updated")
-    public ResponseEntity<Void> changeProfileImage(@PathVariable Long id, @RequestBody ProfileImageRequest request) {
-        userService.updateProfileImage(id, request.getImagePath());
+    public ResponseEntity<Void> changeProfileImage(@PathVariable String userId, @RequestBody ProfileImageRequest request) {
+        userService.updateProfileImage(userId, request.getImagePath());
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{userId}")
     @Operation(summary = "Get user info", description = "Retrieve user with friend count")
     @ApiResponse(responseCode = "200", description = "Found user")
-    public ResponseEntity<UserWithFriendCountResponse> getUserWithFriendCount(@PathVariable Long id) {
-        User user = userService.findById(id);
+    public ResponseEntity<UserWithFriendCountResponse> getUserWithFriendCount(@PathVariable String userId) {
+        User user = userService.findByUserId(userId);
         // 친구 수 계산 (FriendshipService 사용)
-        long friendCount = friendshipService.getFriendCount(id);
+        long friendCount = friendshipService.getFriendCount(user.getId());
         UserWithFriendCountResponse response = new UserWithFriendCountResponse(user, friendCount);
         return ResponseEntity.ok(response);
     }

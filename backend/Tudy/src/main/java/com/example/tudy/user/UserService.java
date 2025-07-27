@@ -43,32 +43,32 @@ public class UserService {
         return userRepository.findByEmail(email).isPresent();
     }
 
-    public User updateEmail(Long userId, String email) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public User updateEmail(String userId, String email) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         user.setEmail(email);
         return userRepository.save(user);
     }
 
-    public User updateName(Long userId, String name) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public User updateName(String userId, String name) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         user.setName(name);
         return userRepository.save(user);
     }
 
-    public User updateMajor(Long userId, String major) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public User updateMajor(String userId, String major) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         user.setMajor(major);
         return userRepository.save(user);
     }
 
-    public User updateCollege(Long userId, String college) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public User updateCollege(String userId, String college) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         user.setCollege(college);
         return userRepository.save(user);
     }
 
-    public void updatePassword(Long userId, String currentPassword, String newPassword) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public void updatePassword(String userId, String currentPassword, String newPassword) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid password");
         }
@@ -76,13 +76,13 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public void updateProfileImage(Long userId, String imagePath) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public void updateProfileImage(String userId, String imagePath) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         user.setProfileImage(imagePath);
         userRepository.save(user);
     }
 
-        public void addCoins(Long userId, int amount) {
+    public void addCoins(Long userId, int amount) {
         User user = userRepository.findById(userId).orElseThrow();
         user.setCoinBalance(user.getCoinBalance() + amount);
         userRepository.save(user);
@@ -90,5 +90,9 @@ public class UserService {
 
     public User findById(Long id) {
         return userRepository.findById(id).orElseThrow();
+    }
+
+    public User findByUserId(String userId) {
+        return userRepository.findByUserId(userId).orElseThrow();
     }
 }
