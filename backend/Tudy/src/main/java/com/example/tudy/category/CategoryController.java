@@ -35,6 +35,7 @@ public class CategoryController {
         Category category = new Category();
         category.setName(req.getName());
         category.setColor(req.getColor());
+        category.setCategoryType(req.getCategoryType());
         category.setUser(user);
         return ResponseEntity.ok(categoryRepository.save(category));
     }
@@ -42,19 +43,19 @@ public class CategoryController {
     @GetMapping("/exists")
     @Operation(summary = "Check category name")
     @ApiResponse(responseCode = "200", description = "Check completed")
-    public ResponseEntity<Boolean> existsByName(@RequestParam Long userId, @RequestParam String name) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public ResponseEntity<Boolean> existsByName(@RequestParam String userId, @RequestParam String name) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         return ResponseEntity.ok(categoryRepository.existsByUserAndName(user, name));
     }
 
     @GetMapping
     @Operation(summary = "List categories")
     @ApiResponse(responseCode = "200", description = "Categories listed")
-    public ResponseEntity<List<CategoryResponse>> list(@RequestParam Long userId) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public ResponseEntity<List<CategoryResponse>> list(@RequestParam String userId) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         List<Category> categories = categoryRepository.findByUser(user);
         List<CategoryResponse> result = categories.stream()
-            .map(c -> new CategoryResponse(c.getId(), c.getName(), c.getColor()))
+            .map(c -> new CategoryResponse(c.getId(), c.getName(), c.getColor(), c.getCategoryType()))
             .toList();
         return ResponseEntity.ok(result);
     }
@@ -67,6 +68,8 @@ public class CategoryController {
         private String name;
         @Schema(description = "Color code", example = "1")
         private Integer color;
+        @Schema(description = "Category type", example = "STUDY")
+        private Category.CategoryType categoryType;
     }
 
     @Data
@@ -77,11 +80,14 @@ public class CategoryController {
         private String name;
         @Schema(description = "Color code", example = "1")
         private Integer color;
+        @Schema(description = "Category type", example = "STUDY")
+        private Category.CategoryType categoryType;
 
-        public CategoryResponse(Long id, String name, Integer color) {
+        public CategoryResponse(Long id, String name, Integer color, Category.CategoryType categoryType) {
             this.id = id;
             this.name = name;
             this.color = color;
+            this.categoryType = categoryType;
         }
     }
 }
