@@ -23,7 +23,17 @@ public class Category {
     @Column(nullable = false)
     private Integer color; // 1~10
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private CategoryType categoryType = CategoryType.ETC;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    public enum CategoryType {
+        STUDY,
+        EXERCISE,
+        ETC;
+    }
 }

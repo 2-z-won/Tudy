@@ -58,6 +58,28 @@ public class GoalController {
         return ResponseEntity.ok(goalService.listGoalsByDate(userId, date, categoryName));
     }
 
+    @GetMapping("/group")
+    @Operation(summary = "List group goals")
+    @ApiResponse(responseCode = "200", description = "Group goals listed")
+    public ResponseEntity<List<SimpleGoalResponse>> listGroupGoals(@RequestParam String userId) {
+        List<Goal> goals = goalService.listGroupGoals(userId);
+        List<SimpleGoalResponse> result = goals.stream()
+            .map(goal -> new SimpleGoalResponse(goal.getTitle(), goal.isCompleted()))
+            .toList();
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/friend")
+    @Operation(summary = "List friend goals")
+    @ApiResponse(responseCode = "200", description = "Friend goals listed")
+    public ResponseEntity<List<SimpleGoalResponse>> listFriendGoals(@RequestParam String userId) {
+        List<Goal> goals = goalService.listFriendGoals(userId);
+        List<SimpleGoalResponse> result = goals.stream()
+            .map(goal -> new SimpleGoalResponse(goal.getTitle(), goal.isCompleted()))
+            .toList();
+        return ResponseEntity.ok(result);
+    }
+
     // 이미지 인증 목표의 proofImage 업로드용 엔드포인트 예시 (실제 파일 업로드는 별도 구현 필요)
     @PostMapping("/{id}/proof-image")
     @Operation(summary = "Upload proof image for image proof goal")
@@ -95,5 +117,18 @@ public class GoalController {
     private static class ProofRequest {
         @Schema(description = "Proof image path", example = "/proof.png")
         private String proofImage;
+    }
+
+    @Data
+    class SimpleGoalResponse {
+        @Schema(description = "Goal title", example = "목표명")
+        private String title;
+        @Schema(description = "Completion status", example = "false")
+        private boolean completed;
+
+        public SimpleGoalResponse(String title, boolean completed) {
+            this.title = title;
+            this.completed = completed;
+        }
     }
 }
