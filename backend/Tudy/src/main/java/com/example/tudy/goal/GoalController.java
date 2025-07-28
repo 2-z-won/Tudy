@@ -58,6 +58,13 @@ public class GoalController {
         return ResponseEntity.ok(goalService.listGoalsByDate(userId, date, categoryName));
     }
 
+    @GetMapping("/group")
+    @Operation(summary = "List group goals")
+    @ApiResponse(responseCode = "200", description = "Group goals listed")
+    public ResponseEntity<List<Goal>> listGroupGoals(@RequestParam String userId) {
+        return ResponseEntity.ok(goalService.listGroupGoals(userId));
+    }
+
     // 이미지 인증 목표의 proofImage 업로드용 엔드포인트 예시 (실제 파일 업로드는 별도 구현 필요)
     @PostMapping("/{id}/proof-image")
     @Operation(summary = "Upload proof image for image proof goal")

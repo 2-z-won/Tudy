@@ -162,6 +162,11 @@ public class GoalService {
         }
     }
 
+    public List<Goal> listGroupGoals(String userId) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
+        return goalRepository.findByUserAndIsGroupGoalTrue(user);
+    }
+
     private Category getOrCreateCategory(User user, String categoryName) {
         Category category = categoryRepository.findByUserAndName(user, categoryName);
         if (category == null) {
