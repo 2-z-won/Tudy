@@ -17,4 +17,7 @@ public interface GoalRepository extends JpaRepository<Goal, Long> {
     
     // 특정 그룹의 목표 조회
     List<Goal> findByGroupId(Long groupId);
+    
+    // 사용자의 친구 목표 조회
+    List<Goal> findByUserAndIsFriendGoalTrue(User user);
 }
