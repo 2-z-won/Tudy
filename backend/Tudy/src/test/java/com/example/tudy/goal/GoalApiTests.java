@@ -130,8 +130,6 @@ public class GoalApiTests {
         StudySession session = new StudySession();
         session.setUser(user);
         session.setGoal(goal);
-        session.setStartTime(java.time.LocalDateTime.now());
-        session.setEndTime(java.time.LocalDateTime.now());
         session.setDuration(7200);
         studySessionRepository.save(session);
 
