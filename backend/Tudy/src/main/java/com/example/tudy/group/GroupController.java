@@ -21,43 +21,69 @@ public class GroupController {
     @ApiResponse(responseCode = "200", description = "Group created")
     public ResponseEntity<?> create(@RequestBody GroupRequest req) {
         try {
-            Group group = groupService.createGroup(req.getName(), req.getPassword());
+            Group group = groupService.createGroup(req.getName(), req.getPassword(), req.getOwnerId());
             return ResponseEntity.ok(group);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    @GetMapping
-    @Operation(summary = "List groups")
-    @ApiResponse(responseCode = "200", description = "Groups listed")
-    public ResponseEntity<?> list(@RequestParam(name = "public") Boolean isPublic,
-                                  @RequestParam(required = false) String password,
-                                  @RequestParam(defaultValue = "0") int page,
-                                  @RequestParam(defaultValue = "10") int size) {
-        if (isPublic == null) {
-            return ResponseEntity.badRequest().body("public parameter is required");
-        }
-        return ResponseEntity.ok(groupService.searchGroups(isPublic, password, page, size));
+    @GetMapping("/search")
+    @Operation(summary = "Search group")
+    @ApiResponse(responseCode = "200", description = "Group found")
+    public ResponseEntity<Boolean> searchGroup(@RequestParam String name) {
+        boolean exists = groupService.searchGroup(name);
+        return ResponseEntity.ok(exists);
     }
 
     @PostMapping("/join")
     @Operation(summary = "Join group")
-    @ApiResponse(responseCode = "200", description = "Joined")
+    @ApiResponse(responseCode = "200", description = "Join request submitted")
     public ResponseEntity<String> join(@RequestBody JoinRequest req) {
-        boolean success = groupService.joinGroup(req.getGroupId(), req.getUserId(), req.getPassword());
-        if (success) {
-            return ResponseEntity.ok("참여 성공");
-        } else {
-            return ResponseEntity.badRequest().body("비밀번호가 일치하지 않습니다.");
+        try {
+            String result = groupService.joinGroup(req.getGroupId(), req.getUserId(), req.getPassword());
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    @GetMapping("/exists")
-    @Operation(summary = "Check group name")
-    @ApiResponse(responseCode = "200", description = "Check completed")
-    public ResponseEntity<Boolean> existsByName(@RequestParam String name) {
-        return ResponseEntity.ok(groupService.existsByName(name));
+    @PostMapping("/{requestId}/approve")
+    @Operation(summary = "Approve join request")
+    @ApiResponse(responseCode = "200", description = "Join request approved")
+    public ResponseEntity<String> approveRequest(@PathVariable Long requestId, 
+                                               @RequestParam String ownerId) {
+        try {
+            String result = groupService.approveJoinRequest(requestId, ownerId);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{requestId}/reject")
+    @Operation(summary = "Reject join request")
+    @ApiResponse(responseCode = "200", description = "Join request rejected")
+    public ResponseEntity<String> rejectRequest(@PathVariable Long requestId, 
+                                              @RequestParam String ownerId) {
+        try {
+            String result = groupService.rejectJoinRequest(requestId, ownerId);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{groupId}/pending-requests")
+    @Operation(summary = "Get pending join requests")
+    @ApiResponse(responseCode = "200", description = "Pending requests listed")
+    public ResponseEntity<?> getPendingRequests(@PathVariable Long groupId, 
+                                              @RequestParam String ownerId) {
+        try {
+            return ResponseEntity.ok(groupService.getPendingRequests(groupId, ownerId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @Data
@@ -66,14 +92,16 @@ public class GroupController {
         private String name;
         @Schema(description = "Password", example = "pass")
         private String password;
+        @Schema(description = "Owner ID", example = "test")
+        private String ownerId;
     }
 
     @Data
     private static class JoinRequest {
         @Schema(description = "Group ID", example = "1")
         private Long groupId;
-        @Schema(description = "User ID", example = "2")
-        private Long userId;
+        @Schema(description = "User ID", example = "user1")
+        private String userId;
         @Schema(description = "Group password", example = "pass")
         private String password;
     }
