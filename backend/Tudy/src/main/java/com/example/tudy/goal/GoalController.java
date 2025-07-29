@@ -75,7 +75,7 @@ public class GoalController {
     public ResponseEntity<List<SimpleGoalResponse>> listFriendGoals(@RequestParam String userId) {
         List<Goal> goals = goalService.listFriendGoals(userId);
         List<SimpleGoalResponse> result = goals.stream()
-            .map(goal -> new SimpleGoalResponse(goal.getTitle(), goal.isCompleted()))
+            .map(goal -> new SimpleGoalResponse(goal.getTitle(), goal.isCompleted(), goal.getFriendName()))
             .toList();
         return ResponseEntity.ok(result);
     }
@@ -125,10 +125,18 @@ public class GoalController {
         private String title;
         @Schema(description = "Completion status", example = "false")
         private boolean completed;
+        @Schema(description = "Friend name", example = "김철수")
+        private String friendName;
 
         public SimpleGoalResponse(String title, boolean completed) {
             this.title = title;
             this.completed = completed;
+        }
+
+        public SimpleGoalResponse(String title, boolean completed, String friendName) {
+            this.title = title;
+            this.completed = completed;
+            this.friendName = friendName;
         }
     }
 }

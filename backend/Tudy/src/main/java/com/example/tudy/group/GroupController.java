@@ -9,6 +9,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/groups")
 @RequiredArgsConstructor
@@ -51,10 +54,11 @@ public class GroupController {
     @PostMapping("/{requestId}/approve")
     @Operation(summary = "Approve join request")
     @ApiResponse(responseCode = "200", description = "Join request approved")
-    public ResponseEntity<String> approveRequest(@PathVariable Long requestId, 
+    public ResponseEntity<String> approveRequest(@PathVariable Long requestId,
+                                               @RequestParam Long groupId,
                                                @RequestParam String ownerId) {
         try {
-            String result = groupService.approveJoinRequest(requestId, ownerId);
+            String result = groupService.approveJoinRequest(requestId, groupId, ownerId);
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -64,10 +68,11 @@ public class GroupController {
     @PostMapping("/{requestId}/reject")
     @Operation(summary = "Reject join request")
     @ApiResponse(responseCode = "200", description = "Join request rejected")
-    public ResponseEntity<String> rejectRequest(@PathVariable Long requestId, 
+    public ResponseEntity<String> rejectRequest(@PathVariable Long requestId,
+                                              @RequestParam Long groupId,
                                               @RequestParam String ownerId) {
         try {
-            String result = groupService.rejectJoinRequest(requestId, ownerId);
+            String result = groupService.rejectJoinRequest(requestId, groupId, ownerId);
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -85,6 +90,20 @@ public class GroupController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @GetMapping("/user/{userId}/groups")
+    @Operation(summary = "Get user's groups")
+    @ApiResponse(responseCode = "200", description = "User's groups retrieved")
+    public ResponseEntity<?> getUserGroups(@PathVariable String userId) {
+        try {
+            List<GroupService.GroupInfo> groups = groupService.getUserGroups(userId);
+            return ResponseEntity.ok(groups);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+
 
     @Data
     private static class GroupRequest {
