@@ -80,11 +80,12 @@ public class GroupService {
     }
 
     @Transactional
-    public String approveJoinRequest(Long requestId, String ownerId) {
+    public String approveJoinRequest(Long requestId, Long groupId, String ownerId) {
         GroupJoinRequest request = groupJoinRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("가입 신청을 찾을 수 없습니다."));
         
-        Group group = request.getGroup();
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new IllegalArgumentException("그룹을 찾을 수 없습니다."));
         
         // 그룹 소유자인지 확인
         if (!group.getOwner().getUserId().equals(ownerId)) {
@@ -108,11 +109,12 @@ public class GroupService {
     }
 
     @Transactional
-    public String rejectJoinRequest(Long requestId, String ownerId) {
+    public String rejectJoinRequest(Long requestId, Long groupId, String ownerId) {
         GroupJoinRequest request = groupJoinRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("가입 신청을 찾을 수 없습니다."));
         
-        Group group = request.getGroup();
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new IllegalArgumentException("그룹을 찾을 수 없습니다."));
         
         // 그룹 소유자인지 확인
         if (!group.getOwner().getUserId().equals(ownerId)) {
@@ -141,5 +143,39 @@ public class GroupService {
         }
         
         return groupJoinRequestRepository.findByGroupAndStatusOrderByCreatedAtDesc(group, GroupJoinRequest.RequestStatus.PENDING);
+    }
+
+    public List<GroupInfo> getUserGroups(String userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        
+        List<GroupMember> memberships = groupMemberRepository.findByUser(user);
+        return memberships.stream()
+                .map(membership -> {
+                    Group group = membership.getGroup();
+                    return new GroupInfo(
+                            group.getId(),
+                            group.getName()
+                    );
+                })
+                .toList();
+    }
+
+
+    public static class GroupInfo {
+        private Long id;
+        private String name;
+
+        public GroupInfo(Long id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        // Getters and Setters
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+        
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
     }
 } 
