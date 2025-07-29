@@ -18,8 +18,8 @@ public class FriendshipService {
     }
 
     @Transactional
-    public boolean sendFriendRequest(Long fromUserId, String toUserId) {
-        Optional<User> fromUserOpt = userRepository.findById(fromUserId);
+    public boolean sendFriendRequest(String fromUserId, String toUserId) {
+        Optional<User> fromUserOpt = userRepository.findByUserId(fromUserId);
         Optional<User> toUserOpt = userRepository.findByUserId(toUserId);
         if (fromUserOpt.isEmpty() || toUserOpt.isEmpty()) {
             return false;
@@ -34,12 +34,12 @@ public class FriendshipService {
         return true;
     }
 
-    public List<Friendship> getReceivedRequests(Long userId) {
+    public List<Friendship> getReceivedRequests(String userId) {
         return friendshipRepository.findByToUserIdAndStatus(userId, Friendship.Status.PENDING);
     }
 
     @Transactional
-    public boolean acceptRequest(Long requestId, Long userId) {
+    public boolean acceptRequest(Long requestId, String userId) {
         Optional<Friendship> requestOpt = friendshipRepository.findById(requestId);
         if (requestOpt.isEmpty()) return false;
         Friendship request = requestOpt.get();
@@ -50,7 +50,7 @@ public class FriendshipService {
     }
 
     @Transactional
-    public boolean rejectRequest(Long requestId, Long userId) {
+    public boolean rejectRequest(Long requestId, String userId) {
         Optional<Friendship> requestOpt = friendshipRepository.findById(requestId);
         if (requestOpt.isEmpty()) return false;
         Friendship request = requestOpt.get();
@@ -60,7 +60,7 @@ public class FriendshipService {
         return true;
     }
 
-    public List<User> getFriends(Long userId) {
+    public List<User> getFriends(String userId) {
         List<Friendship> friendships = friendshipRepository.findByFromUserIdOrToUserIdAndStatus(userId, userId, Friendship.Status.ACCEPTED);
         return friendships.stream().map(f -> {
             if (f.getFromUser().getId().equals(userId)) return f.getToUser();
@@ -68,7 +68,7 @@ public class FriendshipService {
         }).toList();
     }
 
-    public long getFriendCount(Long userId) {
+    public long getFriendCount(String userId) {
         return getFriends(userId).size();
     }
 } 

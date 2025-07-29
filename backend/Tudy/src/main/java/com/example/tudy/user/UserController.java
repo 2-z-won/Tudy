@@ -39,30 +39,6 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.status(401).body(Map.of("error", "invalid")));
     }
 
-    @PutMapping("/{userId}/email")
-    @Operation(summary = "Change email")
-    @ApiResponse(responseCode = "200", description = "Email updated")
-    public ResponseEntity<?> changeEmail(@PathVariable String userId,
-                                         @RequestBody EmailRequest request,
-                                         @RequestHeader(value = "Authorization", required = false) String auth) {
-        Long uid = tokenService.resolveUserId(auth);
-        if (uid == null) {
-            return ResponseEntity.status(401).build();
-        }
-        User currentUser = userService.findByUserId(userId);
-        if (!uid.equals(currentUser.getId())) {
-            return ResponseEntity.status(403).build();
-        }
-        if (request.getEmail() == null || !request.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
-            return ResponseEntity.badRequest().build();
-        }
-        if (userService.emailExists(request.getEmail())) {
-            return ResponseEntity.status(409).body(Map.of("error", "Email already exists"));
-        }
-        User user = userService.updateEmail(userId, request.getEmail());
-        return ResponseEntity.ok(user);
-    }
-
     @PutMapping("/{userId}/name")
     @Operation(summary = "Change name")
     @ApiResponse(responseCode = "200", description = "Name updated")

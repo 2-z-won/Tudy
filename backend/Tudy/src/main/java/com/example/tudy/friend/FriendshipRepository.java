@@ -4,9 +4,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
-    List<Friendship> findByToUserIdAndStatus(Long toUserId, Friendship.Status status);
+    List<Friendship> findByToUserIdAndStatus(String toUserId, Friendship.Status status);
     List<Friendship> findByFromUserIdAndStatus(Long fromUserId, Friendship.Status status);
-    List<Friendship> findByFromUserIdOrToUserIdAndStatus(Long fromUserId, Long toUserId, Friendship.Status status);
+    List<Friendship> findByFromUserIdOrToUserIdAndStatus(String fromUserId, String toUserId, Friendship.Status status);
     List<Friendship> findByFromUserIdOrToUserId(Long fromUserId, Long toUserId);
     boolean existsByFromUserIdAndToUserIdAndStatus(Long fromUserId, Long toUserId, Friendship.Status status);
     Friendship findByFromUserIdAndToUserIdAndStatus(Long fromUserId, Long toUserId, Friendship.Status status);
