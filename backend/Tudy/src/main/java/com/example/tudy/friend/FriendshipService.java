@@ -35,7 +35,11 @@ public class FriendshipService {
     }
 
     public List<Friendship> getReceivedRequests(String userId) {
-        return friendshipRepository.findByToUserIdAndStatus(userId, Friendship.Status.PENDING);
+        Optional<User> userOpt = userRepository.findByUserId(userId);
+        if (userOpt.isEmpty()) {
+            return List.of();
+        }
+        return friendshipRepository.findByToUser_IdAndStatus(userOpt.get().getId(), Friendship.Status.PENDING);
     }
 
     @Transactional
