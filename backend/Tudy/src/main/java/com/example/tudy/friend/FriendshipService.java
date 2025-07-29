@@ -35,7 +35,11 @@ public class FriendshipService {
     }
 
     public List<Friendship> getReceivedRequests(String userId) {
-        return friendshipRepository.findByToUserIdAndStatus(userId, Friendship.Status.PENDING);
+        Optional<User> userOpt = userRepository.findByUserId(userId);
+        if (userOpt.isEmpty()) {
+            return List.of();
+        }
+        return friendshipRepository.findByToUser_IdAndStatus(userOpt.get().getId(), Friendship.Status.PENDING);
     }
 
     @Transactional
@@ -61,9 +65,14 @@ public class FriendshipService {
     }
 
     public List<User> getFriends(String userId) {
-        List<Friendship> friendships = friendshipRepository.findByFromUserIdOrToUserIdAndStatus(userId, userId, Friendship.Status.ACCEPTED);
+        Optional<User> userOpt = userRepository.findByUserId(userId);
+        if (userOpt.isEmpty()) {
+            return List.of();
+        }
+        Long id = userOpt.get().getId();
+        List<Friendship> friendships = friendshipRepository.findByFromUser_IdOrToUser_IdAndStatus(id, id, Friendship.Status.ACCEPTED);
         return friendships.stream().map(f -> {
-            if (f.getFromUser().getId().equals(userId)) return f.getToUser();
+            if (f.getFromUser().getId().equals(id)) return f.getToUser();
             else return f.getFromUser();
         }).toList();
     }
