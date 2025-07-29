@@ -103,7 +103,7 @@ public class UserController {
     public ResponseEntity<UserWithFriendCountResponse> getUserWithFriendCount(@PathVariable String userId) {
         User user = userService.findByUserId(userId);
         // 친구 수 계산 (FriendshipService 사용)
-        long friendCount = friendshipService.getFriendCount(user.getId());
+        long friendCount = friendshipService.getFriendCount(userId);
         UserWithFriendCountResponse response = new UserWithFriendCountResponse(user, friendCount);
         return ResponseEntity.ok(response);
     }
