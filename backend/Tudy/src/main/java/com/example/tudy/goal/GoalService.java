@@ -145,8 +145,8 @@ public class GoalService {
         if (categoryName == null) {
             return goalRepository.findByUser(user);
         } else {
-            Category category = categoryRepository.findByUserAndName(user, categoryName);
-            if (category == null) return List.of();
+            Category category = categoryRepository.findByUserAndName(user, categoryName)
+                    .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Category not found"));
             return goalRepository.findByUserAndCategory(user, category);
         }
     }
@@ -156,8 +156,8 @@ public class GoalService {
         if (categoryName == null) {
             return goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date, date);
         } else {
-            Category category = categoryRepository.findByUserAndName(user, categoryName);
-            if (category == null) return List.of();
+            Category category = categoryRepository.findByUserAndName(user, categoryName)
+                    .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Category not found"));
             return goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqualAndCategory(user, date, date, category);
         }
     }
@@ -173,14 +173,13 @@ public class GoalService {
     }
 
     private Category getOrCreateCategory(User user, String categoryName) {
-        Category category = categoryRepository.findByUserAndName(user, categoryName);
-        if (category == null) {
-            category = new Category();
-            category.setUser(user);
-            category.setName(categoryName);
-            category.setColor(1); // 기본 색상(1)로 생성, 필요시 파라미터로 받을 수 있음
-            category = categoryRepository.save(category);
-        }
-        return category;
+        return categoryRepository.findByUserAndName(user, categoryName)
+                .orElseGet(() -> {
+                    Category category = new Category();
+                    category.setUser(user);
+                    category.setName(categoryName);
+                    category.setColor(1); // 기본 색상(1)로 생성, 필요시 파라미터로 받을 수 있음
+                    return categoryRepository.save(category);
+                });
     }
 }
