@@ -23,8 +23,8 @@ public class GoalService {
     private final StudySessionRepository studySessionRepository;
     private static final int REWARD_COINS = 10;
 
-    public Goal createGoal(Long userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public Goal createGoal(String userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         Category category = getOrCreateCategory(user, categoryName);
         Goal goal = new Goal();
         goal.setUser(user);

@@ -92,7 +92,7 @@ public class GoalController {
     @Data
     private static class GoalRequest {
         @Schema(description = "User ID", example = "1")
-        private Long userId;
+        private String userId;
         @Schema(description = "Goal title", example = "스터디 목표")
         private String title;
         @Schema(description = "Category name", example = "공부")
