@@ -1,13 +1,19 @@
 package com.example.tudy.goal;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/goals")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Goal", description = "Goal management APIs")
 public class GoalController {
     private final GoalService goalService;
@@ -22,16 +29,40 @@ public class GoalController {
     @PostMapping
     @Operation(summary = "Create goal")
     @ApiResponse(responseCode = "200", description = "Goal created")
-    public ResponseEntity<Goal> create(@RequestBody GoalRequest req) {
-        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendName(), req.getProofType(), req.getTargetTime());
+    public ResponseEntity<Goal> create(@Valid @RequestBody GoalRequest req) {
+        Goal goal = goalService.createGoal(
+                req.getUserId(),
+                req.getTitle(),
+                req.getCategoryName(),
+                req.getStartDate(),
+                req.getEndDate(),
+                req.getIsGroupGoal(),
+                req.getGroupId(),
+                req.getIsFriendGoal(),
+                req.getFriendName(),
+                req.getProofType(),
+                req.getTargetTime()
+        );
         return ResponseEntity.ok(goal);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update goal")
     @ApiResponse(responseCode = "200", description = "Goal updated")
-    public ResponseEntity<Goal> update(@PathVariable Long id, @RequestBody GoalRequest req) {
-        Goal goal = goalService.updateGoal(id, req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendName(), req.getProofType(), req.getTargetTime());
+    public ResponseEntity<Goal> update(@PathVariable Long id, @Valid @RequestBody GoalRequest req) {
+        Goal goal = goalService.updateGoal(
+                id,
+                req.getTitle(),
+                req.getCategoryName(),
+                req.getStartDate(),
+                req.getEndDate(),
+                req.getIsGroupGoal(),
+                req.getGroupId(),
+                req.getIsFriendGoal(),
+                req.getFriendName(),
+                req.getProofType(),
+                req.getTargetTime()
+        );
         return ResponseEntity.ok(goal);
     }
 
@@ -84,7 +115,7 @@ public class GoalController {
     @PostMapping("/{id}/proof-image")
     @Operation(summary = "Upload proof image for image proof goal")
     @ApiResponse(responseCode = "200", description = "Proof image uploaded and goal completed")
-    public ResponseEntity<Goal> uploadProofImage(@PathVariable Long id, @RequestBody ProofRequest req) {
+    public ResponseEntity<Goal> uploadProofImage(@PathVariable Long id, @Valid @RequestBody ProofRequest req) {
         Goal goal = goalService.completeImageProofGoal(id, req.getProofImage());
         return ResponseEntity.ok(goal);
     }
@@ -92,25 +123,47 @@ public class GoalController {
     @Data
     private static class GoalRequest {
         @Schema(description = "User ID", example = "user1")
+        @NotBlank
         private String userId;
+
         @Schema(description = "Goal title", example = "스터디 목표")
+        @NotBlank
         private String title;
+
         @Schema(description = "Category name", example = "공부")
+        @NotBlank
         private String categoryName;
+
         @Schema(description = "Start date", example = "2024-01-01")
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        @NotNull
         private LocalDate startDate;
+
         @Schema(description = "End date", example = "2024-01-31")
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        @NotNull
         private LocalDate endDate;
+
         @Schema(description = "Group goal flag", example = "false")
+        @NotNull
+        @JsonProperty("isGroupGoal")
         private Boolean isGroupGoal;
+
         @Schema(description = "Group ID", example = "1")
         private Long groupId;
+
         @Schema(description = "Friend goal flag", example = "false")
+        @NotNull
+        @JsonProperty("isFriendGoal")
         private Boolean isFriendGoal;
+
         @Schema(description = "Friend name", example = "친구")
         private String friendName;
+
         @Schema(description = "Proof type", example = "TIME")
+        @NotNull
         private Goal.ProofType proofType;
+
         @Schema(description = "Target time in seconds", example = "7200")
         private Integer targetTime;
     }
@@ -118,6 +171,7 @@ public class GoalController {
     @Data
     private static class ProofRequest {
         @Schema(description = "Proof image path", example = "/proof.png")
+        @NotBlank
         private String proofImage;
     }
 

@@ -8,6 +8,7 @@ import com.example.tudy.category.Category;
 import com.example.tudy.category.CategoryRepository;
 import com.example.tudy.study.StudySession;
 import com.example.tudy.study.StudySessionRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +25,8 @@ public class GoalService {
     private static final int REWARD_COINS = 10;
 
     public Goal createGoal(String userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType, Integer targetTime) {
-        User user = userRepository.findByUserId(userId).orElseThrow();
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         Category category = getOrCreateCategory(user, categoryName);
         Goal goal = new Goal();
         goal.setUser(user);
@@ -93,7 +95,8 @@ public class GoalService {
     }
 
     public Goal updateGoal(Long id, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType, Integer targetTime) {
-        Goal goal = goalRepository.findById(id).orElseThrow();
+        Goal goal = goalRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
         Category category = getOrCreateCategory(goal.getUser(), categoryName);
         goal.setTitle(title);
         goal.setCategory(category);
@@ -113,14 +116,16 @@ public class GoalService {
     }
 
     public Goal deleteGoal(Long id) {
-        Goal goal = goalRepository.findById(id).orElseThrow();
+        Goal goal = goalRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
         goalRepository.delete(goal);
         return goal;
     }
 
     // 이미지 인증 목표의 proofImage 업로드 및 인증 처리
     public Goal completeImageProofGoal(Long id, String proofImage) {
-        Goal goal = goalRepository.findById(id).orElseThrow();
+        Goal goal = goalRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
         if (goal.getProofType() != Goal.ProofType.IMAGE) {
             throw new IllegalStateException("이미지 인증 목표가 아닙니다.");
         }
@@ -145,34 +150,38 @@ public class GoalService {
     }
 
     public List<Goal> listGoals(String userId, String categoryName) {
-        User user = userRepository.findByUserId(userId).orElseThrow();
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         if (categoryName == null) {
             return goalRepository.findByUser(user);
         } else {
             Category category = categoryRepository.findByUserAndName(user, categoryName)
-                    .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Category not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
             return goalRepository.findByUserAndCategory(user, category);
         }
     }
 
     public List<Goal> listGoalsByDate(String userId, java.time.LocalDate date, String categoryName) {
-        User user = userRepository.findByUserId(userId).orElseThrow();
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         if (categoryName == null) {
             return goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date, date);
         } else {
             Category category = categoryRepository.findByUserAndName(user, categoryName)
-                    .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Category not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
             return goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqualAndCategory(user, date, date, category);
         }
     }
 
     public List<Goal> listGroupGoals(String userId) {
-        User user = userRepository.findByUserId(userId).orElseThrow();
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         return goalRepository.findByUserAndIsGroupGoalTrue(user);
     }
 
     public List<Goal> listFriendGoals(String userId) {
-        User user = userRepository.findByUserId(userId).orElseThrow();
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         return goalRepository.findByUserAndIsFriendGoalTrue(user);
     }
 
