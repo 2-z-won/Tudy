@@ -19,11 +19,20 @@ class AddTodo extends StatefulWidget {
   State<AddTodo> createState() => _TodoDetailState();
 }
 
-class _TodoDetailState extends State<AddTodo> {
-  bool isTimeSelected = true;
+  class _TodoDetailState extends State<AddTodo> {
+    bool isTimeSelected = true;
+    final TextEditingController hoursController = TextEditingController();
+    final TextEditingController minutesController = TextEditingController();
 
-  @override
-  Widget build(BuildContext context) {
+    @override
+    void dispose() {
+      hoursController.dispose();
+      minutesController.dispose();
+      super.dispose();
+    }
+
+    @override
+    Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       // height: 386,
@@ -148,7 +157,7 @@ class _TodoDetailState extends State<AddTodo> {
                               style: TextStyle(fontSize: 12),
                             ),
                             const Text(
-                              '(최소 2시간 이상)',
+                              '(목표 시간 설정)',
                               style: TextStyle(fontSize: 8),
                             ),
                           ],
@@ -157,18 +166,43 @@ class _TodoDetailState extends State<AddTodo> {
 
                       const SizedBox(height: 15),
 
-                      // 타이머 텍스트
-                      const Center(
-                        child: Text(
-                          '00 h  :  00 m',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            letterSpacing: 2,
+                      // 목표 시간 입력 필드
+                      if (isTimeSelected) ...[
+                        Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 40,
+                                child: TextField(
+                                  controller: hoursController,
+                                  keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.center,
+                                  decoration: const InputDecoration(
+                                    hintText: '0',
+                                    border: UnderlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                              const Text(' h  :  '),
+                              SizedBox(
+                                width: 40,
+                                child: TextField(
+                                  controller: minutesController,
+                                  keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.center,
+                                  decoration: const InputDecoration(
+                                    hintText: '0',
+                                    border: UnderlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                              const Text(' m'),
+                            ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 15),
+                        const SizedBox(height: 15),
+                      ],
 
                       // 사진 인증 체크박스
                       // 사진 인증

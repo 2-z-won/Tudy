@@ -23,7 +23,7 @@ public class GoalService {
     private final StudySessionRepository studySessionRepository;
     private static final int REWARD_COINS = 10;
 
-    public Goal createGoal(String userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType) {
+    public Goal createGoal(String userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType, Integer targetTime) {
         User user = userRepository.findByUserId(userId).orElseThrow();
         Category category = getOrCreateCategory(user, categoryName);
         Goal goal = new Goal();
@@ -37,8 +37,9 @@ public class GoalService {
         goal.setIsFriendGoal(isFriendGoal);
         goal.setFriendName(friendName);
         goal.setProofType(proofType);
-        // 시간 인증 목표는 누적 2시간 이상이면 자동 완료
-        if (proofType == Goal.ProofType.TIME && getTotalDuration(goal) >= 7200) {
+        goal.setTargetTime(targetTime);
+        // 시간 인증 목표는 설정된 목표 시간 이상이면 자동 완료
+        if (proofType == Goal.ProofType.TIME && targetTime != null && getTotalDuration(goal) >= targetTime) {
             goal.setCompleted(true);
         }
         Goal savedGoal = goalRepository.save(goal);
@@ -58,7 +59,8 @@ public class GoalService {
                     groupGoal.setIsFriendGoal(false);
                     groupGoal.setFriendName(null);
                     groupGoal.setProofType(proofType);
-                    if (proofType == Goal.ProofType.TIME && getTotalDuration(groupGoal) >= 7200) {
+                    groupGoal.setTargetTime(targetTime);
+                    if (proofType == Goal.ProofType.TIME && targetTime != null && getTotalDuration(groupGoal) >= targetTime) {
                         groupGoal.setCompleted(true);
                     }
                     goalRepository.save(groupGoal);
@@ -80,7 +82,8 @@ public class GoalService {
                 friendGoal.setIsFriendGoal(true);
                 friendGoal.setFriendName(user.getUserId());
                 friendGoal.setProofType(proofType);
-                if (proofType == Goal.ProofType.TIME && getTotalDuration(friendGoal) >= 7200) {
+                friendGoal.setTargetTime(targetTime);
+                if (proofType == Goal.ProofType.TIME && targetTime != null && getTotalDuration(friendGoal) >= targetTime) {
                     friendGoal.setCompleted(true);
                 }
                 goalRepository.save(friendGoal);
@@ -89,7 +92,7 @@ public class GoalService {
         return savedGoal;
     }
 
-    public Goal updateGoal(Long id, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType) {
+    public Goal updateGoal(Long id, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType, Integer targetTime) {
         Goal goal = goalRepository.findById(id).orElseThrow();
         Category category = getOrCreateCategory(goal.getUser(), categoryName);
         goal.setTitle(title);
@@ -101,7 +104,8 @@ public class GoalService {
         goal.setIsFriendGoal(isFriendGoal);
         goal.setFriendName(friendName);
         goal.setProofType(proofType);
-        if (proofType == Goal.ProofType.TIME && getTotalDuration(goal) >= 7200) {
+        goal.setTargetTime(targetTime);
+        if (proofType == Goal.ProofType.TIME && targetTime != null && getTotalDuration(goal) >= targetTime) {
             goal.setCompleted(true);
         }
         Goal savedGoal = goalRepository.save(goal);

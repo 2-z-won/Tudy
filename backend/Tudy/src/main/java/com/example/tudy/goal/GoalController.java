@@ -23,7 +23,7 @@ public class GoalController {
     @Operation(summary = "Create goal")
     @ApiResponse(responseCode = "200", description = "Goal created")
     public ResponseEntity<Goal> create(@RequestBody GoalRequest req) {
-        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendName(), req.getProofType());
+        Goal goal = goalService.createGoal(req.getUserId(), req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendName(), req.getProofType(), req.getTargetTime());
         return ResponseEntity.ok(goal);
     }
 
@@ -31,7 +31,7 @@ public class GoalController {
     @Operation(summary = "Update goal")
     @ApiResponse(responseCode = "200", description = "Goal updated")
     public ResponseEntity<Goal> update(@PathVariable Long id, @RequestBody GoalRequest req) {
-        Goal goal = goalService.updateGoal(id, req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendName(), req.getProofType());
+        Goal goal = goalService.updateGoal(id, req.getTitle(), req.getCategoryName(), req.getStartDate(), req.getEndDate(), req.getIsGroupGoal(), req.getGroupId(), req.getIsFriendGoal(), req.getFriendName(), req.getProofType(), req.getTargetTime());
         return ResponseEntity.ok(goal);
     }
 
@@ -111,6 +111,8 @@ public class GoalController {
         private String friendName;
         @Schema(description = "Proof type", example = "TIME")
         private Goal.ProofType proofType;
+        @Schema(description = "Target time in seconds", example = "7200")
+        private Integer targetTime;
     }
 
     @Data
