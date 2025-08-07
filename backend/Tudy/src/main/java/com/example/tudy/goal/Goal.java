@@ -35,6 +35,7 @@ public class Goal {
     private String friendName;
     @Enumerated(EnumType.STRING)
     private ProofType proofType;
+    private Integer targetTime; // 목표 시간(초)
 
     public enum ProofType {
         TIME, IMAGE
