@@ -46,7 +46,7 @@ public class GoalService {
         // 그룹 목표라면 그룹원 모두에게 동일 목표 생성
         if (Boolean.TRUE.equals(isGroupGoal) && groupId != null) {
             for (GroupMember member : groupMemberRepository.findAllByGroupId(groupId)) {
-                if (!member.getUser().getId().equals(userId)) {
+                if (!member.getUser().getId().equals(user.getId())) {
                     Category memberCategory = getOrCreateCategory(member.getUser(), categoryName);
                     Goal groupGoal = new Goal();
                     groupGoal.setUser(member.getUser());
@@ -144,8 +144,8 @@ public class GoalService {
                 .sum();
     }
 
-    public List<Goal> listGoals(Long userId, String categoryName) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public List<Goal> listGoals(String userId, String categoryName) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         if (categoryName == null) {
             return goalRepository.findByUser(user);
         } else {

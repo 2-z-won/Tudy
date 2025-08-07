@@ -74,7 +74,7 @@ public class GoalGroupAndDateApiTests {
         String endDate = LocalDate.now().plusDays(3).toString();
         // 그룹 목표 생성 (리더가 생성)
         String reqJson = "{" +
-                "\"userId\":" + leader.getId() + "," +
+                "\"userId\":\"" + leader.getUserId() + "\"," +
                 "\"title\":\"" + title + "\"," +
                 "\"categoryName\":\"" + categoryName + "\"," +
                 "\"startDate\":\"" + startDate + "\"," +
@@ -89,7 +89,7 @@ public class GoalGroupAndDateApiTests {
                 .andExpect(jsonPath("$.title").value(title));
         // 그룹원(멤버)도 같은 카테고리명으로 목표가 생성되어야 함
         mockMvc.perform(get("/api/goals")
-                .param("userId", member.getId().toString())
+                .param("userId", member.getUserId())
                 .param("categoryName", categoryName))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title").value(title));
@@ -119,7 +119,7 @@ public class GoalGroupAndDateApiTests {
         String endDate = LocalDate.now().plusDays(2).toString();
         // 목표 생성
         String reqJson = "{" +
-                "\"userId\":" + user.getId() + "," +
+                "\"userId\":\"" + user.getUserId() + "\"," +
                 "\"title\":\"" + title + "\"," +
                 "\"categoryName\":\"" + categoryName + "\"," +
                 "\"startDate\":\"" + startDate + "\"," +
@@ -134,7 +134,7 @@ public class GoalGroupAndDateApiTests {
                 .andExpect(jsonPath("$.title").value(title));
         // 날짜별+카테고리명으로 조회
         mockMvc.perform(get("/api/goals/by-date")
-                .param("userId", user.getId().toString())
+                .param("userId", user.getUserId())
                 .param("date", startDate)
                 .param("categoryName", categoryName))
                 .andExpect(status().isOk())

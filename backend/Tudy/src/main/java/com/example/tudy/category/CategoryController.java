@@ -62,7 +62,7 @@ public class CategoryController {
 
     @Data
     private static class CategoryRequest {
-        @Schema(description = "User ID", example = "1")
+        @Schema(description = "User ID", example = "user1")
         private String userId;
         @Schema(description = "Category name", example = "공부")
         private String name;
