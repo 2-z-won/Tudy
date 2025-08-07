@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/api/Friend/controller/AddFriendController.dart';
+import 'package:frontend/api/Friend/controller/AddListController.dart';
+import 'package:frontend/api/Friend/controller/FriendListController.dart';
+import 'package:frontend/utils/auth_util.dart';
 import 'package:get/get.dart';
 import 'package:frontend/components/bottomNavigation/GroupFriend/FriendList.dart';
 import 'package:frontend/components/bottomNavigation/GroupFriend/GroupFriendItem.dart';
@@ -14,19 +18,68 @@ class Friendpage extends StatefulWidget {
 }
 
 class _GroupPageState extends State<Friendpage> {
-  final TextEditingController _groupController = TextEditingController();
+  final TextEditingController _friendAddController = TextEditingController();
+  final FriendAddListController _requestController = Get.put(
+    FriendAddListController(),
+  );
+  final FriendListController _friendListcontroller = Get.put(
+    FriendListController(),
+  );
+
+  String? userId; // 🔹 로그인된 유저 아이디
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserId();
+  }
+
+  Future<void> loadUserId() async {
+    final uid = await getUserIdFromStorage(); // utils/auth_util.dart 함수
+    setState(() {
+      userId = uid;
+    });
+    _requestController.fetchRequests(uid!);
+    await _friendListcontroller.fetchFriends(uid);
+  }
 
   @override
   void dispose() {
-    _groupController.dispose();
+    _friendAddController.dispose();
     super.dispose();
   }
 
-  void onJoin() {
-    final groupName = _groupController.text.trim();
-    if (groupName.isNotEmpty) {
-      print("그룹 참여 요청: $groupName");
-    }
+  String messageType = '';
+  String message = '';
+  void onJoin() async {
+    final toUserId = _friendAddController.text.trim();
+    if (toUserId.isEmpty) return;
+
+    await FriendAddRequestController.sendFriendRequest(
+      userId: userId!,
+      toUserId: toUserId,
+    );
+
+    setState(() {
+      if (FriendAddRequestController.successMessage.value.isNotEmpty) {
+        messageType = 'success';
+        message = FriendAddRequestController.successMessage.value;
+        _friendAddController.clear();
+      } else {
+        messageType = 'error';
+        message = FriendAddRequestController.errorMessage.value;
+      }
+    });
+
+    // 2초 후 메시지 초기화
+    Future.delayed(Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          messageType = '';
+          message = '';
+        });
+      }
+    });
   }
 
   @override
@@ -55,17 +108,19 @@ class _GroupPageState extends State<Friendpage> {
               ),
 
               Padding(
-                padding: EdgeInsetsGeometry.symmetric(horizontal: 10),
+                padding: EdgeInsets.symmetric(horizontal: 10),
                 child: Column(
                   children: [
                     JoinAddField(
                       hinttext: "친구명을 입력하세요",
                       button: "SEND",
-                      controller: _groupController,
+                      controller: _friendAddController,
                       onJoin: onJoin,
+                      messageType: messageType,
+                      message: message,
                     ),
                     Padding(
-                      padding: EdgeInsetsGeometry.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 10,
                       ),
@@ -73,22 +128,47 @@ class _GroupPageState extends State<Friendpage> {
                     ),
                     CardContainer(
                       title: "✉️ 친구 신청 목록 ✉️",
-                      child: Column(
-                        children: [
-                          JoinRequestRow(
-                            name: "김효정",
-                            imageAsset: 'assets/profile1.jpg',
-                          ),
-                          SizedBox(height: 10),
-                          JoinRequestRow(
-                            name: "김효정",
-                            imageAsset: 'assets/profile2.jpg',
-                          ),
-                        ],
-                      ),
+                      child: Obx(() {
+                        final requests = _requestController.requests;
+                        if (requests.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Text(
+                              "친구 신청 목록이 없습니다!",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFFA9A9A9),
+                              ),
+                            ),
+                          );
+                        }
+
+                        return Column(
+                          children: requests.map((request) {
+                            final fromUser = request.fromUser;
+                            return JoinRequestRow(
+                              name: fromUser['name'] ?? '이름 없음',
+                              imageAsset: 'assets/profile.jpg', // 이미지 경로 수정 가능
+                              onApprove: () async {
+                                await _requestController.approveRequest(
+                                  request.id,
+                                  userId!,
+                                );
+                              },
+                              onReject: () async {
+                                await _requestController.rejectRequest(
+                                  request.id,
+                                  userId!,
+                                );
+                              },
+                            );
+                          }).toList(),
+                        );
+                      }),
                     ),
+
                     Padding(
-                      padding: EdgeInsetsGeometry.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 10,
                       ),
@@ -108,7 +188,25 @@ class _GroupPageState extends State<Friendpage> {
                     ),
                     SizedBox(height: 10),
 
-                    FriendDropdownCard(name: "김효정"),
+                    Obx(() {
+                      if (_friendListcontroller.friendList.isEmpty) {
+                        return Text("친구 목록이 비어있습니다");
+                      }
+
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: _friendListcontroller.friendList.length,
+                        itemBuilder: (context, index) {
+                          final friend =
+                              _friendListcontroller.friendList[index];
+                          return FriendDropdownCard(
+                            name: friend.name,
+                            imageUrl: friend.profileImage,
+                          );
+                        },
+                      );
+                    }),
                   ],
                 ),
               ),

@@ -21,10 +21,12 @@ class TodoItem {
   final String category; // 카테고리명
   final List<SubTodo> subTodos; // 목표 리스트
   final Color mainColor;
+  final Color subColor;
 
   TodoItem({
     required this.category,
     required this.subTodos,
     required this.mainColor,
+    required this.subColor,
   });
 }

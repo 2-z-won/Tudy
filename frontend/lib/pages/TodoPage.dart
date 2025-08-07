@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/api/Todo/TodoItem.dart';
 import 'package:frontend/api/Todo/controller/category_controller.dart';
+import 'package:frontend/api/Todo/model/category_model.dart';
+import 'package:frontend/components/Todo/TodoColor.dart';
 import 'package:frontend/components/Todo/TodoDetail/AddCategory.dart';
 import 'package:frontend/constants/colors.dart';
 import 'package:frontend/components/Calendar/CustomMonthCalendar.dart';
@@ -8,6 +10,7 @@ import 'package:frontend/components/Calendar/CustomWeekCalendar.dart';
 import 'package:frontend/components/Todo/Todo.dart';
 import 'package:frontend/components/Todo/TodoDetail/AddTodo.dart';
 import 'package:frontend/components/Todo/TodoDetail/TodoDetail.dart';
+import 'package:frontend/utils/auth_util.dart';
 
 class TodoPageView extends StatefulWidget {
   const TodoPageView({super.key});
@@ -18,40 +21,90 @@ class TodoPageView extends StatefulWidget {
 
 class _MainPageViewState extends State<TodoPageView> {
   List<TodoItem> todoList = [];
+  List<Category> categoryList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserId();
+  }
+
+  String? userId;
+
+  Future<void> loadUserId() async {
+    final uid = await getUserIdFromStorage();
+    if (uid == null) {
+      print('❌ 저장된 사용자 ID가 없습니다.');
+      return;
+    }
+
+    print("로딩됨");
+
+    setState(() {
+      userId = uid;
+    });
+    await loadCategories();
+    await loadGoalsForDate(selectedDate); // ✅ userId 로딩 후 목표 불러오기까지 연결
+  }
+
+  Future<void> loadCategories() async {
+    print('🟨 loadCategories 시작');
+    print(userId);
+    if (userId == null) return;
+    try {
+      final list = await CategoryController.fetchCategories(userId!);
+      print('✅ 응답 왔음');
+      setState(() {
+        categoryList = list;
+      });
+      print("📦 불러온 카테고리: ${list.map((c) => c.name).toList()}");
+    } catch (e) {
+      print("❌ 카테고리 불러오기 실패: $e");
+    }
+  }
 
   Future<void> loadGoalsForDate(DateTime date) async {
+    if (userId == null) return;
+
     try {
-      final userId = '1'; // TODO: 실제 로그인 유저 ID로 교체
-      final formattedDate = date.toIso8601String().substring(
-        0,
-        10,
-      ); // yyyy-MM-dd
-      final goals = await CategoryController.fetchGoalsByDate(
-        userId: userId,
-        date: formattedDate,
-      );
+      final formattedDate = date.toIso8601String().substring(0, 10);
+      List<TodoItem> allItems = [];
 
-      // 변환: Goal → TodoItem
-      final List<TodoItem> mapped = goals.map((goal) {
-        final Color mainColor = Colors.blue;
-
-        return TodoItem(
-          category: goal.category.name,
-          mainColor: mainColor,
-          subTodos: [
-            SubTodo(
-              goalTitle: goal.title,
-              isGroup: goal.isGroupGoal,
-              isDone: goal.completed,
-              isTimerRequired: false, // TODO: backend certType 필드 추가 시 반영
-              isPhotoRequired: false,
-            ),
-          ],
+      for (final category in categoryList) {
+        final goals = await CategoryController.fetchGoalsByDate(
+          userId: userId!,
+          date: formattedDate,
+          categoryName: category.name,
         );
-      }).toList();
+
+        final int colorIndex = (category.color ?? 1) - 1;
+        final Color mainColor =
+            mainColors[colorIndex.clamp(0, mainColors.length - 1)];
+        final Color subColor =
+            subColors[colorIndex.clamp(0, subColors.length - 1)];
+
+        final List<SubTodo> subTodos = goals.map((goal) {
+          return SubTodo(
+            goalTitle: goal.title,
+            isGroup: goal.isGroupGoal,
+            isDone: goal.completed,
+            isTimerRequired: goal.proofType == 'TIME',
+            isPhotoRequired: goal.proofType == 'PHOTO',
+          );
+        }).toList();
+
+        allItems.add(
+          TodoItem(
+            category: category.name,
+            mainColor: mainColor,
+            subColor: subColor,
+            subTodos: subTodos,
+          ),
+        );
+      }
 
       setState(() {
-        todoList = mapped;
+        todoList = allItems;
       });
     } catch (e) {
       print('목표 불러오기 오류: $e');
@@ -216,6 +269,21 @@ class _MainPageViewState extends State<TodoPageView> {
               ],
             ),
           ),
+          if (isDetailVisible || isDoneDetailVisible || isAddCategoryVisible)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () {
+                  setState(() {
+                    isDetailVisible = false;
+                    isDoneDetailVisible = false;
+                    isAddCategoryVisible = false;
+                  });
+                },
+                child: Container(), // 투명
+              ),
+            ),
+
           if (isDetailVisible)
             Positioned(
               left: 0,
@@ -229,6 +297,7 @@ class _MainPageViewState extends State<TodoPageView> {
                   setState(() {
                     isDetailVisible = false;
                   });
+                  loadGoalsForDate(selectedDate);
                 },
               ),
             ),
@@ -257,14 +326,13 @@ class _MainPageViewState extends State<TodoPageView> {
               left: 0,
               right: 0,
               bottom: 0,
-              child: AddCategory(
-                category: '', // 초기값 또는 선택값
-                mainColor: Colors.grey,
-                subColor: Colors.grey.shade100,
-                onClose: () {
+              child: AddCategoryUI(
+                onClose: () async {
                   setState(() {
                     isAddCategoryVisible = false;
                   });
+                  await loadCategories();
+                  await loadGoalsForDate(selectedDate);
                 },
               ),
             ),

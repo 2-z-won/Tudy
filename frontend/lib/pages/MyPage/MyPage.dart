@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/api/SignupLogin/controller/login_controller.dart';
 import 'package:get/get.dart';
 import 'package:frontend/constants/colors.dart';
 import 'package:frontend/pages/MyPage/StudentCard.dart';
@@ -39,6 +40,8 @@ class MyPageView extends StatelessWidget {
             GestureDetector(
               onTap: () {
                 //로그아웃
+                final loginController = Get.find<LoginController>();
+                loginController.logout();
               },
               child: Text(
                 '휴학하기',

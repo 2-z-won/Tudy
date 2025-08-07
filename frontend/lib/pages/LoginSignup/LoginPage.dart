@@ -53,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
               final hasError = controller.errorMessage.value.isNotEmpty;
               return Column(
                 children: [
-                  SizedBox(height: hasError ? 2 : 13),
+                  SizedBox(height: hasError ? 2 : 18),
                   if (hasError)
                     Align(
                       alignment: Alignment.centerLeft,

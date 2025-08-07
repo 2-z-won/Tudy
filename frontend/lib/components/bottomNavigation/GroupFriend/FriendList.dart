@@ -5,8 +5,9 @@ import 'package:frontend/constants/colors.dart';
 
 class FriendDropdownCard extends StatefulWidget {
   final String name;
+  final String? imageUrl;
 
-  const FriendDropdownCard({super.key, required this.name});
+  const FriendDropdownCard({super.key, required this.name, this.imageUrl,});
 
   @override
   State<FriendDropdownCard> createState() => _FriendDropdownCardState();
@@ -46,7 +47,10 @@ class _FriendDropdownCardState extends State<FriendDropdownCard> {
                         border: Border.all(color: Color(0xFFE1DDD4)),
                         borderRadius: BorderRadius.circular(5),
                       ),
-                      child: Image.asset("/images/profile.jpg"),
+                      child:(widget.imageUrl != null &&
+                              widget.imageUrl!.isNotEmpty)
+                          ? Image.network(widget.imageUrl!, fit: BoxFit.cover)
+                          : Image.asset("assets/images/profile.jpg", fit: BoxFit.cover),
                     ),
                     SizedBox(width: 8),
                     Expanded(

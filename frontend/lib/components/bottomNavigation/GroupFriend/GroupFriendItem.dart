@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 class JoinRequestRow extends StatelessWidget {
   final String name;
   final String imageAsset;
+  final VoidCallback onApprove;
+  final VoidCallback onReject;
 
   const JoinRequestRow({
     super.key,
     required this.name,
     required this.imageAsset,
+    required this.onApprove,
+    required this.onReject,
   });
 
   @override
@@ -21,13 +25,13 @@ class JoinRequestRow extends StatelessWidget {
             border: Border.all(color: Color(0xFFE1DDD4)),
             borderRadius: BorderRadius.circular(5),
           ),
-          child: Image.asset("/images/profile.jpg"),
+          child: Image.asset(imageAsset),
         ),
         const SizedBox(width: 10),
         Text(name, style: TextStyle(fontSize: 13, color: Colors.black)),
         const Spacer(),
         GestureDetector(
-          onTap: () {},
+          onTap: onApprove,
           child: Text(
             "승인",
             style: TextStyle(fontSize: 10, color: Colors.black),
@@ -35,7 +39,7 @@ class JoinRequestRow extends StatelessWidget {
         ),
         Text("  |  ", style: TextStyle(fontSize: 10, color: Colors.black)),
         GestureDetector(
-          onTap: () {},
+          onTap: onReject,
           child: Text(
             "거부",
             style: TextStyle(fontSize: 10, color: Colors.black),

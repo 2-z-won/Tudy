@@ -1,5 +1,6 @@
 // models/user_model.dart
 class UserModel {
+  final String email;
   final String id;
   final String password;
   final String name;
@@ -8,6 +9,7 @@ class UserModel {
   final String dept;
 
   UserModel({
+    required this.email,
     required this.id,
     required this.password,
     required this.name,
@@ -18,6 +20,7 @@ class UserModel {
 
   Map<String, dynamic> toJson() {
     return {
+      "email": email,
       "userId": id,
       "password": password,
       "name": name,

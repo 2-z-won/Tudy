@@ -63,27 +63,46 @@ class _SignUpEmailPageState extends State<SignUpEmailPage> {
                 ),
                 SizedBox(height: 2),
 
-                Obx(
-                  () => _verifyController.errorMessage.value.isNotEmpty
-                      ? Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            children: [
-                              SizedBox(width: 5),
-                              Text(
-                                _verifyController.errorMessage.value,
-                                style: TextStyle(
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: Color(0xFFE94F4F),
-                                  fontSize: 10,
-                                  color: Color(0xFFE94F4F),
-                                ),
-                              ),
-                            ],
+                Obx(() {
+                  if (_verifyController.errorMessage.value.isNotEmpty) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 5),
+                        child: Text(
+                          _verifyController.errorMessage.value,
+                          style: TextStyle(
+                            decoration: TextDecoration.underline,
+                            decorationColor: Color(0xFFE94F4F),
+                            fontSize: 10,
+                            color: Color(0xFFE94F4F),
                           ),
-                        )
-                      : SizedBox(height: 13),
-                ),
+                        ),
+                      ),
+                    );
+                  } else if (_verifyController
+                      .successMessage
+                      .value
+                      .isNotEmpty) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 5),
+                        child: Text(
+                          _verifyController.successMessage.value,
+                          style: TextStyle(
+                            decoration: TextDecoration.underline,
+                            decorationColor: SubTextColor,
+                            fontSize: 10,
+                            color: SubTextColor, // 검정색
+                          ),
+                        ),
+                      ),
+                    );
+                  } else {
+                    return SizedBox(height: 13); // 빈 공간 유지
+                  }
+                }),
 
                 const SizedBox(height: 30),
                 buildButton(
@@ -94,7 +113,10 @@ class _SignUpEmailPageState extends State<SignUpEmailPage> {
                       _numController.text.trim(),
                     );
                     if (_verifyController.isVerified.value) {
-                      Get.toNamed("/signup");
+                      Get.toNamed(
+                        '/signup',
+                        arguments: _emailController.text.trim(),
+                      );
                     }
                   },
                 ),
