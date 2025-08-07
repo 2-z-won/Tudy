@@ -19,8 +19,8 @@ public class StudySessionService {
     private final UserRepository userRepository;
     private final GoalRepository goalRepository;
 
-    public StudySession logSession(Long userId, Long goalId, Integer hours, Integer minutes) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public StudySession logSession(String userId, Long goalId, Integer hours, Integer minutes) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         Goal goal = goalRepository.findById(goalId).orElseThrow();
         StudySession session = new StudySession();
         session.setUser(user);

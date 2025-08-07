@@ -10,6 +10,7 @@ import 'package:frontend/pages/MyPage/MyPage.dart';
 import 'package:frontend/pages/TodoPage.dart';
 import 'package:frontend/pages/stopwatchPage.dart';
 import 'package:get/get.dart';
+import 'package:frontend/pages/stopwatchPage.dart';
 
 import 'package:frontend/layout/navigationLayout.dart';
 import 'package:frontend/layout/noLayout.dart';

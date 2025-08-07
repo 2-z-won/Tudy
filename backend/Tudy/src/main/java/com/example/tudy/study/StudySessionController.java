@@ -47,7 +47,7 @@ public class StudySessionController {
     @Data
     private static class LogRequest {
         @Schema(description = "User ID", example = "1")
-        private Long userId;
+        private String userId;
         @Schema(description = "Goal ID", example = "10")
         private Long goalId;
         @Schema(description = "Hours of study", example = "1")

@@ -18,8 +18,8 @@ public class FriendshipService {
     }
 
     @Transactional
-    public boolean sendFriendRequest(Long fromUserId, String toUserId) {
-        Optional<User> fromUserOpt = userRepository.findById(fromUserId);
+    public boolean sendFriendRequest(String fromUserId, String toUserId) {
+        Optional<User> fromUserOpt = userRepository.findByUserId(fromUserId);
         Optional<User> toUserOpt = userRepository.findByUserId(toUserId);
         if (fromUserOpt.isEmpty() || toUserOpt.isEmpty()) {
             return false;
@@ -34,41 +34,50 @@ public class FriendshipService {
         return true;
     }
 
-    public List<Friendship> getReceivedRequests(Long userId) {
-        return friendshipRepository.findByToUserIdAndStatus(userId, Friendship.Status.PENDING);
+    public List<Friendship> getReceivedRequests(String userId) {
+        Optional<User> userOpt = userRepository.findByUserId(userId);
+        if (userOpt.isEmpty()) {
+            return List.of();
+        }
+        return friendshipRepository.findByToUser_IdAndStatus(userOpt.get().getId(), Friendship.Status.PENDING);
     }
 
     @Transactional
-    public boolean acceptRequest(Long requestId, Long userId) {
+    public boolean acceptRequest(Long requestId, String userId) {
         Optional<Friendship> requestOpt = friendshipRepository.findById(requestId);
         if (requestOpt.isEmpty()) return false;
         Friendship request = requestOpt.get();
-        if (!request.getToUser().getId().equals(userId) || request.getStatus() != Friendship.Status.PENDING) return false;
+        if (!request.getToUser().getUserId().equals(userId) || request.getStatus() != Friendship.Status.PENDING) return false;
         request.setStatus(Friendship.Status.ACCEPTED);
         friendshipRepository.save(request);
         return true;
     }
 
     @Transactional
-    public boolean rejectRequest(Long requestId, Long userId) {
+    public boolean rejectRequest(Long requestId, String userId) {
         Optional<Friendship> requestOpt = friendshipRepository.findById(requestId);
         if (requestOpt.isEmpty()) return false;
         Friendship request = requestOpt.get();
-        if (!request.getToUser().getId().equals(userId) || request.getStatus() != Friendship.Status.PENDING) return false;
+        if (!request.getToUser().getUserId().equals(userId) || request.getStatus() != Friendship.Status.PENDING) return false;
         request.setStatus(Friendship.Status.REJECTED);
         friendshipRepository.save(request);
         return true;
     }
 
-    public List<User> getFriends(Long userId) {
-        List<Friendship> friendships = friendshipRepository.findByFromUserIdOrToUserIdAndStatus(userId, userId, Friendship.Status.ACCEPTED);
+    public List<User> getFriends(String userId) {
+        Optional<User> userOpt = userRepository.findByUserId(userId);
+        if (userOpt.isEmpty()) {
+            return List.of();
+        }
+        Long id = userOpt.get().getId();
+        List<Friendship> friendships = friendshipRepository.findByFromUser_IdOrToUser_IdAndStatus(id, id, Friendship.Status.ACCEPTED);
         return friendships.stream().map(f -> {
-            if (f.getFromUser().getId().equals(userId)) return f.getToUser();
+            if (f.getFromUser().getId().equals(id)) return f.getToUser();
             else return f.getFromUser();
         }).toList();
     }
 
-    public long getFriendCount(Long userId) {
+    public long getFriendCount(String userId) {
         return getFriends(userId).size();
     }
 } 

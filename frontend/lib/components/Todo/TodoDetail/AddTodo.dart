@@ -110,8 +110,8 @@ class _TodoDetailState extends State<AddTodo> {
 
   TextEditingController titleController = TextEditingController();
 
-  @override
-  Widget build(BuildContext context) {
+    @override
+    Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       // height: 386,
@@ -349,7 +349,7 @@ class _TodoDetailState extends State<AddTodo> {
                               style: TextStyle(fontSize: 12),
                             ),
                             const Text(
-                              '(최소 2시간 이상)',
+                              '(목표 시간 설정)',
                               style: TextStyle(fontSize: 8),
                             ),
                           ],
@@ -359,30 +359,16 @@ class _TodoDetailState extends State<AddTodo> {
                       const SizedBox(height: 15),
 
                       // 타이머 텍스트
-                      GestureDetector(
-                        onTap: () {
-                          showCupertinoDurationPicker(
-                            context: context,
-                            initialDuration: selectedDuration,
-                            onDurationPicked: (duration) {
-                              setState(() {
-                                selectedDuration = duration;
-                              });
-                            },
-                          );
-                        },
-                        child: Center(
-                          child: Text(
-                            '${selectedDuration.inHours.toString().padLeft(2, '0')} h  :  ${(selectedDuration.inMinutes % 60).toString().padLeft(2, '0')} m',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              letterSpacing: 2,
-                            ),
+                      const Center(
+                        child: Text(
+                          '00 h  :  00 m',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            letterSpacing: 2,
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 15),
 
                       // 사진 인증 체크박스

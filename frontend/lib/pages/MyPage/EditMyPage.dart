@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/constants/colors.dart';
 import 'package:get/get.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class EditMypageView extends StatefulWidget {
   const EditMypageView({super.key});
@@ -63,6 +65,20 @@ class _EditMypageViewState extends State<EditMypageView> {
     '부속연구소',
   ];
 
+  File? _profileImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,7 +94,7 @@ class _EditMypageViewState extends State<EditMypageView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
+                  children: const [
                     Text(
                       "학  생  증",
                       style: TextStyle(fontSize: 16, color: Colors.white),
@@ -90,7 +106,6 @@ class _EditMypageViewState extends State<EditMypageView> {
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
                   onTap: () {
-                    // 포커스 해제 + 편집 상태 종료
                     FocusScope.of(context).unfocus();
                     setState(() => editingField = null);
                   },
@@ -99,7 +114,7 @@ class _EditMypageViewState extends State<EditMypageView> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
                       children: [
-                        Spacer(),
+                        const Spacer(),
                         buildInputField("NAME", nameController),
                         buildInputField("ID", idController, editable: false),
                         buildInputField(
@@ -117,7 +132,7 @@ class _EditMypageViewState extends State<EditMypageView> {
                           setState(() => selectedCollege = val!);
                         }),
                         buildInputField("학과/학부", deptController),
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -129,7 +144,6 @@ class _EditMypageViewState extends State<EditMypageView> {
                                 ),
                               ),
                               onPressed: () {
-                                // 취소 동작
                                 FocusScope.of(context).unfocus();
                                 setState(() => editingField = null);
                                 Get.back();
@@ -150,10 +164,8 @@ class _EditMypageViewState extends State<EditMypageView> {
                                 ),
                               ),
                               onPressed: () {
-                                // 저장 동작
                                 FocusScope.of(context).unfocus();
                                 setState(() => editingField = null);
-                                // TODO: 저장 로직
                                 Get.back();
                               },
                               child: const Text(
@@ -171,7 +183,6 @@ class _EditMypageViewState extends State<EditMypageView> {
                   ),
                 ),
               ),
-
               Container(
                 width: double.infinity,
                 height: 55,
@@ -184,7 +195,6 @@ class _EditMypageViewState extends State<EditMypageView> {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Image.asset(
                       'assets/images/pnu_logo.png',
@@ -212,16 +222,27 @@ class _EditMypageViewState extends State<EditMypageView> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 125,
-                  height: 125,
-                  padding: const EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Color(0xFFF1F1F1), width: 1),
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: 125,
+                    height: 125,
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Color(0xFFF1F1F1), width: 1),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: _profileImage != null
+                          ? Image.file(_profileImage!, fit: BoxFit.cover)
+                          : Image.asset(
+                              'images/profile.jpg',
+                              fit: BoxFit.cover,
+                            ),
+                    ),
                   ),
-                  child: Image.asset('images/profile.jpg'),
                 ),
               ],
             ),
@@ -243,7 +264,7 @@ class _EditMypageViewState extends State<EditMypageView> {
       onTap: editable
           ? () {
               if (label == "Password") {
-                showPasswordCheckDialog(); // ✅ 다이얼로그 호출
+                showPasswordCheckDialog();
               } else {
                 setState(() => editingField = label);
               }
@@ -257,7 +278,7 @@ class _EditMypageViewState extends State<EditMypageView> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Color(0xFFDCDAE2), width: 2),
+          border: Border.all(color: const Color(0xFFDCDAE2), width: 2),
         ),
         child: Row(
           children: [
@@ -314,7 +335,7 @@ class _EditMypageViewState extends State<EditMypageView> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Color(0xFFDCDAE2), width: 1.5),
+        border: Border.all(color: const Color(0xFFDCDAE2), width: 1.5),
       ),
       child: Row(
         children: [
@@ -349,7 +370,6 @@ class _EditMypageViewState extends State<EditMypageView> {
     await showDialog(
       context: context,
       barrierDismissible: true,
-
       barrierColor: const Color(0xFF6E6E6E).withOpacity(0.2),
       builder: (context) {
         return StatefulBuilder(
@@ -361,7 +381,6 @@ class _EditMypageViewState extends State<EditMypageView> {
               elevation: 0,
               child: Container(
                 width: 310,
-
                 padding: const EdgeInsets.fromLTRB(23, 21, 23, 21),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -383,8 +402,6 @@ class _EditMypageViewState extends State<EditMypageView> {
                       style: TextStyle(fontSize: 14, color: SubTextColor),
                     ),
                     const SizedBox(height: 15),
-
-                    // 입력창 + 에러 밑줄
                     Container(
                       height: 45,
                       width: double.infinity,
@@ -405,13 +422,11 @@ class _EditMypageViewState extends State<EditMypageView> {
                           border: InputBorder.none,
                           isCollapsed: true,
                         ),
-                        style: TextStyle(fontSize: 16, color: TextColor),
+                        style: const TextStyle(fontSize: 16, color: TextColor),
                       ),
                     ),
-
-                    // 에러 메시지 표시
                     if (isError) ...[
-                      SizedBox(height: 5),
+                      const SizedBox(height: 5),
                       const Align(
                         alignment: Alignment.center,
                         child: Text(
@@ -419,27 +434,16 @@ class _EditMypageViewState extends State<EditMypageView> {
                           style: TextStyle(
                             color: Color(0xFFFF2C2C),
                             fontSize: 12,
-                            decoration: TextDecoration.underline, // 밑줄 추가
+                            decoration: TextDecoration.underline,
                             decorationColor: Color(0xFFFF2C2C),
                           ),
                         ),
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                     ] else
                       const SizedBox(height: 29),
-
                     GestureDetector(
                       onTap: () {
-                        // if (pwCheckController.text == pwController.text) {
-                        //   Navigator.pop(context);
-                        //   this.setState(() {
-                        //     editingField = "Password";
-                        //   });
-                        // } else {
-                        //   setState(() {
-                        //     isError = true;
-                        //   });
-                        // }
                         Navigator.pop(context);
                       },
                       child: const Text(
