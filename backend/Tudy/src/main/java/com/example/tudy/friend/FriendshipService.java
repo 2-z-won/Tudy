@@ -47,7 +47,7 @@ public class FriendshipService {
         Optional<Friendship> requestOpt = friendshipRepository.findById(requestId);
         if (requestOpt.isEmpty()) return false;
         Friendship request = requestOpt.get();
-        if (!request.getToUser().getId().equals(userId) || request.getStatus() != Friendship.Status.PENDING) return false;
+        if (!request.getToUser().getUserId().equals(userId) || request.getStatus() != Friendship.Status.PENDING) return false;
         request.setStatus(Friendship.Status.ACCEPTED);
         friendshipRepository.save(request);
         return true;
@@ -58,7 +58,7 @@ public class FriendshipService {
         Optional<Friendship> requestOpt = friendshipRepository.findById(requestId);
         if (requestOpt.isEmpty()) return false;
         Friendship request = requestOpt.get();
-        if (!request.getToUser().getId().equals(userId) || request.getStatus() != Friendship.Status.PENDING) return false;
+        if (!request.getToUser().getUserId().equals(userId) || request.getStatus() != Friendship.Status.PENDING) return false;
         request.setStatus(Friendship.Status.REJECTED);
         friendshipRepository.save(request);
         return true;

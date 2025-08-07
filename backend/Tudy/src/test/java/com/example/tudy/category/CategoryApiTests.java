@@ -45,7 +45,7 @@ public class CategoryApiTests {
         int color = 2;
         // 카테고리 생성
         String reqJson = "{" +
-                "\"userId\":" + user.getId() + "," +
+                "\"userId\":\"" + user.getUserId() + "\"," +
                 "\"name\":\"" + name + "\"," +
                 "\"color\":2" +
                 "}";
@@ -56,14 +56,14 @@ public class CategoryApiTests {
                 .andExpect(jsonPath("$.name").value(name));
         // 중복 체크
         mockMvc.perform(get("/api/categories/exists")
-                .param("userId", user.getId().toString())
+                .param("userId", user.getUserId())
                 .param("name", name))
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
         // 전체 목록
         mockMvc.perform(get("/api/categories")
-                .param("userId", user.getId().toString()))
+                .param("userId", user.getUserId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value(name));
     }
-} 
+}
