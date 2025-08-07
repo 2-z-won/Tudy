@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/friends")
+@RequestMapping("/api/friends")
 public class FriendshipController {
     private final FriendshipService friendshipService;
 

@@ -91,7 +91,7 @@ public class GroupController {
         }
     }
 
-    @GetMapping("/user/{userId}/groups")
+    @GetMapping("/user/{userId}")
     @Operation(summary = "Get user's groups")
     @ApiResponse(responseCode = "200", description = "User's groups retrieved")
     public ResponseEntity<?> getUserGroups(@PathVariable String userId) {
