@@ -46,7 +46,7 @@ public class GoalController {
     @GetMapping
     @Operation(summary = "List goals")
     @ApiResponse(responseCode = "200", description = "Goals listed")
-    public ResponseEntity<List<Goal>> list(@RequestParam Long userId, @RequestParam(required = false) String categoryName) {
+    public ResponseEntity<List<Goal>> list(@RequestParam String userId, @RequestParam(required = false) String categoryName) {
         return ResponseEntity.ok(goalService.listGoals(userId, categoryName));
     }
 
@@ -91,7 +91,7 @@ public class GoalController {
 
     @Data
     private static class GoalRequest {
-        @Schema(description = "User ID", example = "1")
+        @Schema(description = "User ID", example = "user1")
         private String userId;
         @Schema(description = "Goal title", example = "스터디 목표")
         private String title;
