@@ -51,7 +51,7 @@ public class GoalApiTests {
         String endDate = LocalDate.now().plusDays(7).toString();
         // 목표 생성
         String reqJson = "{" +
-                "\"userId\":" + user.getId() + "," +
+                "\"userId\":\"" + user.getUserId() + "\"," +
                 "\"title\":\"" + title + "\"," +
                 "\"categoryName\":\"" + categoryName + "\"," +
                 "\"startDate\":\"" + startDate + "\"," +
@@ -68,7 +68,7 @@ public class GoalApiTests {
                 .andExpect(jsonPath("$.title").value(title));
         // 카테고리명으로 조회
         mockMvc.perform(get("/api/goals")
-                .param("userId", user.getId().toString())
+                .param("userId", user.getUserId())
                 .param("categoryName", categoryName))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title").value(title));
@@ -81,7 +81,7 @@ public class GoalApiTests {
                 "사진테스터", "2000.01.01", "컴퓨터공학", "공과대학", null, 0));
 
         String reqJson = "{" +
-                "\"userId\":" + user.getId() + "," +
+                "\"userId\":\"" + user.getUserId() + "\"," +
                 "\"title\":\"title\"," +
                 "\"categoryName\":\"cat\"," +
                 "\"startDate\":\"" + LocalDate.now() + "\"," +
@@ -111,7 +111,7 @@ public class GoalApiTests {
                 "시간테스터", "2000.01.01", "컴퓨터공학", "공과대학", null, 0));
 
         String reqJson = "{" +
-                "\"userId\":" + user.getId() + "," +
+                "\"userId\":\"" + user.getUserId() + "\"," +
                 "\"title\":\"title\"," +
                 "\"categoryName\":\"cat\"," +
                 "\"startDate\":\"" + LocalDate.now() + "\"," +

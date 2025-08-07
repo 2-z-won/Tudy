@@ -8,8 +8,10 @@ import com.example.tudy.category.Category;
 import com.example.tudy.category.CategoryRepository;
 import com.example.tudy.study.StudySession;
 import com.example.tudy.study.StudySessionRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,74 +25,88 @@ public class GoalService {
     private final StudySessionRepository studySessionRepository;
     private static final int REWARD_COINS = 10;
 
-    public Goal createGoal(String userId, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType) {
-        User user = userRepository.findByUserId(userId).orElseThrow();
-        Category category = getOrCreateCategory(user, categoryName);
+    @Transactional
+    public Goal createGoal(GoalCreateRequest request) {
+        User user = userRepository.findByUserId(request.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + request.getUserId()));
+
+        Category category = getOrCreateCategory(user, request.getCategoryName());
+
+        // 1. Goal 객체 생성
         Goal goal = new Goal();
         goal.setUser(user);
-        goal.setTitle(title);
+        goal.setTitle(request.getTitle());
         goal.setCategory(category);
-        goal.setStartDate(startDate);
-        goal.setEndDate(endDate);
-        goal.setIsGroupGoal(isGroupGoal);
-        goal.setGroupId(groupId);
-        goal.setIsFriendGoal(isFriendGoal);
-        goal.setFriendName(friendName);
-        goal.setProofType(proofType);
-        // 시간 인증 목표는 누적 2시간 이상이면 자동 완료
-        if (proofType == Goal.ProofType.TIME && getTotalDuration(goal) >= 7200) {
-            goal.setCompleted(true);
-        }
-        Goal savedGoal = goalRepository.save(goal);
-        // 그룹 목표라면 그룹원 모두에게 동일 목표 생성
-        if (Boolean.TRUE.equals(isGroupGoal) && groupId != null) {
-            for (GroupMember member : groupMemberRepository.findAllByGroupId(groupId)) {
-                if (!member.getUser().getId().equals(userId)) {
-                    Category memberCategory = getOrCreateCategory(member.getUser(), categoryName);
+        goal.setStartDate(request.getStartDate());
+        goal.setEndDate(request.getEndDate());
+        goal.setIsGroupGoal(request.getIsGroupGoal());
+        goal.setGroupId(request.getGroupId());
+        goal.setIsFriendGoal(request.getIsFriendGoal());
+        goal.setFriendName(request.getFriendName());
+        goal.setProofType(request.getProofType());
+        goal.setTargetTime(request.getTargetTime());
+
+        // 2. 기본 goal 즉시 저장
+        goalRepository.save(goal);
+
+        // 3. 그룹 목표가 있다면 저장
+        if (Boolean.TRUE.equals(request.getIsGroupGoal()) && request.getGroupId() != null) {
+            for (GroupMember member : groupMemberRepository.findAllByGroupId(request.getGroupId())) {
+                if (!member.getUser().getId().equals(user.getId())) {
+                    Category memberCategory = getOrCreateCategory(member.getUser(), request.getCategoryName());
                     Goal groupGoal = new Goal();
                     groupGoal.setUser(member.getUser());
-                    groupGoal.setTitle(title);
+                    groupGoal.setTitle(request.getTitle());
                     groupGoal.setCategory(memberCategory);
-                    groupGoal.setStartDate(startDate);
-                    groupGoal.setEndDate(endDate);
+                    groupGoal.setStartDate(request.getStartDate());
+                    groupGoal.setEndDate(request.getEndDate());
                     groupGoal.setIsGroupGoal(true);
-                    groupGoal.setGroupId(groupId);
+                    groupGoal.setGroupId(request.getGroupId());
                     groupGoal.setIsFriendGoal(false);
                     groupGoal.setFriendName(null);
-                    groupGoal.setProofType(proofType);
-                    if (proofType == Goal.ProofType.TIME && getTotalDuration(groupGoal) >= 7200) {
-                        groupGoal.setCompleted(true);
-                    }
+                    groupGoal.setProofType(request.getProofType());
+                    groupGoal.setTargetTime(request.getTargetTime());
                     goalRepository.save(groupGoal);
                 }
             }
         }
-        // 친구와 함께하기 기능 (isFriendGoal이 true이고 friendName이 있을 때만)
-        if (Boolean.TRUE.equals(isFriendGoal) && friendName != null && !friendName.isBlank()) {
-            userRepository.findByUserId(friendName).ifPresent(friend -> {
-                Category friendCategory = getOrCreateCategory(friend, categoryName);
+
+        // 4. 친구 목표가 있다면 저장
+        if (Boolean.TRUE.equals(request.getIsFriendGoal()) && request.getFriendName() != null && !request.getFriendName().isBlank()) {
+            userRepository.findByUserId(request.getFriendName()).ifPresent(friend -> {
+                Category friendCategory = getOrCreateCategory(friend, request.getCategoryName());
                 Goal friendGoal = new Goal();
                 friendGoal.setUser(friend);
-                friendGoal.setTitle(title);
+                friendGoal.setTitle(request.getTitle());
                 friendGoal.setCategory(friendCategory);
-                friendGoal.setStartDate(startDate);
-                friendGoal.setEndDate(endDate);
+                friendGoal.setStartDate(request.getStartDate());
+                friendGoal.setEndDate(request.getEndDate());
                 friendGoal.setIsGroupGoal(false);
                 friendGoal.setGroupId(null);
                 friendGoal.setIsFriendGoal(true);
                 friendGoal.setFriendName(user.getUserId());
-                friendGoal.setProofType(proofType);
-                if (proofType == Goal.ProofType.TIME && getTotalDuration(friendGoal) >= 7200) {
-                    friendGoal.setCompleted(true);
-                }
+                friendGoal.setProofType(request.getProofType());
+                friendGoal.setTargetTime(request.getTargetTime());
                 goalRepository.save(friendGoal);
             });
         }
-        return savedGoal;
+
+        // 5. 저장된 goal로부터 총 수행 시간 계산
+        long totalDuration = getTotalDuration(goal);
+        goal.setTotalDuration(totalDuration);
+
+        // 시간 인증 목표는 설정된 목표 시간 이상이면 자동 완료
+        if (request.getProofType() == Goal.ProofType.TIME && request.getTargetTime() != null && totalDuration >= request.getTargetTime()) {
+            goal.setCompleted(true);
+        }
+
+        // 6. 최종 업데이트 후 반환
+        return goalRepository.save(goal);
     }
 
-    public Goal updateGoal(Long id, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType) {
-        Goal goal = goalRepository.findById(id).orElseThrow();
+    public Goal updateGoal(Long id, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType, Integer targetTime) {
+        Goal goal = goalRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
         Category category = getOrCreateCategory(goal.getUser(), categoryName);
         goal.setTitle(title);
         goal.setCategory(category);
@@ -101,7 +117,8 @@ public class GoalService {
         goal.setIsFriendGoal(isFriendGoal);
         goal.setFriendName(friendName);
         goal.setProofType(proofType);
-        if (proofType == Goal.ProofType.TIME && getTotalDuration(goal) >= 7200) {
+        goal.setTargetTime(targetTime);
+        if (proofType == Goal.ProofType.TIME && targetTime != null && getTotalDuration(goal) >= targetTime) {
             goal.setCompleted(true);
         }
         Goal savedGoal = goalRepository.save(goal);
@@ -109,14 +126,16 @@ public class GoalService {
     }
 
     public Goal deleteGoal(Long id) {
-        Goal goal = goalRepository.findById(id).orElseThrow();
+        Goal goal = goalRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
         goalRepository.delete(goal);
         return goal;
     }
 
     // 이미지 인증 목표의 proofImage 업로드 및 인증 처리
     public Goal completeImageProofGoal(Long id, String proofImage) {
-        Goal goal = goalRepository.findById(id).orElseThrow();
+        Goal goal = goalRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
         if (goal.getProofType() != Goal.ProofType.IMAGE) {
             throw new IllegalStateException("이미지 인증 목표가 아닙니다.");
         }
@@ -133,42 +152,46 @@ public class GoalService {
         return goal;
     }
 
-    private int getTotalDuration(Goal goal) {
+    private long getTotalDuration(Goal goal) {
         return studySessionRepository.findByGoal(goal).stream()
                 .filter(s -> s.getDuration() != null)
-                .mapToInt(StudySession::getDuration)
+                .mapToLong(StudySession::getDuration)
                 .sum();
     }
 
-    public List<Goal> listGoals(Long userId, String categoryName) {
-        User user = userRepository.findById(userId).orElseThrow();
+    public List<Goal> listGoals(String userId, String categoryName) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         if (categoryName == null) {
             return goalRepository.findByUser(user);
         } else {
             Category category = categoryRepository.findByUserAndName(user, categoryName)
-                    .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Category not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
             return goalRepository.findByUserAndCategory(user, category);
         }
     }
 
     public List<Goal> listGoalsByDate(String userId, java.time.LocalDate date, String categoryName) {
-        User user = userRepository.findByUserId(userId).orElseThrow();
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         if (categoryName == null) {
             return goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date, date);
         } else {
             Category category = categoryRepository.findByUserAndName(user, categoryName)
-                    .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Category not found"));
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
             return goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqualAndCategory(user, date, date, category);
         }
     }
 
     public List<Goal> listGroupGoals(String userId) {
-        User user = userRepository.findByUserId(userId).orElseThrow();
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         return goalRepository.findByUserAndIsGroupGoalTrue(user);
     }
 
     public List<Goal> listFriendGoals(String userId) {
-        User user = userRepository.findByUserId(userId).orElseThrow();
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         return goalRepository.findByUserAndIsFriendGoalTrue(user);
     }
 
