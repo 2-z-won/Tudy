@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -31,6 +32,13 @@ public class GoalService {
     public Goal createGoal(GoalCreateRequest request) {
         User user = userRepository.findByUserId(request.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + request.getUserId()));
+
+        // targetTime 검증 추가
+        if (request.getProofType() == Goal.ProofType.TIME && request.getTargetTime() != null) {
+            if (request.getTargetTime() < 7200) { // 최소 2시간 (7200초)
+                throw new IllegalArgumentException("목표 시간은 최소 2시간(7200초) 이상이어야 합니다.");
+            }
+        }
 
         Category category = getOrCreateCategory(user, request.getCategoryName());
 
@@ -110,9 +118,17 @@ public class GoalService {
         return goalRepository.save(goal);
     }
 
-    public Goal updateGoal(Long id, String title, String categoryName, java.time.LocalDate startDate, java.time.LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType, Integer targetTime) {
+    public Goal updateGoal(Long id, String title, String categoryName, LocalDate startDate, LocalDate endDate, Boolean isGroupGoal, Long groupId, Boolean isFriendGoal, String friendName, Goal.ProofType proofType, Integer targetTime) {
         Goal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
+        
+        // targetTime 검증 추가
+        if (proofType == Goal.ProofType.TIME && targetTime != null) {
+            if (targetTime < 7200) { // 최소 2시간 (7200초)
+                throw new IllegalArgumentException("목표 시간은 최소 2시간(7200초) 이상이어야 합니다.");
+            }
+        }
+        
         Category category = getOrCreateCategory(goal.getUser(), categoryName);
         goal.setTitle(title);
         goal.setCategory(category);
@@ -181,7 +197,7 @@ public class GoalService {
         }
     }
 
-    public List<Goal> listGoalsByDate(String userId, java.time.LocalDate date, String categoryName) {
+    public List<Goal> listGoalsByDate(String userId, LocalDate date, String categoryName) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         if (categoryName == null) {
@@ -193,12 +209,6 @@ public class GoalService {
         }
     }
 
-    public List<Goal> listGroupGoals(String userId) {
-        User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        return goalRepository.findByUserAndIsGroupGoalTrue(user);
-    }
-
     private Category getOrCreateCategory(User user, String categoryName) {
         return categoryRepository.findByUserAndName(user, categoryName)
                 .orElseGet(() -> {
@@ -208,5 +218,21 @@ public class GoalService {
                     category.setColor(1); // 기본 색상(1)로 생성, 필요시 파라미터로 받을 수 있음
                     return categoryRepository.save(category);
                 });
+    }
+
+    // GoalCreateRequest DTO 클래스 추가
+    @lombok.Data
+    public static class GoalCreateRequest {
+        private String userId;
+        private String title;
+        private String categoryName;
+        private LocalDate startDate;
+        private LocalDate endDate;
+        private Boolean isGroupGoal;
+        private Long groupId;
+        private Boolean isFriendGoal;
+        private String friendName;
+        private Goal.ProofType proofType;
+        private Integer targetTime;
     }
 }

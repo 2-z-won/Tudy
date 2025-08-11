@@ -15,7 +15,8 @@ public class FriendshipService {
     private final UserRepository userRepository;
     private final GoalRepository goalRepository;
 
-    public FriendshipService(FriendshipRepository friendshipRepository, UserRepository userRepository, GoalRepository goalRepository) {
+    public FriendshipService(FriendshipRepository friendshipRepository, UserRepository userRepository, 
+                           GoalRepository goalRepository) {
         this.friendshipRepository = friendshipRepository;
         this.userRepository = userRepository;
         this.goalRepository = goalRepository;
