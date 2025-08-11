@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 //TODO 모델
 class SubTodo {
+  final int goalId;
   final String goalTitle;
   final bool isGroup;
   final bool isDone;
@@ -9,6 +10,7 @@ class SubTodo {
   final bool isTimerRequired;
 
   SubTodo({
+    required this.goalId,
     required this.goalTitle,
     required this.isGroup,
     required this.isDone,
@@ -21,10 +23,12 @@ class TodoItem {
   final String category; // 카테고리명
   final List<SubTodo> subTodos; // 목표 리스트
   final Color mainColor;
+  final Color subColor;
 
   TodoItem({
     required this.category,
     required this.subTodos,
     required this.mainColor,
+    required this.subColor,
   });
 }

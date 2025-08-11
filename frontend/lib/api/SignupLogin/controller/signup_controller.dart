@@ -6,6 +6,7 @@ import 'package:frontend/api/SignupLogin/model/signup_model.dart';
 import 'package:http/http.dart' as http;
 
 class SignUpController extends GetxController {
+  final emailController = TextEditingController();
   final nameController = TextEditingController();
   final idController = TextEditingController();
   final pwController = TextEditingController();
@@ -23,6 +24,7 @@ class SignUpController extends GetxController {
     errorMessage.value = '';
 
     final user = UserModel(
+      email: emailController.text,
       id: idController.text,
       password: pwController.text,
       name: nameController.text,
@@ -62,9 +64,6 @@ class SignUpController extends GetxController {
       return;
     }
 
-    // 아이디 중복 확인은 백엔드에서 따로 제공되는 API가 필요함
-    // 이 부분은 일반적으로 별도 버튼/요청으로 처리
-
     try {
       final response = await http.post(
         Uri.parse('${Urls.apiUrl}users/signup'),
@@ -76,7 +75,17 @@ class SignUpController extends GetxController {
         Get.offAllNamed('/login');
       } else {
         final data = json.decode(response.body);
-        errorMessage.value = data['message'] ?? "회원가입에 실패했습니다.";
+        final message = data['message'] ?? '';
+
+        if (message == "Email already exists") {
+          errorMessage.value = "이미 사용 중인 이메일입니다.";
+        } else if (message == "UserId already exists") {
+          errorMessage.value = "이미 사용 중인 아이디입니다.";
+        } else if (message == "Name already exists") {
+          errorMessage.value = "이미 사용 중인 이름입니다.";
+        } else {
+          errorMessage.value = "회원가입에 실패했습니다.";
+        }
       }
     } catch (e) {
       errorMessage.value = "서버와 연결할 수 없습니다.";

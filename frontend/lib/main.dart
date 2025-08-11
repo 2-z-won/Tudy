@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/api/SignupLogin/controller/login_controller.dart';
 import 'package:get/get.dart';
 import 'package:frontend/pages/MainPage.dart';
 import 'package:frontend/router/main_router.dart';
 import 'package:frontend/constants/colors.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
+  Get.put(LoginController());
   runApp(const MyApp());
 }
 
@@ -20,6 +23,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Flutter Demo',
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''), // English, no country code
+        Locale('ko', ''),
+      ],
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -39,7 +50,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         scaffoldBackgroundColor: MainColor,
       ),
-      initialRoute: '/main',
+      initialRoute: '/login',
       getPages: MainRouter.routes,
       home: const MainPageView(),
     );

@@ -8,12 +8,13 @@ class TodoDetail extends StatelessWidget {
   final String group;
   final Color mainColor; // ✅ 메인색
   final Color subColor;
-    final String certificationType;
-    final String goalText; // ✅ 목표 내용
-    final bool done; // ✅ 완료 여부
-    final int? targetTime; // 목표 시간(초)
+  final String certificationType;
+  final String goalText; // ✅ 목표 내용
+  final bool done; // ✅ 완료 여부
+  final int? targetTime; // 목표 시간(초)
+  final int goalId;
 
-    const TodoDetail({
+  const TodoDetail({
     super.key,
     required this.onClose,
     required this.category,
@@ -22,9 +23,10 @@ class TodoDetail extends StatelessWidget {
     required this.subColor,
     required this.certificationType,
     required this.goalText,
-      required this.done,
-      this.targetTime,
-    });
+    required this.done,
+    this.targetTime,
+    required this.goalId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +107,7 @@ class TodoDetail extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(15, 12, 15, 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -123,7 +126,7 @@ class TodoDetail extends StatelessWidget {
                           children: [
                             const SizedBox(width: 5),
                             const CheckIcon(),
-                            const SizedBox(width: 7),
+                            const SizedBox(width: 5),
                             const Text(
                               '시간 측정 ',
                               style: TextStyle(
@@ -131,30 +134,21 @@ class TodoDetail extends StatelessWidget {
                                 color: Colors.black,
                               ),
                             ),
-                            Text(
-                              targetTime != null
-                                  ? '(목표 ${targetTime! ~/ 3600}h ${(targetTime! % 3600) ~/ 60}m)'
-                                  : '',
-                              style: const TextStyle(
-                                fontSize: 8,
-                                color: Colors.black,
-                              ),
-                            ),
                           ],
                         ),
+                        const SizedBox(height: 13),
                         Center(
                           child: Text(
                             targetTime != null
-                                ? '${targetTime! ~/ 3600} h  :  ${(targetTime! % 3600) ~/ 60} m'
-                                : '00 h  :  00 m',
+                                ? '(목표 ${targetTime! ~/ 3600}h ${(targetTime! % 3600) ~/ 60}m)'
+                                : '',
                             style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              letterSpacing: 2,
+                              fontSize: 8,
+                              color: Colors.black,
                             ),
                           ),
                         ),
-                      ] else if (certificationType == 'photo') ...[
+                      ] else if (certificationType == 'photo' && done) ...[
                         Row(
                           children: const [
                             SizedBox(width: 5),
@@ -169,6 +163,22 @@ class TodoDetail extends StatelessWidget {
                             ),
                           ],
                         ),
+                      ] else if (certificationType == 'photo' && !done) ...[
+                        Row(
+                          children: const [
+                            SizedBox(width: 5),
+                            CheckIcon(),
+                            SizedBox(width: 7),
+                            Text(
+                              '사진 인증',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Center(child: Icon(Icons.add_a_photo, size: 24)),
                       ],
                     ],
                   ),
@@ -181,8 +191,10 @@ class TodoDetail extends StatelessWidget {
                     style: TextStyle(color: Colors.black, fontSize: 14),
                   ),
                 ] else if (certificationType == 'time') ...[
-                  Text("🍀 목표 완료까지 ${targetTime != null ? '${targetTime! ~/ 3600}h ${(targetTime! % 3600) ~/ 60}m' : '##h ##m'} 남았어요 🍀",
-                      style: const TextStyle(color: Colors.black, fontSize: 14)),
+                  Text(
+                    "🍀 목표 완료까지 ${targetTime != null ? '${targetTime! ~/ 3600}h ${(targetTime! % 3600) ~/ 60}m' : '##h ##m'} 남았어요 🍀",
+                    style: const TextStyle(color: Colors.black, fontSize: 14),
+                  ),
                 ] else if (certificationType == 'photo') ...[
                   const Text(
                     "🍀 사진을 찍어 목표 달성 인증 해주세요 🍀",

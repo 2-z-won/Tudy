@@ -13,6 +13,14 @@ class SingupPage extends StatefulWidget {
 class _SingupPageState extends State<SingupPage> {
   final SignUpController controller = Get.put(SignUpController());
 
+  @override
+  void initState() {
+    super.initState();
+    // ✅ 전달된 이메일 가져와서 컨트롤러에 넣기
+    final email = Get.arguments as String? ?? '';
+    controller.emailController.text = email;
+  }
+
   Widget buildCollegeField() {
     final List<String> colleges = [
       '치의학전문대학원',
@@ -113,17 +121,16 @@ class _SingupPageState extends State<SingupPage> {
             const SizedBox(height: 90),
 
             buildInputField(
-              title: "NAME",
+              title: "NICKNAME",
               controller: controller.nameController,
               obscureText: false,
             ),
             //
             const SizedBox(height: 20),
-            buildInputButtonField(
-              title: "NAME",
+            buildInputField(
+              title: "ID",
               controller: controller.idController,
               obscureText: false,
-              button: "중복확인",
             ),
             //
             const SizedBox(height: 20),
@@ -164,6 +171,7 @@ class _SingupPageState extends State<SingupPage> {
                           color: Color(0xFFE94F4F),
                           fontSize: 12,
                           decoration: TextDecoration.underline,
+                          decorationColor: Color(0xFFE94F4F),
                         ),
                       ),
                     );
@@ -171,8 +179,8 @@ class _SingupPageState extends State<SingupPage> {
             const SizedBox(height: 27),
             buildButton(
               button: "SIGN UP",
-              onTap: () {
-                Get.toNamed("/login");
+              onTap: () async {
+                controller.signUp();
               },
             ),
           ],

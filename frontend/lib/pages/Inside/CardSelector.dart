@@ -2,32 +2,63 @@
 import 'package:flutter/material.dart';
 
 class StudyRoomSelector extends StatelessWidget {
+  final String? selectedCardName;
+  final void Function(String?) onCardTap;
+
+  StudyRoomSelector({
+    required this.onCardTap,
+    required this.selectedCardName,
+    super.key,
+  });
+
   final List<Map<String, dynamic>> rooms = [
-    {'name': '학과사무실', 'image': 'images/profile.jpg', 'locked': false},
-    {
-      'name': '과방',
-      'image': 'images/profile.jpg',
-      'locked': true,
-      'price': 1000,
-    },
-    {'name': '강의실', 'image': 'images/profile.jpg', 'locked': false},
-    {'name': '학과사무실', 'image': 'images/profile.jpg', 'locked': false},
-    {
-      'name': '과방',
-      'image': 'images/profile.jpg',
-      'locked': true,
-      'price': 1000,
-    },
-    {'name': '강의실', 'image': 'images/profile.jpg', 'locked': false},
+    {'name': '1', 'image': 'images/profile.jpg', 'locked': false},
+    {'name': '2', 'image': 'images/profile.jpg', 'locked': false},
+    {'name': '3', 'image': 'images/profile.jpg', 'locked': false},
+    {'name': '4', 'image': 'images/profile.jpg', 'locked': false},
+    {'name': '5', 'image': 'images/profile.jpg', 'locked': false},
   ];
 
-  StudyRoomSelector({super.key});
+  // final List<Map<String, dynamic>> rooms = [
+  //   {'name': '학과사무실', 'image': 'images/profile.jpg', 'locked': false},
+  //   {
+  //     'name': '과방',
+  //     'image': 'images/profile.jpg',
+  //     'locked': true,
+  //     'price': 1000,
+  //   },
+  //   {'name': '강의실', 'image': 'images/profile.jpg', 'locked': false},
+  //   {'name': '학과사무실', 'image': 'images/profile.jpg', 'locked': false},
+  //   {
+  //     'name': '과방',
+  //     'image': 'images/profile.jpg',
+  //     'locked': true,
+  //     'price': 1000,
+  //   },
+  //   {'name': '강의실', 'image': 'images/profile.jpg', 'locked': false},
+  // ];
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: rooms.map((room) => _buildRoomCard(room)).toList(),
+      children: rooms.map((room) {
+        return Transform.translate(
+          offset: room['name'] == selectedCardName
+              ? Offset(0, -6)
+              : Offset.zero,
+          child: GestureDetector(
+            onTap: () {
+              if (room['name'] == selectedCardName) {
+                onCardTap(null); // 🔸 같은 카드 다시 누르면 선택 해제
+              } else {
+                onCardTap(room['name']); // 🔸 다른 카드 선택
+              }
+            },
+            child: _buildRoomCard(room),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -43,7 +74,7 @@ class StudyRoomSelector extends StatelessWidget {
                 height: 90,
                 padding: EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                  color: Color(0xFF433123),
+                  color: Color.fromARGB(255, 156, 131, 111),
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: RoomCard(room['image']),

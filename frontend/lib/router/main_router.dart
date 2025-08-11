@@ -8,6 +8,7 @@ import 'package:frontend/pages/MyPage/FriendPage.dart';
 import 'package:frontend/pages/MyPage/GroupPage.dart';
 import 'package:frontend/pages/MyPage/MyPage.dart';
 import 'package:frontend/pages/TodoPage.dart';
+import 'package:frontend/pages/stopwatchPage.dart';
 import 'package:get/get.dart';
 import 'package:frontend/pages/stopwatchPage.dart';
 
@@ -64,7 +65,7 @@ class MainRouter {
     ),
     GetPage(
       name: '/stopwatch',
-      page: () => NoLayout(child: StopwatchPage()),
+      page: () => NavigationLayout(child: StopwatchPage()),
     ),
   ];
 }

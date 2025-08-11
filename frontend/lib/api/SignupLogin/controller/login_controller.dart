@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:frontend/constants/url.dart';
 import 'package:frontend/api/SignupLogin/model/login_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginController extends GetxController {
   final idController = TextEditingController();
@@ -30,6 +31,12 @@ class LoginController extends GetxController {
       );
 
       if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print(response.body);
+
+        var accessToken = data['token'];
+        await saveTokens(accessToken, idController.text);
+
         Get.offAllNamed('/main');
       } else {
         final data = json.decode(response.body);
@@ -38,5 +45,23 @@ class LoginController extends GetxController {
     } catch (e) {
       errorMessage.value = "서버와 연결할 수 없습니다.";
     }
+  }
+
+  Future<void> saveTokens(String accessToken, String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('access_token', accessToken);
+    await prefs.setString('user_id', userId);
+  }
+
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('access_token');
+    await prefs.remove('user_id');
+
+    idController.clear();
+    pwController.clear();
+
+    // 로그인 페이지로 이동 (뒤로가기 방지)
+    Get.offAllNamed('/login');
   }
 }

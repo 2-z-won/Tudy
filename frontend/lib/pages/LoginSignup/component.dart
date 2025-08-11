@@ -117,30 +117,53 @@ Widget buildInputButtonField({
   );
 }
 
-Widget buildButton({
-  required String button,
-  required VoidCallback onTap, // 클릭 시 실행할 함수
-}) {
-  return GestureDetector(
-    onTap: onTap, // 클릭 이벤트 처리
-    child: Container(
-      width: double.infinity,
-      height: 45,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF6E5),
-        border: Border.all(color: const Color(0xFFE1DDD4), width: 2),
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: Center(
-        child: Text(
-          button,
-          style: const TextStyle(
-            fontSize: 20,
-            color: Color(0xFF6E6E6E),
-            fontWeight: FontWeight.bold,
+Widget buildButton({required String button, required VoidCallback onTap}) {
+  return _PressableButton(button: button, onTap: onTap);
+}
+
+class _PressableButton extends StatefulWidget {
+  final String button;
+  final VoidCallback onTap;
+
+  const _PressableButton({required this.button, required this.onTap});
+
+  @override
+  State<_PressableButton> createState() => _PressableButtonState();
+}
+
+class _PressableButtonState extends State<_PressableButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          width: double.infinity,
+          height: 45,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF6E5),
+            border: Border.all(color: const Color(0xFFE1DDD4), width: 2),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: Center(
+            child: Text(
+              widget.button,
+              style: const TextStyle(
+                fontSize: 20,
+                color: Color(0xFF6E6E6E),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

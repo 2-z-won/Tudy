@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/api/Todo/TodoItem.dart';
 import '../Todo/TodoGroupHeader.dart';
 import '../Todo/TodoList.dart';
+import 'package:frontend/components/Todo/TodoColor.dart';
 
 Color getSubColor(Color mainColor) {
   final r = mainColor.red;
@@ -40,7 +41,7 @@ class Todo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color mainColor = todoItem.mainColor;
-    final Color subColor = getSubColor(mainColor);
+    final Color subColor = todoItem.subColor;
 
     final doneCount = todoItem.subTodos.where((t) => t.isDone).length;
     final failCount = todoItem.subTodos.where((t) => !t.isDone).length;
@@ -57,31 +58,42 @@ class Todo extends StatelessWidget {
             onHeaderTap(todoItem.category, mainColor, subColor);
           },
         ),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: todoItem.subTodos.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 5),
-          itemBuilder: (context, index) {
-            final sub = todoItem.subTodos[index];
-            return GestureDetector(
-              onTap: () {
-                onItemTap(
-                  category: todoItem.category,
-                  subTodo: sub,
-                  mainColor: mainColor,
-                  subColor: subColor,
-                );
-              },
-              child: TodoItemCard(
-                text: sub.goalTitle,
-                isGroup: sub.isGroup,
-                isDone: sub.isDone,
-                subColor: subColor,
+        todoItem.subTodos.isEmpty
+            ? Padding(
+                padding: const EdgeInsets.only(left: 10, bottom: 10),
+                child: Center(
+                  child: Text(
+                    '아직 등록된 목표가 없습니다.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ),
+              )
+            : ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: todoItem.subTodos.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 6),
+                itemBuilder: (context, index) {
+                  final sub = todoItem.subTodos[index];
+                  return GestureDetector(
+                    onTap: () {
+                      onItemTap(
+                        category: todoItem.category,
+                        subTodo: sub,
+                        mainColor: mainColor,
+                        subColor: subColor,
+                      );
+                    },
+                    child: TodoItemCard(
+                      text: sub.goalTitle,
+                      isGroup: sub.isGroup,
+                      isDone: sub.isDone,
+                      subColor: subColor,
+                    ),
+                  );
+                },
               ),
-            );
-          },
-        ),
+        SizedBox(height: 8),
       ],
     );
   }
