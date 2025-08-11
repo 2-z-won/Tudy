@@ -1,5 +1,7 @@
 package com.example.tudy.group;
 
+import com.example.tudy.goal.Goal;
+import com.example.tudy.goal.GoalRepository;
 import com.example.tudy.user.User;
 import com.example.tudy.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ public class GroupService {
     private final UserRepository userRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final GroupJoinRequestRepository groupJoinRequestRepository;
+    private final GoalRepository goalRepository;
 
     public Group createGroup(String name, String password, String ownerId) {
         User owner = userRepository.findByUserId(ownerId)
@@ -145,12 +148,13 @@ public class GroupService {
         return groupJoinRequestRepository.findByGroupAndStatusOrderByCreatedAtDesc(group, GroupJoinRequest.RequestStatus.PENDING);
     }
 
-    public List<GroupInfo> getUserGroups(String userId) {
+    public UserGroupsAndGoalsResponse getUserGroupsAndGoals(String userId) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         
+        // 사용자의 그룹 정보 조회
         List<GroupMember> memberships = groupMemberRepository.findByUser(user);
-        return memberships.stream()
+        List<GroupInfo> groups = memberships.stream()
                 .map(membership -> {
                     Group group = membership.getGroup();
                     return new GroupInfo(
@@ -159,8 +163,12 @@ public class GroupService {
                     );
                 })
                 .toList();
+        
+        // 사용자의 그룹 목표 조회
+        List<Goal> groupGoals = goalRepository.findByUserAndIsGroupGoalTrue(user);
+        
+        return new UserGroupsAndGoalsResponse(groups, groupGoals);
     }
-
 
     public static class GroupInfo {
         private Long id;
@@ -177,5 +185,22 @@ public class GroupService {
         
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
+    }
+
+    public static class UserGroupsAndGoalsResponse {
+        private List<GroupInfo> groups;
+        private List<Goal> groupGoals;
+
+        public UserGroupsAndGoalsResponse(List<GroupInfo> groups, List<Goal> groupGoals) {
+            this.groups = groups;
+            this.groupGoals = groupGoals;
+        }
+
+        // Getters and Setters
+        public List<GroupInfo> getGroups() { return groups; }
+        public void setGroups(List<GroupInfo> groups) { this.groups = groups; }
+        
+        public List<Goal> getGroupGoals() { return groupGoals; }
+        public void setGroupGoals(List<Goal> groupGoals) { this.groupGoals = groupGoals; }
     }
 } 

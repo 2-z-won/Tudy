@@ -165,25 +165,44 @@ public class UserController {
     public static class UserWithFriendCountResponse {
         @Schema(description = "User id", example = "1")
         private Long id;
+        
+        @Schema(description = "Login ID", example = "user01")
+        private String userId;
+        
         @Schema(description = "Email", example = "user@pusan.ac.kr")
         private String email;
+        
+        @Schema(description = "Password hash", example = "hashedPassword123")
+        private String passwordHash;
+        
         @Schema(description = "Name", example = "홍길동")
         private String name;
+        
+        @Schema(description = "Birth date", example = "2000.01.01")
+        private String birth;
+        
         @Schema(description = "Major", example = "Computer Science")
         private String major;
+        
         @Schema(description = "College", example = "IT College")
         private String college;
+        
         @Schema(description = "Profile image path", example = "/img.png")
         private String profileImage;
+        
         @Schema(description = "Coin balance", example = "100")
         private Integer coinBalance;
+        
         @Schema(description = "Number of friends", example = "5")
         private long friendCount;
 
         public UserWithFriendCountResponse(User user, long friendCount) {
             this.id = user.getId();
+            this.userId = user.getUserId();
             this.email = user.getEmail();
+            this.passwordHash = user.getPasswordHash();
             this.name = user.getName();
+            this.birth = user.getBirth();
             this.major = user.getMajor();
             this.college = user.getCollege();
             this.profileImage = user.getProfileImage();

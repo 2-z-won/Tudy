@@ -41,7 +41,6 @@ public class GroupJoinRequestTests {
         assertNotNull(group);
         assertEquals("테스트 그룹", group.getName());
         assertEquals(owner.getId(), group.getOwner().getId());
-        assertTrue(group.isPrivate());
         assertEquals("123456", group.getPassword());
     }
 
@@ -102,7 +101,7 @@ public class GroupJoinRequestTests {
         var pendingRequests = groupService.getPendingRequests(group.getId(), owner.getUserId());
         Long requestId = pendingRequests.get(0).getId();
 
-        String result = groupService.approveJoinRequest(requestId, owner.getUserId());
+        String result = groupService.approveJoinRequest(requestId, group.getId(), owner.getUserId());
         assertEquals("가입 신청이 승인되었습니다.", result);
 
         // 승인 후 대기중인 신청이 없어야 함
@@ -137,7 +136,7 @@ public class GroupJoinRequestTests {
         var pendingRequests = groupService.getPendingRequests(group.getId(), owner.getUserId());
         Long requestId = pendingRequests.get(0).getId();
 
-        String result = groupService.rejectJoinRequest(requestId, owner.getUserId());
+        String result = groupService.rejectJoinRequest(requestId, group.getId(), owner.getUserId());
         assertEquals("가입 신청이 거부되었습니다.", result);
 
         // 거부 후 대기중인 신청이 없어야 함

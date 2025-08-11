@@ -92,17 +92,16 @@ public class GroupController {
     }
 
     @GetMapping("/user/{userId}")
-    @Operation(summary = "Get user's groups")
-    @ApiResponse(responseCode = "200", description = "User's groups retrieved")
-    public ResponseEntity<?> getUserGroups(@PathVariable String userId) {
+    @Operation(summary = "Get user's groups and group goals")
+    @ApiResponse(responseCode = "200", description = "User's groups and group goals retrieved")
+    public ResponseEntity<?> getUserGroupsAndGoals(@PathVariable String userId) {
         try {
-            List<GroupService.GroupInfo> groups = groupService.getUserGroups(userId);
-            return ResponseEntity.ok(groups);
+            GroupService.UserGroupsAndGoalsResponse response = groupService.getUserGroupsAndGoals(userId);
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
 
 
     @Data

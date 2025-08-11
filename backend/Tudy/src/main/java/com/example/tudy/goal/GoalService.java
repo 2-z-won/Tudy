@@ -8,6 +8,7 @@ import com.example.tudy.category.Category;
 import com.example.tudy.category.CategoryRepository;
 import com.example.tudy.study.StudySession;
 import com.example.tudy.study.StudySessionRepository;
+import com.example.tudy.game.CoinService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class GoalService {
     private final GroupMemberRepository groupMemberRepository;
     private final CategoryRepository categoryRepository;
     private final StudySessionRepository studySessionRepository;
+    private final CoinService coinService;
     private static final int REWARD_COINS = 10;
 
     @Transactional
@@ -98,6 +100,10 @@ public class GoalService {
         // 시간 인증 목표는 설정된 목표 시간 이상이면 자동 완료
         if (request.getProofType() == Goal.ProofType.TIME && request.getTargetTime() != null && totalDuration >= request.getTargetTime()) {
             goal.setCompleted(true);
+            // 목표 완료 시 새로운 코인 시스템으로 코인 지급
+            if (goal.isCompleted()) {
+                coinService.awardCoinsForGoalCompletion(user, category.getCategoryType());
+            }
         }
 
         // 6. 최종 업데이트 후 반환
@@ -120,6 +126,10 @@ public class GoalService {
         goal.setTargetTime(targetTime);
         if (proofType == Goal.ProofType.TIME && targetTime != null && getTotalDuration(goal) >= targetTime) {
             goal.setCompleted(true);
+            // 목표 완료 시 새로운 코인 시스템으로 코인 지급
+            if (goal.isCompleted()) {
+                coinService.awardCoinsForGoalCompletion(goal.getUser(), category.getCategoryType());
+            }
         }
         Goal savedGoal = goalRepository.save(goal);
         return savedGoal;
@@ -145,10 +155,10 @@ public class GoalService {
         goal.setProofImage(proofImage);
         goal.setCompleted(true);
         goalRepository.save(goal);
-        userRepository.findById(goal.getUser().getId()).ifPresent(u -> {
-            u.setCoinBalance(u.getCoinBalance() + REWARD_COINS);
-            userRepository.save(u);
-        });
+        
+        // 새로운 코인 시스템으로 코인 지급
+        coinService.awardCoinsForGoalCompletion(goal.getUser(), goal.getCategory().getCategoryType());
+        
         return goal;
     }
 
@@ -187,12 +197,6 @@ public class GoalService {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         return goalRepository.findByUserAndIsGroupGoalTrue(user);
-    }
-
-    public List<Goal> listFriendGoals(String userId) {
-        User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-        return goalRepository.findByUserAndIsFriendGoalTrue(user);
     }
 
     private Category getOrCreateCategory(User user, String categoryName) {
