@@ -23,7 +23,7 @@ class MyBottomNavigationController extends GetxController {
         Get.toNamed('/Todo');
         break;
       case 1:
-        Get.toNamed('/main');
+        Get.toNamed('/stopwatch');
         break;
       case 2:
         Get.toNamed('/main');

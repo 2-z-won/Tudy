@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/api/Friend/controller/AddListController.dart';
+import 'package:frontend/api/Group/controller/GroupAddListControlller.dart';
 import 'package:frontend/components/bottomNavigation/GroupFriend/GroupFriendItem.dart';
 import 'package:frontend/constants/colors.dart';
+import 'package:frontend/utils/auth_util.dart';
+import 'package:get/get.dart';
 
 class GroupDropdownCard extends StatefulWidget {
   final String title;
+  final int groupId;
 
-  const GroupDropdownCard({super.key, required this.title});
+  const GroupDropdownCard({
+    super.key,
+    required this.title,
+    required this.groupId,
+  });
 
   @override
   State<GroupDropdownCard> createState() => _GroupDropdownCardState();
@@ -13,6 +22,29 @@ class GroupDropdownCard extends StatefulWidget {
 
 class _GroupDropdownCardState extends State<GroupDropdownCard> {
   bool _isExpanded = false;
+
+  final GroupAddListController _requestController = Get.put(
+    GroupAddListController(),
+  );
+
+  String? ownerId; // 🔹 로그인된 유저 아이디
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserId();
+  }
+
+  Future<void> loadUserId() async {
+    final uid = await getUserIdFromStorage(); // utils/auth_util.dart 함수
+    setState(() {
+      ownerId = uid;
+    });
+    _requestController.fetchGroupRequests(
+      groupId: widget.groupId,
+      ownerId: ownerId!,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,19 +105,37 @@ class _GroupDropdownCardState extends State<GroupDropdownCard> {
                 children: [
                   CardContainer(
                     title: "☘️ 그룹 참여 신청 ☘️",
-                    child: Column(
-                      children: [
-                        JoinRequestRow(
-                          name: "김효정",
-                          imageAsset: 'assets/profile1.jpg',
-                        ),
-                        SizedBox(height: 10),
-                        JoinRequestRow(
-                          name: "김효정",
-                          imageAsset: 'assets/profile2.jpg',
-                        ),
-                      ],
-                    ),
+                    child: Obx(() {
+                      if (_requestController.isLoading.value) {
+                        return CircularProgressIndicator();
+                      }
+
+                      if (_requestController.requests.isEmpty) {
+                        return Text("신청자가 없습니다.");
+                      }
+
+                      return Column(
+                        children: _requestController.requests.map((request) {
+                          final fromUser = request.fromUser;
+                          return JoinRequestRow(
+                            name: fromUser['name'] ?? '이름 없음',
+                            imageAsset: 'assets/profile.jpg',
+                            onApprove: () async {
+                              await _requestController.approveRequest(
+                                request.id,
+                                ownerId!,
+                              );
+                            },
+                            onReject: () async {
+                              await _requestController.rejectRequest(
+                                request.id,
+                                ownerId!,
+                              );
+                            },
+                          );
+                        }).toList(),
+                      );
+                    }),
                   ),
                   SizedBox(height: 16),
                   CardContainer(
@@ -119,6 +169,7 @@ class CardContainer extends StatelessWidget {
       children: [
         // ⚪ 메인 카드 박스
         Container(
+          width: double.infinity,
           margin: const EdgeInsets.only(top: 10), // 제목과의 간격
           padding: const EdgeInsets.fromLTRB(10, 15, 15, 12),
           decoration: BoxDecoration(

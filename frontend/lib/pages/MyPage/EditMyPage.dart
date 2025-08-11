@@ -14,26 +14,14 @@ class EditMypageView extends StatefulWidget {
 class _EditMypageViewState extends State<EditMypageView> {
   String? editingField;
 
-  final TextEditingController nameController = TextEditingController(
-    text: "김효정",
-  );
-  final TextEditingController idController = TextEditingController(
-    text: "loopy",
-  );
-  final TextEditingController pwController = TextEditingController(
-    text: "12345678",
-  );
-  final TextEditingController emailController = TextEditingController(
-    text: "###@pusan.ac.kr",
-  );
-  final TextEditingController birthController = TextEditingController(
-    text: "2004.12.25",
-  );
-  final TextEditingController deptController = TextEditingController(
-    text: "정보컴퓨터공학부",
-  );
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController idController = TextEditingController();
+  final TextEditingController pwController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController birthController = TextEditingController();
+  final TextEditingController deptController = TextEditingController();
 
-  String selectedCollege = "정보의생명공학대학";
+  late String selectedCollege;
 
   final List<String> colleges = [
     '치의학전문대학원',
@@ -77,6 +65,24 @@ class _EditMypageViewState extends State<EditMypageView> {
         _profileImage = File(pickedFile.path);
       });
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final args = (Get.arguments ?? {}) as Map<String, dynamic>;
+
+    nameController.text = (args['name'] ?? '') as String;
+    emailController.text = (args['email'] ?? '') as String;
+    idController.text = (args['id'] ?? '') as String;
+    pwController.text = (args['password'] ?? '') as String;
+    birthController.text = (args['birth'] ?? '') as String;
+    selectedCollege = (args['college'] ?? selectedCollege) as String;
+    deptController.text = (args['department'] ?? '') as String;
+    final argCollege = args['college'] as String?;
+    selectedCollege = (argCollege != null && colleges.contains(argCollege))
+        ? argCollege
+        : colleges.first;
   }
 
   @override
@@ -133,6 +139,7 @@ class _EditMypageViewState extends State<EditMypageView> {
                         }),
                         buildInputField("학과/학부", deptController),
                         const SizedBox(height: 10),
+
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -262,9 +269,15 @@ class _EditMypageViewState extends State<EditMypageView> {
 
     return GestureDetector(
       onTap: editable
-          ? () {
+          ? () async {
               if (label == "Password") {
-                showPasswordCheckDialog();
+                final ok = await showPasswordCheckDialog();
+                if (!mounted) return;
+                if (ok == true) {
+                  setState(() {
+                    editingField = label;
+                  });
+                }
               } else {
                 setState(() => editingField = label);
               }
@@ -363,11 +376,11 @@ class _EditMypageViewState extends State<EditMypageView> {
     );
   }
 
-  Future<void> showPasswordCheckDialog() async {
+  Future<bool> showPasswordCheckDialog() async {
     final TextEditingController pwCheckController = TextEditingController();
     bool isError = false;
 
-    await showDialog(
+    final result = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
       barrierColor: const Color(0xFF6E6E6E).withOpacity(0.2),
@@ -444,7 +457,12 @@ class _EditMypageViewState extends State<EditMypageView> {
                       const SizedBox(height: 29),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pop(context);
+                        if (pwCheckController.text.trim() ==
+                            pwController.text) {
+                          Navigator.pop(context, true);
+                        } else {
+                          setState(() => isError = true);
+                        }
                       },
                       child: const Text(
                         "완료",
@@ -459,5 +477,6 @@ class _EditMypageViewState extends State<EditMypageView> {
         );
       },
     );
+    return result ?? false;
   }
 }

@@ -1,48 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/utils/auth_util.dart';
+import 'package:get/get.dart';
 import 'package:frontend/components/check.dart';
 import 'package:frontend/components/Todo/Todo.dart';
+import 'package:frontend/components/Todo/TodoColor.dart';
+import 'package:frontend/api/Todo/controller/category_controller.dart';
 
-class AddCategory extends StatefulWidget {
+class AddCategoryUI extends StatefulWidget {
   final VoidCallback onClose;
-  final String category;
-  final Color mainColor;
-  final Color subColor;
-
-  const AddCategory({
-    super.key,
-    required this.onClose,
-    required this.category,
-    required this.mainColor,
-    required this.subColor,
-  });
+  const AddCategoryUI({super.key, required this.onClose});
 
   @override
-  State<AddCategory> createState() => _AddCategoryState();
+  State<AddCategoryUI> createState() => _AddCategoryUIState();
 }
 
-class _AddCategoryState extends State<AddCategory> {
-  List<Color> colorOptions = [
-    Color(0xFFFF4A4A), // 빨강
-    Color(0xFFFF9A3E), // 주황
-    Color(0xFFFFEB3B), // 노랑
-    Color(0xFF00E676), // 연두
-    Color(0xFF2979FF), // 파랑
-    Color(0xFFE040FB), // 보라
-    Color(0xFFE0E0E0), // 회색1
-    Color(0xFFE0E0E0), // 회색2
-  ];
+class _AddCategoryUIState extends State<AddCategoryUI> {
+  final CategoryController _categoryController = CategoryController();
+
+  final TextEditingController nameController = TextEditingController();
+
+  List<Color> colorOptions = mainColors;
 
   int selectedColorIndex = 0; // 초기 선택 인덱스
+
+  bool isStudySelected = false;
+  bool isExcerciseSelected = false;
+  bool isEtcSelected = false;
 
   bool isTimeSelected = true;
   late Color mainColor;
   late Color subColor;
 
+  String? userId;
+
   @override
   void initState() {
     super.initState();
-    mainColor = Color(0xFFFF4A4A); // ex: Colors.grey
-    subColor = const Color(0xFFFFE1E1); // 기본 배경색
+    mainColor = Color(0xFFFF4A4A);
+    subColor = const Color(0xFFFFE1E1);
+    isStudySelected = true;
+
+    loadUserId();
+  }
+
+  Future<void> loadUserId() async {
+    final uid = await getUserIdFromStorage();
+    setState(() {
+      userId = uid;
+    });
   }
 
   @override
@@ -71,7 +76,29 @@ class _AddCategoryState extends State<AddCategory> {
               ),
               Spacer(),
               TextButton(
-                onPressed: widget.onClose,
+                onPressed: () async {
+                  if (userId == null) {
+                    _categoryController.errorMessage.value =
+                        "로그인 정보가 없습니다. 다시 로그인해주세요.";
+                    return;
+                  }
+
+                  await _categoryController.addCategory(
+                    userId: userId!,
+                    name: nameController.text,
+                    colorIndex: selectedColorIndex + 1,
+                    categoryType: isStudySelected
+                        ? 'STUDY'
+                        : isExcerciseSelected
+                        ? 'EXERCISE'
+                        : 'ECT',
+                  );
+
+                  // 결과 메시지 출력
+                  if (!_categoryController.errorMessage.isNotEmpty) {
+                    widget.onClose(); // 닫기
+                  }
+                },
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: Size(0, 0),
@@ -98,7 +125,7 @@ class _AddCategoryState extends State<AddCategory> {
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start, // ✅ 위로 정렬
-                  children: const [
+                  children: [
                     Text(
                       '✍🏻 카테고리 명',
                       style: TextStyle(fontSize: 12, color: Colors.black),
@@ -106,6 +133,7 @@ class _AddCategoryState extends State<AddCategory> {
                     SizedBox(width: 10),
                     Expanded(
                       child: TextField(
+                        controller: nameController,
                         keyboardType: TextInputType.multiline, // ✅ 줄바꿈 허용
                         maxLines: null, // ✅ 무제한 줄바꿈 가능
                         style: TextStyle(
@@ -122,6 +150,85 @@ class _AddCategoryState extends State<AddCategory> {
                           ),
                           border: InputBorder.none,
                         ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.fromLTRB(15, 12, 15, 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '분류',
+                      style: TextStyle(color: Colors.black, fontSize: 12),
+                    ),
+                    const SizedBox(height: 15),
+
+                    // 시간 측정
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isStudySelected = true;
+
+                          isEtcSelected = false;
+                          isExcerciseSelected = false;
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 5),
+                          isStudySelected
+                              ? const CheckIcon()
+                              : const NoCheckIcon(),
+                          const SizedBox(width: 5),
+                          const Text('공부', style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    //
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isStudySelected = false;
+                          isEtcSelected = false;
+                          isExcerciseSelected = true;
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 5),
+                          isExcerciseSelected
+                              ? const CheckIcon()
+                              : const NoCheckIcon(),
+                          const SizedBox(width: 5),
+                          const Text('운동', style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          isEtcSelected = true;
+                          isExcerciseSelected = false;
+                          isStudySelected = false;
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 5),
+                          isEtcSelected
+                              ? const CheckIcon()
+                              : const NoCheckIcon(),
+                          const SizedBox(width: 5),
+                          const Text('기타', style: TextStyle(fontSize: 12)),
+                        ],
                       ),
                     ),
                   ],
@@ -156,10 +263,8 @@ class _AddCategoryState extends State<AddCategory> {
                             onTap: () {
                               setState(() {
                                 selectedColorIndex = index;
-                                mainColor = colorOptions[index];
-                                subColor = getSubColor(
-                                  mainColor,
-                                ); // ✅ 여기서 배경 업데이트
+                                mainColor = mainColors[index];
+                                subColor = subColors[index];
                               });
                             },
 
@@ -191,7 +296,24 @@ class _AddCategoryState extends State<AddCategory> {
               ),
             ],
           ),
-          SizedBox(height: 80),
+          _categoryController.errorMessage.isNotEmpty
+              ? Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      _categoryController.errorMessage.value,
+                      style: const TextStyle(
+                        decoration: TextDecoration.underline,
+                        fontSize: 10,
+                        color: Color(0xFFE94F4F),
+                        decorationColor: Color(0xFFE94F4F),
+                      ),
+                    ),
+                  ),
+                )
+              : SizedBox(height: 12),
+
+          SizedBox(height: 60),
         ],
       ),
     );

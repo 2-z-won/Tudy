@@ -7,6 +7,7 @@ import 'package:frontend/api/SignupLogin/model/verify_email_model.dart';
 
 class EmailVerifyController extends GetxController {
   var errorMessage = ''.obs;
+  var successMessage = ''.obs;
   var isVerified = false.obs;
   var emailSent = false.obs; // ✅ 이메일 전송 여부 상태 추가
 
@@ -35,12 +36,7 @@ class EmailVerifyController extends GetxController {
         final json = jsonDecode(response.body);
         if (json['success'] == true) {
           emailSent.value = true; // ✅ 전송 상태 true로
-          errorMessage.value = '';
-          Get.snackbar(
-            '전송 완료',
-            '입력하신 이메일로 인증번호를 보냈습니다',
-            snackPosition: SnackPosition.BOTTOM,
-          );
+          successMessage.value = '전송 완료 ! 입력하신 이메일로 인증번호를 보냈습니다';
         } else {
           emailSent.value = false;
           errorMessage.value = json['error'] ?? '인증번호 전송 실패';
