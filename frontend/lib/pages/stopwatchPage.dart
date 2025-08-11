@@ -6,6 +6,8 @@ import 'package:frontend/components/Todo/Todo.dart';
 import 'package:frontend/api/Todo/TodoItem.dart';
 import 'package:frontend/components/Todo/TodoColor.dart';
 import 'package:frontend/utils/auth_util.dart';
+import 'package:frontend/api/StopWatch/stopwatch_controller.dart';
+import 'package:get/get.dart';
 
 class StopwatchPage extends StatefulWidget {
   const StopwatchPage({super.key});
@@ -20,9 +22,18 @@ class _StopwatchPageState extends State<StopwatchPage> {
   String? userId;
   DateTime selectedDate = DateTime.now();
 
+  final StudySessionController _sessionController = Get.put(
+    StudySessionController(),
+  );
+
+  Color _selectedSubColor = const Color(0xFFF8BBD0); // 기본 테두리 색
+  String _selectedGoalTitle = '알고리즘 공부하기'; // 기본 텍스트
+
   int _seconds = 0;
   Timer? _timer;
   bool _isRunning = false;
+
+  int? _selectedGoalId;
 
   String get _formattedTime {
     final hours = (_seconds ~/ 3600).toString().padLeft(2, '0');
@@ -49,11 +60,17 @@ class _StopwatchPageState extends State<StopwatchPage> {
     });
   }
 
-  void _stopTimer() {
+  void _stopTimer() async {
     _timer?.cancel();
-    setState(() {
-      _isRunning = false;
-    });
+    setState(() => _isRunning = false);
+
+    if (_selectedGoalId != null && userId != null) {
+      await _sessionController.logStudyTime(
+        userId: userId!,
+        goalId: _selectedGoalId!,
+        seconds: _seconds,
+      );
+    }
   }
 
   @override
@@ -112,6 +129,7 @@ class _StopwatchPageState extends State<StopwatchPage> {
 
         final List<SubTodo> subTodos = goals.map((goal) {
           return SubTodo(
+            goalId: goal.id,
             goalTitle: goal.title,
             isGroup: goal.isGroupGoal,
             isDone: goal.completed,
@@ -169,12 +187,12 @@ class _StopwatchPageState extends State<StopwatchPage> {
                   ],
                   color: Color(0xFFFFFFFF),
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFF8BBD0), width: 4),
+                  border: Border.all(color: _selectedSubColor, width: 4),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('알고리즘 공부하기', style: TextStyle(fontSize: 16)),
+                    Text(_selectedGoalTitle, style: TextStyle(fontSize: 16)),
                     const SizedBox(height: 8),
                     Text(
                       _formattedTime,
@@ -206,7 +224,21 @@ class _StopwatchPageState extends State<StopwatchPage> {
                             required subTodo,
                             required mainColor,
                             required subColor,
-                          }) {},
+                          }) async {
+                            await _sessionController.fetchAccumulatedTime(
+                              subTodo.goalId,
+                            );
+
+                            setState(() {
+                              _selectedGoalId = subTodo.goalId;
+                              _selectedSubColor = subColor;
+                              _selectedGoalTitle = subTodo.goalTitle;
+                              _seconds = _sessionController
+                                  .accumulatedTime
+                                  .value
+                                  .inSeconds;
+                            });
+                          },
                     ),
                 ],
               ),

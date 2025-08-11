@@ -9,10 +9,9 @@ class Goal {
   final bool completed;
   final bool isGroupGoal;
   final int? groupId;
-  final bool isFriendGoal; // ✅ 추가
-  final String? friendNickname; // ✅ 추가
-  final String proofType; // ✅ 추가
-
+  final bool isFriendGoal;
+  final String? friendNickname;
+  final String proofType;
   Goal({
     required this.id,
     required this.title,

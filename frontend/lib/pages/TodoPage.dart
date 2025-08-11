@@ -30,6 +30,7 @@ class _MainPageViewState extends State<TodoPageView> {
   }
 
   String? userId;
+  int? selectedGoalId;
 
   Future<void> loadUserId() async {
     final uid = await getUserIdFromStorage();
@@ -85,6 +86,7 @@ class _MainPageViewState extends State<TodoPageView> {
 
         final List<SubTodo> subTodos = goals.map((goal) {
           return SubTodo(
+            goalId: goal.id,
             goalTitle: goal.title,
             isGroup: goal.isGroupGoal,
             isDone: goal.completed,
@@ -231,6 +233,7 @@ class _MainPageViewState extends State<TodoPageView> {
                                     isDetailVisible = false;
                                     isDoneDetailVisible = true;
                                     isAddCategoryVisible = false;
+                                    selectedGoalId = subTodo.goalId;
                                   });
                                 },
                           ),
@@ -306,6 +309,7 @@ class _MainPageViewState extends State<TodoPageView> {
               left: 0,
               right: 0,
               bottom: 0,
+
               child: TodoDetail(
                 category: selectedCategory,
                 group: selectedGroupType,
@@ -314,10 +318,12 @@ class _MainPageViewState extends State<TodoPageView> {
                 certificationType: selectedCertType,
                 mainColor: selectedMainColor,
                 subColor: selectedSubColor,
+                goalId: selectedGoalId!,
                 onClose: () {
                   setState(() {
                     isDoneDetailVisible = false;
                   });
+                  loadGoalsForDate(selectedDate);
                 },
               ),
             ),

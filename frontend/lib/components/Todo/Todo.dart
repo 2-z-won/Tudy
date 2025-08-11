@@ -72,7 +72,7 @@ class Todo extends StatelessWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: todoItem.subTodos.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 5),
+                separatorBuilder: (context, index) => const SizedBox(height: 6),
                 itemBuilder: (context, index) {
                   final sub = todoItem.subTodos[index];
                   return GestureDetector(
@@ -93,6 +93,7 @@ class Todo extends StatelessWidget {
                   );
                 },
               ),
+        SizedBox(height: 8),
       ],
     );
   }
