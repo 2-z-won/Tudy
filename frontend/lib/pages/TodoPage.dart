@@ -172,6 +172,7 @@ class _MainPageViewState extends State<TodoPageView> {
                 // ✅ 달력 뷰: Month ↔ Week
                 isMonthView
                     ? CustomMonthCalendar(
+                        selectedDate: selectedDate,
                         onDateSelected: (date) {
                           setState(() {
                             selectedDate = date;

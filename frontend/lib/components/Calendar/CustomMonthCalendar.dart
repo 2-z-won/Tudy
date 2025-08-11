@@ -5,8 +5,13 @@ import 'package:frontend/components/Calendar/CalendarHeader.dart';
 
 class CustomMonthCalendar extends StatefulWidget {
   final void Function(DateTime date) onDateSelected;
+  final DateTime selectedDate;
 
-  const CustomMonthCalendar({super.key, required this.onDateSelected});
+  const CustomMonthCalendar({
+    super.key,
+    required this.onDateSelected,
+    required this.selectedDate,
+  });
 
   @override
   State<CustomMonthCalendar> createState() => _CustomMonthCalendarState();
@@ -58,6 +63,7 @@ class _CustomMonthCalendarState extends State<CustomMonthCalendar> {
               onTap: () {
                 setState(() {
                   currentDate = DateTime.now();
+                  widget.onDateSelected(DateTime.now());
                 });
               },
             ),
@@ -113,6 +119,10 @@ class _CustomMonthCalendarState extends State<CustomMonthCalendar> {
                   today.year == year &&
                   today.month == month &&
                   today.day == day;
+              final isSelected =
+                  widget.selectedDate.year == year &&
+                  widget.selectedDate.month == month &&
+                  widget.selectedDate.day == day;
 
               return GestureDetector(
                 onTap: () {
@@ -120,23 +130,41 @@ class _CustomMonthCalendarState extends State<CustomMonthCalendar> {
                   widget.onDateSelected(selectedDate);
                 },
                 child: Center(
-                  child: Container(
+                  child: SizedBox(
                     width: 30,
                     height: 30,
-                    decoration: isToday
-                        ? BoxDecoration(
-                            color: const Color(0xFFFFE5E5),
-                            shape: BoxShape.circle,
-                          )
-                        : null,
-                    child: Center(
-                      child: Text(
-                        '$day',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: SubTextColor,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (isToday)
+                          Container(
+                            width: 30,
+                            height: 30,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFFFFE5E5),
+                            ),
+                          ),
+                        if (isSelected)
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color.fromARGB(255, 250, 179, 179),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        Text(
+                          '$day',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: SubTextColor,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
