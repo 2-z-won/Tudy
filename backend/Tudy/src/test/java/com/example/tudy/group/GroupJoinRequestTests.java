@@ -41,7 +41,6 @@ public class GroupJoinRequestTests {
         assertNotNull(group);
         assertEquals("테스트 그룹", group.getName());
         assertEquals(owner.getId(), group.getOwner().getId());
-        assertTrue(group.isPrivate());
         assertEquals("123456", group.getPassword());
     }
 

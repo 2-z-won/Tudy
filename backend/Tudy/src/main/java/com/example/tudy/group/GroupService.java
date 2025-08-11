@@ -2,6 +2,8 @@ package com.example.tudy.group;
 
 import com.example.tudy.user.User;
 import com.example.tudy.user.UserRepository;
+import com.example.tudy.goal.Goal;
+import com.example.tudy.goal.GoalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,7 @@ public class GroupService {
     private final UserRepository userRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final GroupJoinRequestRepository groupJoinRequestRepository;
+    private final GoalRepository goalRepository;
 
     public Group createGroup(String name, String password, String ownerId) {
         User owner = userRepository.findByUserId(ownerId)
@@ -80,12 +83,11 @@ public class GroupService {
     }
 
     @Transactional
-    public String approveJoinRequest(Long requestId, Long groupId, String ownerId) {
+    public String approveJoinRequest(Long requestId, String ownerId) {
         GroupJoinRequest request = groupJoinRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("가입 신청을 찾을 수 없습니다."));
         
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("그룹을 찾을 수 없습니다."));
+        Group group = request.getGroup();
         
         // 그룹 소유자인지 확인
         if (!group.getOwner().getUserId().equals(ownerId)) {
@@ -109,12 +111,11 @@ public class GroupService {
     }
 
     @Transactional
-    public String rejectJoinRequest(Long requestId, Long groupId, String ownerId) {
+    public String rejectJoinRequest(Long requestId, String ownerId) {
         GroupJoinRequest request = groupJoinRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("가입 신청을 찾을 수 없습니다."));
         
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("그룹을 찾을 수 없습니다."));
+        Group group = request.getGroup();
         
         // 그룹 소유자인지 확인
         if (!group.getOwner().getUserId().equals(ownerId)) {
@@ -145,37 +146,42 @@ public class GroupService {
         return groupJoinRequestRepository.findByGroupAndStatusOrderByCreatedAtDesc(group, GroupJoinRequest.RequestStatus.PENDING);
     }
 
-    public List<GroupInfo> getUserGroups(String userId) {
+    // 사용자의 그룹 목록 조회 메서드 추가
+    public List<Group> getUserGroups(String userId) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         
-        List<GroupMember> memberships = groupMemberRepository.findByUser(user);
-        return memberships.stream()
-                .map(membership -> {
-                    Group group = membership.getGroup();
-                    return new GroupInfo(
-                            group.getId(),
-                            group.getName()
-                    );
-                })
+        return groupMemberRepository.findByUser(user).stream()
+                .map(GroupMember::getGroup)
                 .toList();
     }
 
+    // 사용자의 그룹과 그룹 목표 함께 조회
+    public GroupsAndGoalsResponse getUserGroupsAndGoals(String userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        
+        List<Group> groups = getUserGroups(userId);
+        List<Goal> groupGoals = goalRepository.findByUserAndIsGroupGoalTrue(user);
+        
+        return new GroupsAndGoalsResponse(groups, groupGoals);
+    }
 
-    public static class GroupInfo {
-        private Long id;
-        private String name;
+    // 응답 DTO 클래스
+    public static class GroupsAndGoalsResponse {
+        private List<Group> groups;
+        private List<Goal> groupGoals;
 
-        public GroupInfo(Long id, String name) {
-            this.id = id;
-            this.name = name;
+        public GroupsAndGoalsResponse(List<Group> groups, List<Goal> groupGoals) {
+            this.groups = groups;
+            this.groupGoals = groupGoals;
         }
 
         // Getters and Setters
-        public Long getId() { return id; }
-        public void setId(Long id) { this.id = id; }
+        public List<Group> getGroups() { return groups; }
+        public void setGroups(List<Group> groups) { this.groups = groups; }
         
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
+        public List<Goal> getGroupGoals() { return groupGoals; }
+        public void setGroupGoals(List<Goal> groupGoals) { this.groupGoals = groupGoals; }
     }
 } 

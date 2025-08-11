@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/friends")
+@RequestMapping("/api/friends")
 public class FriendshipController {
     private final FriendshipService friendshipService;
 
@@ -37,8 +37,8 @@ public class FriendshipController {
         return Map.of("success", result);
     }
 
-    @GetMapping // 친구 목록 조회
-    public List<User> getFriends(@RequestParam String userId) {
-        return friendshipService.getFriends(userId);
+    @GetMapping("/{userId}") // 친구 목록과 친구 목표 함께 조회
+    public FriendshipService.FriendsAndGoalsResponse getFriendsAndGoals(@PathVariable String userId) {
+        return friendshipService.getFriendsAndGoals(userId);
     }
 } 

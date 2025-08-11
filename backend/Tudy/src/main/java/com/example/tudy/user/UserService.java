@@ -95,4 +95,8 @@ public class UserService {
     public User findByUserId(String userId) {
         return userRepository.findByUserId(userId).orElseThrow();
     }
+    
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow();
+    }
 }

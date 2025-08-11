@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.AssertTrue;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -53,6 +54,38 @@ public class GoalCreateRequest {
     @NotNull
     private Goal.ProofType proofType;
 
-    @Schema(description = "Target time in seconds", example = "7200")
+    @Schema(description = "Target time in seconds (required when proofType is TIME, minimum 7200 seconds = 2 hours)", example = "7200")
     private Integer targetTime;
+
+    @AssertTrue(message = "Target time is required when proof type is TIME")
+    public boolean isTargetTimeValid() {
+        if (proofType == Goal.ProofType.TIME) {
+            return targetTime != null && targetTime >= 7200; // 최소 2시간(7200초) 이상
+        }
+        return true; // IMAGE 타입일 때는 targetTime 검증하지 않음
+    }
+
+    @AssertTrue(message = "Group ID is required when isGroupGoal is true")
+    public boolean isGroupGoalValid() {
+        if (Boolean.TRUE.equals(isGroupGoal)) {
+            return groupId != null;
+        }
+        return true;
+    }
+
+    @AssertTrue(message = "Friend name is required when isFriendGoal is true")
+    public boolean isFriendGoalValid() {
+        if (Boolean.TRUE.equals(isFriendGoal)) {
+            return friendName != null && !friendName.trim().isEmpty();
+        }
+        return true;
+    }
+
+    @AssertTrue(message = "Start date must be before or equal to end date")
+    public boolean isDateValid() {
+        if (startDate != null && endDate != null) {
+            return !startDate.isAfter(endDate);
+        }
+        return true;
+    }
 }
