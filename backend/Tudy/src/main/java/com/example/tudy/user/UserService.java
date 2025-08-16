@@ -67,6 +67,12 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User updateBirth(String userId, String birth) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
+        user.setBirth(birth);
+        return userRepository.save(user);
+    }
+
     public User updateMajor(String userId, String major) {
         User user = userRepository.findByUserId(userId).orElseThrow();
         user.setMajor(major);

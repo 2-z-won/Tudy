@@ -82,6 +82,20 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @PutMapping("/{userId}/birth")
+    @Operation(summary = "Change birth")
+    @ApiResponse(responseCode = "200", description = "Birth updated")
+    public ResponseEntity<?> changeBirth(@PathVariable String userId,
+                                         @RequestBody ValueRequest request,
+                                         @RequestHeader(value = "Authorization", required = false) String auth) {
+        Long uid = tokenService.resolveUserId(auth);
+        if (uid == null) return ResponseEntity.status(401).build();
+        User currentUser = userService.findByUserId(userId);
+        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        User user = userService.updateBirth(userId, request.getValue());
+        return ResponseEntity.ok(user);
+    }
+
     @PutMapping("/{userId}/password")
     @Operation(summary = "Change password")
     @ApiResponse(responseCode = "200", description = "Password updated")
