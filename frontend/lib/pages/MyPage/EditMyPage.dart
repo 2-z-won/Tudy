@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/constants/colors.dart';
+import 'package:frontend/utils/auth_util.dart';
 import 'package:get/get.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:frontend/api/Mypage/editMypageController.dart';
 
 class EditMypageView extends StatefulWidget {
   const EditMypageView({super.key});
@@ -22,6 +24,9 @@ class _EditMypageViewState extends State<EditMypageView> {
   final TextEditingController deptController = TextEditingController();
 
   late String selectedCollege;
+  late final EditMypageController c;
+  late String oldName, oldMajor, oldCollege, initPw;
+  late String oldBirth;
 
   final List<String> colleges = [
     '치의학전문대학원',
@@ -70,20 +75,53 @@ class _EditMypageViewState extends State<EditMypageView> {
   @override
   void initState() {
     super.initState();
-    final args = (Get.arguments ?? {}) as Map<String, dynamic>;
 
+    c = Get.put(EditMypageController());
+
+    final args = (Get.arguments ?? {}) as Map<String, dynamic>;
     nameController.text = (args['name'] ?? '') as String;
     emailController.text = (args['email'] ?? '') as String;
     idController.text = (args['id'] ?? '') as String;
     pwController.text = (args['password'] ?? '') as String;
     birthController.text = (args['birth'] ?? '') as String;
-    selectedCollege = (args['college'] ?? selectedCollege) as String;
     deptController.text = (args['department'] ?? '') as String;
     final argCollege = args['college'] as String?;
     selectedCollege = (argCollege != null && colleges.contains(argCollege))
         ? argCollege
         : colleges.first;
+
+    oldName = nameController.text.trim();
+    oldMajor = deptController.text.trim();
+    oldCollege = selectedCollege;
+    initPw = pwController.text.trim();
+    oldBirth = birthController.text.trim();
+    loadUserId();
   }
+
+  String? userId;
+  Future<void> loadUserId() async {
+    final uid = await getUserIdFromStorage();
+    if (uid == null) {
+      print('❌ 저장된 사용자 ID가 없습니다.');
+      return;
+    }
+    setState(() => userId = uid);
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    idController.dispose();
+    pwController.dispose();
+    emailController.dispose();
+    birthController.dispose();
+    deptController.dispose();
+    super.dispose();
+  }
+
+  bool isValidBirth(String s) =>
+      RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(s) &&
+      DateTime.tryParse(s) != null;
 
   @override
   Widget build(BuildContext context) {
@@ -164,16 +202,77 @@ class _EditMypageViewState extends State<EditMypageView> {
                               ),
                             ),
                             TextButton(
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 25,
-                                  vertical: 25,
-                                ),
-                              ),
-                              onPressed: () {
-                                FocusScope.of(context).unfocus();
-                                setState(() => editingField = null);
-                                Get.back();
+                              onPressed: () async {
+                                if (userId == null) {
+                                  Get.snackbar('오류', '로그인이 필요합니다.');
+                                  return;
+                                }
+
+                                final futures = <Future<bool>>[];
+
+                                if (nameController.text.trim() != oldName) {
+                                  futures.add(
+                                    c.updateName(
+                                      userId: userId!,
+                                      name: nameController.text.trim(),
+                                    ),
+                                  );
+                                }
+                                if (deptController.text.trim() != oldMajor) {
+                                  futures.add(
+                                    c.updateMajor(
+                                      userId: userId!,
+                                      major: deptController.text.trim(),
+                                    ),
+                                  );
+                                }
+                                if (selectedCollege != oldCollege) {
+                                  futures.add(
+                                    c.updateCollege(
+                                      userId: userId!,
+                                      college: selectedCollege,
+                                    ),
+                                  );
+                                }
+
+                                if (futures.isEmpty) {
+                                  Get.snackbar('알림', '변경된 내용이 없습니다.');
+                                  return;
+                                }
+
+                                final newBirth = birthController.text.trim();
+                                if (newBirth != oldBirth) {
+                                  if (!isValidBirth(newBirth)) {
+                                    Get.snackbar(
+                                      '형식 오류',
+                                      '생일은 YYYY-MM-DD 형식으로 입력해 주세요.',
+                                    );
+                                    return;
+                                  }
+                                  futures.add(
+                                    c.updateBirth(
+                                      userId: userId!,
+                                      birthDate: newBirth,
+                                      bodyKey:
+                                          'birth', // 서버가 {"value": "..."}면 'value'로 바꿔주세요
+                                    ),
+                                  );
+                                }
+
+                                final results = await Future.wait(futures);
+                                if (results.every((e) => e)) {
+                                  // 스냅샷 갱신
+                                  oldName = nameController.text.trim();
+                                  oldMajor = deptController.text.trim();
+                                  oldCollege = selectedCollege;
+                                  oldBirth = newBirth;
+                                  initPw = pwController.text.trim();
+
+                                  Get.snackbar('완료', '프로필이 업데이트됐어요');
+                                  Get.back();
+                                } else {
+                                  Get.snackbar('실패', c.errorMessage.value);
+                                }
                               },
                               child: const Text(
                                 '저장',
@@ -383,6 +482,7 @@ class _EditMypageViewState extends State<EditMypageView> {
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
+      // ignore: deprecated_member_use
       barrierColor: const Color(0xFF6E6E6E).withOpacity(0.2),
       builder: (context) {
         return StatefulBuilder(
@@ -401,7 +501,8 @@ class _EditMypageViewState extends State<EditMypageView> {
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.25),
+                      // ignore: deprecated_member_use
+                      color: const Color(0xFF000000).withOpacity(0.25),
                       offset: const Offset(0, 4),
                       blurRadius: 12.9,
                     ),

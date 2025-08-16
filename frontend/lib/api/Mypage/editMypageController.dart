@@ -1,119 +1,163 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/constants/url.dart';
-import 'package:frontend/utils/auth_util.dart';
 
-class UserEditController extends GetxController {
-  final isLoading = false.obs;
+class EditMypageController extends GetxController {
   final isSaving = false.obs;
+  final errorMessage = ''.obs;
 
-  String? userId;
+  final lastUserJson = Rxn<Map<String, dynamic>>();
+  final birth = ''.obs;
+  Map<String, String> get _jsonHeaders => {'Content-Type': 'application/json'};
 
-  final name = ''.obs;
-  final major = ''.obs;
-  final college = ''.obs;
-  final profileImage = ''.obs;
-
-  @override
-  void onInit() {
-    super.onInit();
-  }
-
-  // --- 개별 업데이트 ---
-  Future<void> updateName(String newName) async {
+  //이름 변경
+  Future<bool> updateName({
+    required String userId,
+    required String name,
+  }) async {
+    isSaving.value = true;
+    errorMessage.value = '';
     final uri = Uri.parse('${Urls.apiUrl}users/$userId/name');
-    await http.put(
+    final res = await http.put(
       uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'name': newName}), // ✅ name 키
+      headers: _jsonHeaders,
+      body: jsonEncode({'name': name}),
     );
-    name.value = newName;
+    isSaving.value = false;
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      return true;
+    } else {
+      errorMessage.value = '이름 변경 실패 [${res.statusCode}] ${res.body}';
+      return false;
+    }
   }
 
-  Future<void> updateMajor(String newMajor) async {
-    final uri = Uri.parse('${Urls.apiUrl}users/$userId/major');
-    await http.put(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'value': newMajor}), // ✅ value 키
-    );
-    major.value = newMajor;
-  }
-
-  Future<void> updateCollege(String newCollege) async {
+  //단과대 변경
+  Future<bool> updateCollege({
+    required String userId,
+    required String college,
+  }) async {
+    isSaving.value = true;
+    errorMessage.value = '';
     final uri = Uri.parse('${Urls.apiUrl}users/$userId/college');
-    await http.put(
+    final res = await http.put(
       uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'value': newCollege}), // ✅ value 키
+      headers: _jsonHeaders,
+      body: jsonEncode({'value': college}),
     );
-    college.value = newCollege;
+    isSaving.value = false;
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      if (res.body.isNotEmpty) {
+        lastUserJson.value = jsonDecode(res.body) as Map<String, dynamic>;
+      }
+      return true;
+    } else {
+      errorMessage.value = '단과대 변경 실패 [${res.statusCode}] ${res.body}';
+      return false;
+    }
   }
 
-  Future<void> changePassword({
+  //학과/학부(전공) 변경
+  Future<bool> updateMajor({
+    required String userId,
+    required String major,
+  }) async {
+    isSaving.value = true;
+    errorMessage.value = '';
+    final uri = Uri.parse('${Urls.apiUrl}users/$userId/major');
+    final res = await http.put(
+      uri,
+      headers: _jsonHeaders,
+      body: jsonEncode({'value': major}),
+    );
+    isSaving.value = false;
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      if (res.body.isNotEmpty) {
+        lastUserJson.value = jsonDecode(res.body) as Map<String, dynamic>;
+      }
+      return true;
+    } else {
+      errorMessage.value = '전공 변경 실패 [${res.statusCode}] ${res.body}';
+      return false;
+    }
+  }
+
+  ///비밀번호 변경
+  Future<bool> updatePassword({
+    required String userId,
     required String currentPassword,
     required String newPassword,
   }) async {
+    isSaving.value = true;
+    errorMessage.value = '';
     final uri = Uri.parse('${Urls.apiUrl}users/$userId/password');
     final res = await http.put(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: _jsonHeaders,
       body: jsonEncode({
         'currentPassword': currentPassword,
         'newPassword': newPassword,
       }),
     );
-    if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception('비밀번호 변경 실패');
+    isSaving.value = false;
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      return true;
+    } else {
+      errorMessage.value = '비밀번호 변경 실패 [${res.statusCode}] ${res.body}';
+      return false;
     }
   }
 
-  Future<void> updateProfileImageUrl(String url) async {
-    final uri = Uri.parse('${Urls.apiUrl}users/$userId/profile-image');
-    await http.put(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'imagePath': url}), // ✅ imagePath 키
-    );
-    profileImage.value = url;
-  }
-
-  /// 이미지 파일을 서버/스토리지에 업로드해서 URL을 받아오는 자리.
-  /// 아직 업로드 API가 없으면 null을 리턴하고, 저장 시 스킵 처리.
-  Future<String?> uploadProfileAndGetUrl(File file) async {
-    // TODO: 여기에 업로드 구현(예: 서버 업로드 or Cloudinary)
-    return null;
-  }
-
-  /// 저장 버튼에서 한 번에 호출
-  Future<void> saveAll({
-    required String newName,
-    required String newMajor,
-    required String newCollege,
-    File? newProfileFile,
+  //프로필 이미지 변경
+  Future<bool> updateProfileImage({
+    required String userId,
+    required String imageUrl,
   }) async {
     isSaving.value = true;
-    try {
-      final futures = <Future>[];
+    errorMessage.value = '';
+    final uri = Uri.parse('${Urls.apiUrl}users/$userId/profile-image');
+    final res = await http.put(
+      uri,
+      headers: _jsonHeaders,
+      body: jsonEncode({'imagePath': imageUrl}),
+    );
+    isSaving.value = false;
 
-      if (newName.trim() != name.value) futures.add(updateName(newName.trim()));
-      if (newMajor.trim() != major.value)
-        futures.add(updateMajor(newMajor.trim()));
-      if (newCollege.trim() != college.value)
-        futures.add(updateCollege(newCollege.trim()));
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      return true;
+    } else {
+      errorMessage.value = '프로필 이미지 변경 실패 [${res.statusCode}] ${res.body}';
+      return false;
+    }
+  }
 
-      if (newProfileFile != null) {
-        final url = await uploadProfileAndGetUrl(newProfileFile);
-        if (url != null && url.isNotEmpty) {
-          futures.add(updateProfileImageUrl(url));
-        }
-      }
+  Future<bool> updateBirth({
+    required String userId,
+    required String birthDate,
+    String bodyKey = 'value',
+  }) async {
+    isSaving.value = true;
+    errorMessage.value = '';
 
-      await Future.wait(futures);
-    } finally {
-      isSaving.value = false;
+    final uri = Uri.parse('${Urls.apiUrl}users/$userId/birth');
+    final res = await http.put(
+      uri,
+      headers: _jsonHeaders,
+      body: jsonEncode({bodyKey: birthDate}),
+    );
+
+    isSaving.value = false;
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      birth.value = birthDate;
+      return true;
+    } else {
+      errorMessage.value = '생일 변경 실패 [${res.statusCode}] ${res.body}';
+      return false;
     }
   }
 }
