@@ -31,6 +31,9 @@ public class UserBuildingSlot {
     @Enumerated(EnumType.STRING)
     private SpaceType spaceType;
     
+    @Enumerated(EnumType.STRING)
+    private SpaceType purchasedSpaceType;  // 구매한 공간 타입 (설치 전)
+    
     @Column(nullable = false)
     private Integer currentLevel = 0;
     
@@ -49,6 +52,11 @@ public class UserBuildingSlot {
         this.spaceType = spaceType;
         this.currentLevel = 1;
         this.isInstalled = true;
+    }
+    
+    public void purchase(SpaceType spaceType) {
+        this.purchasedSpaceType = spaceType;
+        this.isInstalled = false;
     }
     
     public void upgrade() {

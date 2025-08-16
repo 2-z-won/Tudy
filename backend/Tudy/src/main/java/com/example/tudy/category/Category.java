@@ -21,6 +21,9 @@ public class Category {
     private String name;
 
     @Column(nullable = false)
+    private String icon;
+
+    @Column(nullable = false)
     private Integer color; // 1~10
 
     @Enumerated(EnumType.STRING)

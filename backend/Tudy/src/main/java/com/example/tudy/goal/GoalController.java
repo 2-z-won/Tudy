@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,9 +39,9 @@ public class GoalController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete goal")
     @ApiResponse(responseCode = "200", description = "Goal deleted")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        goalService.deleteGoal(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Goal> delete(@PathVariable Long id) {
+        Goal goal = goalService.deleteGoal(id);
+        return ResponseEntity.ok(goal);
     }
 
     @GetMapping
@@ -58,12 +59,12 @@ public class GoalController {
         return ResponseEntity.ok(goalService.listGoalsByDate(userId, date, categoryName));
     }
 
-    // 이미지 인증 목표의 proofImage 업로드용 엔드포인트 예시 (실제 파일 업로드는 별도 구현 필요)
+    // 이미지 인증 목표의 proofImage 파일 업로드용 엔드포인트
     @PostMapping("/{id}/proof-image")
     @Operation(summary = "Upload proof image for image proof goal")
     @ApiResponse(responseCode = "200", description = "Proof image uploaded and goal completed")
-    public ResponseEntity<Goal> uploadProofImage(@PathVariable Long id, @RequestBody ProofRequest req) {
-        Goal goal = goalService.completeImageProofGoal(id, req.getProofImage());
+    public ResponseEntity<Goal> uploadProofImage(@PathVariable Long id, @RequestParam("image") MultipartFile imageFile) {
+        Goal goal = goalService.completeImageProofGoalWithFile(id, imageFile);
         return ResponseEntity.ok(goal);
     }
 
@@ -89,11 +90,5 @@ public class GoalController {
         private Goal.ProofType proofType;
         @Schema(description = "Target time in seconds", example = "7200")
         private Integer targetTime;
-    }
-
-    @Data
-    private static class ProofRequest {
-        @Schema(description = "Proof image path", example = "/proof.png")
-        private String proofImage;
     }
 }
