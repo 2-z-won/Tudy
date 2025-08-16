@@ -124,6 +124,7 @@ CREATE TABLE user_building_slots (
     building_type VARCHAR(20) NOT NULL CHECK (building_type IN ('DEPARTMENT', 'LIBRARY', 'GYM', 'CAFE')),
     slot_number INTEGER NOT NULL,
     space_type VARCHAR(30),
+    purchased_space_type VARCHAR(30),  -- 구매한 공간 타입 (설치 전)
     current_level INTEGER NOT NULL DEFAULT 0,
     is_installed BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT fk_user_building_slot_user FOREIGN KEY (user_id) REFERENCES users(id),

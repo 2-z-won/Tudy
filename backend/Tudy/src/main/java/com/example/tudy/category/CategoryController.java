@@ -34,6 +34,7 @@ public class CategoryController {
         }
         Category category = new Category();
         category.setName(req.getName());
+        category.setIcon(req.getIcon());
         category.setColor(req.getColor());
         category.setCategoryType(req.getCategoryType());
         category.setUser(user);
@@ -55,7 +56,7 @@ public class CategoryController {
         User user = userRepository.findByUserId(userId).orElseThrow();
         List<Category> categories = categoryRepository.findByUser(user);
         List<CategoryResponse> result = categories.stream()
-            .map(c -> new CategoryResponse(c.getId(), c.getName(), c.getColor(), c.getCategoryType()))
+            .map(c -> new CategoryResponse(c.getId(), c.getName(), c.getIcon(), c.getColor(), c.getCategoryType()))
             .toList();
         return ResponseEntity.ok(result);
     }
@@ -66,6 +67,8 @@ public class CategoryController {
         private String userId;
         @Schema(description = "Category name", example = "공부")
         private String name;
+        @Schema(description = "Category icon", example = "연필 아이콘")
+        private String icon;
         @Schema(description = "Color code", example = "1")
         private Integer color;
         @Schema(description = "Category type", example = "STUDY")
@@ -78,14 +81,17 @@ public class CategoryController {
         private Long id;
         @Schema(description = "Category name", example = "공부")
         private String name;
+        @Schema(description = "Category icon", example = "연필 아이콘")
+        private String icon;
         @Schema(description = "Color code", example = "1")
         private Integer color;
         @Schema(description = "Category type", example = "STUDY")
         private Category.CategoryType categoryType;
 
-        public CategoryResponse(Long id, String name, Integer color, Category.CategoryType categoryType) {
+        public CategoryResponse(Long id, String name, String icon, Integer color, Category.CategoryType categoryType) {
             this.id = id;
             this.name = name;
+            this.icon = icon;
             this.color = color;
             this.categoryType = categoryType;
         }

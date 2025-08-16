@@ -13,8 +13,16 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -27,6 +35,143 @@ public class GoalService {
     private final StudySessionRepository studySessionRepository;
     private final CoinService coinService;
     private static final int REWARD_COINS = 10;
+    
+    // 이미지 저장 경로 설정
+    private static final String UPLOAD_DIR = "uploads/proof-images/";
+    private static final String IMAGE_URL_PREFIX = "/proof-images/";
+
+    // 카페 카테고리 자동 생성 메서드
+    @Transactional
+    public void ensureCafeCategoryExists(User user) {
+        if (!categoryRepository.existsByUserAndName(user, "카페")) {
+            Category cafeCategory = new Category();
+            cafeCategory.setUser(user);
+            cafeCategory.setName("카페");
+            cafeCategory.setIcon("☕");
+            cafeCategory.setColor(10);
+            cafeCategory.setCategoryType(null); // type = null
+            categoryRepository.save(cafeCategory);
+        }
+    }
+
+    // 카페 목표 자동 생성 메서드
+    @Transactional
+    public void createDailyCafeGoal(User user) {
+        LocalDate today = LocalDate.now();
+        
+        // 오늘 날짜에 이미 카페 목표가 있는지 확인
+        List<Goal> todayGoals = goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+            user, today, today);
+        
+        boolean hasCafeGoalToday = todayGoals.stream()
+            .anyMatch(goal -> "카페".equals(goal.getCategory().getName()) && 
+                             "커피 한잔만 마시기".equals(goal.getTitle()));
+        
+        if (!hasCafeGoalToday) {
+            // 카페 카테고리 확인 및 생성
+            ensureCafeCategoryExists(user);
+            
+            Category cafeCategory = categoryRepository.findByUserAndName(user, "카페")
+                .orElseThrow(() -> new IllegalStateException("카페 카테고리를 찾을 수 없습니다."));
+            
+            // 카페 목표 생성
+            Goal cafeGoal = new Goal();
+            cafeGoal.setUser(user);
+            cafeGoal.setTitle("커피 한잔만 마시기");
+            cafeGoal.setCategory(cafeCategory);
+            cafeGoal.setStartDate(today);
+            cafeGoal.setEndDate(today);
+            cafeGoal.setIsGroupGoal(false);
+            cafeGoal.setGroupId(null);
+            cafeGoal.setIsFriendGoal(false);
+            cafeGoal.setFriendName(null);
+            cafeGoal.setProofType(Goal.ProofType.IMAGE);
+            cafeGoal.setTargetTime(null);
+            cafeGoal.setCompleted(false);
+            
+            goalRepository.save(cafeGoal);
+        }
+    }
+
+    // 모든 사용자에 대해 카페 목표 자동 생성 (스케줄러용)
+    @Transactional
+    public void createDailyCafeGoalsForAllUsers() {
+        List<User> allUsers = userRepository.findAll();
+        for (User user : allUsers) {
+            createDailyCafeGoal(user);
+        }
+    }
+
+    // 이미지 파일 업로드 및 목표 완료 처리
+    @Transactional
+    public Goal completeImageProofGoalWithFile(Long id, MultipartFile imageFile) {
+        Goal goal = goalRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
+        
+        if (goal.getProofType() != Goal.ProofType.IMAGE) {
+            throw new IllegalStateException("이미지 인증 목표가 아닙니다.");
+        }
+        
+        if (imageFile == null || imageFile.isEmpty()) {
+            throw new IllegalArgumentException("이미지 파일이 필요합니다.");
+        }
+        
+        // 이미지 파일 검증
+        String contentType = imageFile.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+        }
+        
+        try {
+            // 업로드 디렉토리 생성
+            Path uploadPath = Paths.get(UPLOAD_DIR);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+            
+            // 간단한 파일명 생성
+            String originalFilename = imageFile.getOriginalFilename();
+            String fileExtension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            
+            // 간단한 랜덤 문자열 생성 (6자리)
+            String randomStr = generateRandomString(6);
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"));
+            String finalFilename = timestamp + "_" + randomStr + fileExtension;
+            
+            // 파일 저장
+            Path filePath = uploadPath.resolve(finalFilename);
+            Files.copy(imageFile.getInputStream(), filePath);
+            
+            // Goal에 이미지 경로 저장 (웹에서 접근 가능한 URL)
+            String imageUrl = IMAGE_URL_PREFIX + finalFilename;
+            goal.setProofImage(imageUrl);
+            goal.setCompleted(true);
+            
+            Goal savedGoal = goalRepository.save(goal);
+            
+            // 새로운 코인 시스템으로 코인 지급
+            coinService.awardCoinsForGoalCompletion(goal.getUser(), goal.getCategory().getCategoryType());
+            
+            return savedGoal;
+            
+        } catch (IOException e) {
+            throw new RuntimeException("이미지 파일 저장 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
+    }
+
+    // 간단한 랜덤 문자열 생성 메서드
+    private String generateRandomString(int length) {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            int index = (int) (Math.random() * chars.length());
+            sb.append(chars.charAt(index));
+        }
+        return sb.toString();
+    }
 
     @Transactional
     public Goal createGoal(GoalCreateRequest request) {
@@ -158,7 +303,7 @@ public class GoalService {
         return goal;
     }
 
-    // 이미지 인증 목표의 proofImage 업로드 및 인증 처리
+    // 이미지 인증 목표의 proofImage 업로드 및 인증 처리 (기존 메서드 - URL 방식)
     public Goal completeImageProofGoal(Long id, String proofImage) {
         Goal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
@@ -200,6 +345,10 @@ public class GoalService {
     public List<Goal> listGoalsByDate(String userId, LocalDate date, String categoryName) {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        
+        // 카페 목표 자동 생성 (해당 날짜에 대해)
+        createDailyCafeGoal(user);
+        
         if (categoryName == null) {
             return goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date, date);
         } else {

@@ -42,7 +42,7 @@ public class BuildingController {
         
         BuildingResponse response = new BuildingResponse();
         response.setBuilding(building);
-        response.setSlots(slots);
+        response.setSlots(slots.stream().map(SlotResponse::new).collect(Collectors.toList()));
         response.setBuildingConfig(BuildingConfig.getBuildingInfo(buildingType));
         
         return ResponseEntity.ok(response);
@@ -69,6 +69,32 @@ public class BuildingController {
         return ResponseEntity.ok(slot);
     }
     
+    /**
+     * 공간 구매
+     */
+    @PostMapping("/{buildingType}/slots/{slotNumber}/purchase")
+    public ResponseEntity<UserBuildingSlot> purchaseSpace(
+            @PathVariable String userId,
+            @PathVariable BuildingType buildingType,
+            @PathVariable Integer slotNumber,
+            @RequestBody PurchaseRequest request,
+            Authentication authentication) {
+        
+        User authenticatedUser = userService.getUserByEmail(authentication.getName());
+        User targetUser = userService.findByUserId(userId);
+        
+        if (!authenticatedUser.getId().equals(targetUser.getId())) {
+            return ResponseEntity.status(403).body(null);
+        }
+        
+        try {
+            UserBuildingSlot slot = buildingService.purchaseSpace(targetUser, buildingType, slotNumber, request.getSpaceType());
+            return ResponseEntity.ok(slot);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
     /**
      * 공간 설치
      */
@@ -202,24 +228,70 @@ public class BuildingController {
      */
     public static class BuildingResponse {
         private UserBuilding building;
-        private List<UserBuildingSlot> slots;
+        private List<SlotResponse> slots;
         private BuildingConfig.BuildingInfo buildingConfig;
         
         // Getters and Setters
         public UserBuilding getBuilding() { return building; }
         public void setBuilding(UserBuilding building) { this.building = building; }
         
-        public List<UserBuildingSlot> getSlots() { return slots; }
-        public void setSlots(List<UserBuildingSlot> slots) { this.slots = slots; }
+        public List<SlotResponse> getSlots() { return slots; }
+        public void setSlots(List<SlotResponse> slots) { this.slots = slots; }
         
         public BuildingConfig.BuildingInfo getBuildingConfig() { return buildingConfig; }
         public void setBuildingConfig(BuildingConfig.BuildingInfo buildingConfig) { this.buildingConfig = buildingConfig; }
     }
     
     /**
+     * 슬롯 응답 DTO (구매목록 스타일)
+     */
+    public static class SlotResponse {
+        private Long id;
+        private Integer slotNumber;  // null이면 설치 안됨
+        private SpaceType spaceType; // 항상 채워져 있음 (구매한 공간 타입)
+        private Integer currentLevel;
+        
+        public SlotResponse(UserBuildingSlot slot) {
+            this.id = slot.getId();
+            
+            // slotNumber: 설치되면 슬롯 번호, 설치 안되면 null
+            this.slotNumber = slot.getIsInstalled() ? slot.getSlotNumber() : null;
+            
+            // spaceType: 구매한 공간 타입 (설치 전이거나 설치 후 모두)
+            this.spaceType = slot.getPurchasedSpaceType() != null ? 
+                slot.getPurchasedSpaceType() : slot.getSpaceType();
+            
+            this.currentLevel = slot.getCurrentLevel();
+        }
+        
+        // Getters and Setters
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+        
+        public Integer getSlotNumber() { return slotNumber; }
+        public void setSlotNumber(Integer slotNumber) { this.slotNumber = slotNumber; }
+        
+        public SpaceType getSpaceType() { return spaceType; }
+        public void setSpaceType(SpaceType spaceType) { this.spaceType = spaceType; }
+        
+        public Integer getCurrentLevel() { return currentLevel; }
+        public void setCurrentLevel(Integer currentLevel) { this.currentLevel = currentLevel; }
+    }
+    
+    /**
      * 공간 설치 요청 DTO
      */
     public static class InstallRequest {
+        private SpaceType spaceType;
+        
+        public SpaceType getSpaceType() { return spaceType; }
+        public void setSpaceType(SpaceType spaceType) { this.spaceType = spaceType; }
+    }
+    
+    /**
+     * 공간 구매 요청 DTO
+     */
+    public static class PurchaseRequest {
         private SpaceType spaceType;
         
         public SpaceType getSpaceType() { return spaceType; }

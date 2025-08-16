@@ -49,6 +49,26 @@ public class BuildingService {
     }
     
     /**
+     * 공간 구매
+     */
+    public UserBuildingSlot purchaseSpace(User user, BuildingType buildingType, Integer slotNumber, SpaceType spaceType) {
+        UserBuildingSlot slot = getSlot(user, buildingType, slotNumber);
+        
+        if (slot.getPurchasedSpaceType() != null) {
+            throw new IllegalStateException("이미 구매된 슬롯입니다.");
+        }
+        
+        // 코인 차감
+        coinService.subtractCoins(user, spaceType.getBasePrice());
+        
+        // 공간 구매
+        slot.purchase(spaceType);
+        userBuildingSlotRepository.save(slot);
+        
+        return slot;
+    }
+
+    /**
      * 공간 설치
      */
     public UserBuildingSlot installSpace(User user, BuildingType buildingType, Integer slotNumber, SpaceType spaceType) {
@@ -58,10 +78,15 @@ public class BuildingService {
             throw new IllegalStateException("이미 설치된 슬롯입니다.");
         }
         
-        // 코인 차감
-        coinService.subtractCoins(user, spaceType.getBasePrice());
+        if (slot.getPurchasedSpaceType() == null) {
+            throw new IllegalStateException("먼저 공간을 구매해야 합니다.");
+        }
         
-        // 공간 설치
+        if (!slot.getPurchasedSpaceType().equals(spaceType)) {
+            throw new IllegalStateException("구매한 공간 타입과 일치하지 않습니다.");
+        }
+        
+        // 공간 설치 (코인은 이미 구매 시 차감됨)
         slot.install(spaceType);
         userBuildingSlotRepository.save(slot);
         

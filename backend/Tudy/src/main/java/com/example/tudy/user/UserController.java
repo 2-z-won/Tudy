@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -92,9 +93,9 @@ public class UserController {
     @PutMapping("/{userId}/profile-image")
     @Operation(summary = "Change profile image")
     @ApiResponse(responseCode = "200", description = "Profile image updated")
-    public ResponseEntity<Void> changeProfileImage(@PathVariable String userId, @RequestBody ProfileImageRequest request) {
-        userService.updateProfileImage(userId, request.getImagePath());
-        return ResponseEntity.ok().build();
+    public ResponseEntity<User> changeProfileImage(@PathVariable String userId, @RequestParam("image") MultipartFile imageFile) {
+        User user = userService.updateProfileImageWithFile(userId, imageFile);
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/{userId}")
@@ -141,12 +142,6 @@ public class UserController {
         private String currentPassword;
         @Schema(description = "New password", example = "newpass")
         private String newPassword;
-    }
-
-    @Data
-    private static class ProfileImageRequest {
-        @Schema(description = "Image path", example = "/images/profile.png")
-        private String imagePath;
     }
 
     @Data
