@@ -1,6 +1,7 @@
 package com.example.tudy.category;
 
 import com.example.tudy.user.User;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
     name = "categories",
     uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "name"})
 )
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
