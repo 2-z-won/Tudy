@@ -69,6 +69,26 @@ public class BuildingService {
     }
 
     /**
+     * 공간 구매 (슬롯 자동 할당)
+     */
+    public UserBuildingSlot purchaseSpace(User user, BuildingType buildingType, SpaceType spaceType) {
+        List<UserBuildingSlot> slots = getUserBuildingSlots(user, buildingType);
+        UserBuildingSlot availableSlot = slots.stream()
+                .filter(s -> Boolean.FALSE.equals(s.getIsInstalled()) && s.getPurchasedSpaceType() == null)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("구매 가능한 슬롯이 없습니다."));
+
+        // 코인 차감
+        coinService.subtractCoins(user, spaceType.getBasePrice());
+
+        // 공간 구매 (설치 전 상태로 보유)
+        availableSlot.purchase(spaceType);
+        userBuildingSlotRepository.save(availableSlot);
+
+        return availableSlot;
+    }
+
+    /**
      * 공간 설치
      */
     public UserBuildingSlot installSpace(User user, BuildingType buildingType, Integer slotNumber, SpaceType spaceType) {
