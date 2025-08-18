@@ -49,71 +49,57 @@ public class BuildingService {
     }
     
     /**
-     * 공간 구매
+     * 공간 구매 (슬롯과 무관하게 공간만 구매)
      */
-    public UserBuildingSlot purchaseSpace(User user, BuildingType buildingType, Integer slotNumber, SpaceType spaceType) {
-        UserBuildingSlot slot = getSlot(user, buildingType, slotNumber);
-        
-        if (slot.getPurchasedSpaceType() != null) {
-            throw new IllegalStateException("이미 구매된 슬롯입니다.");
-        }
-        
+    public UserBuildingSlot purchaseSpace(User user, BuildingType buildingType, SpaceType spaceType) {
         // 코인 차감
         coinService.subtractCoins(user, spaceType.getBasePrice());
         
-        // 공간 구매
+        // 새로운 슬롯 생성 (slotNumber는 null, 구매만 완료)
+        UserBuildingSlot slot = new UserBuildingSlot(user, buildingType, null);
         slot.purchase(spaceType);
         userBuildingSlotRepository.save(slot);
         
         return slot;
     }
-
+    
     /**
-     * 공간 구매 (슬롯 자동 할당)
+     * 공간 설치 (구매한 슬롯 ID로)
      */
-    public UserBuildingSlot purchaseSpace(User user, BuildingType buildingType, SpaceType spaceType) {
-        List<UserBuildingSlot> slots = getUserBuildingSlots(user, buildingType);
-        UserBuildingSlot availableSlot = slots.stream()
-                .filter(s -> Boolean.FALSE.equals(s.getIsInstalled()) && s.getPurchasedSpaceType() == null)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("구매 가능한 슬롯이 없습니다."));
-
-        // 코인 차감
-        coinService.subtractCoins(user, spaceType.getBasePrice());
-
-        // 공간 구매 (설치 전 상태로 보유)
-        availableSlot.purchase(spaceType);
-        userBuildingSlotRepository.save(availableSlot);
-
-        return availableSlot;
-    }
-
-    /**
-     * 공간 설치
-     */
-    public UserBuildingSlot installSpace(User user, BuildingType buildingType, Integer slotNumber, SpaceType spaceType) {
-        UserBuildingSlot slot = getSlot(user, buildingType, slotNumber);
+    public UserBuildingSlot installSpace(User user, BuildingType buildingType, Long purchasedSlotId, Integer slotNumber) {
+        UserBuildingSlot purchasedSlot = userBuildingSlotRepository.findById(purchasedSlotId)
+                .orElseThrow(() -> new IllegalArgumentException("구매한 슬롯을 찾을 수 없습니다."));
         
-        if (slot.getIsInstalled()) {
+        // 사용자와 건물 타입이 일치하는지 확인
+        if (!purchasedSlot.getUser().getId().equals(user.getId()) || !purchasedSlot.getBuildingType().equals(buildingType)) {
+            throw new IllegalArgumentException("해당 슬롯에 접근할 권한이 없습니다.");
+        }
+        
+        if (purchasedSlot.getIsInstalled()) {
             throw new IllegalStateException("이미 설치된 슬롯입니다.");
         }
         
-        if (slot.getPurchasedSpaceType() == null) {
+        if (purchasedSlot.getPurchasedSpaceType() == null) {
             throw new IllegalStateException("먼저 공간을 구매해야 합니다.");
         }
         
-        if (!slot.getPurchasedSpaceType().equals(spaceType)) {
-            throw new IllegalStateException("구매한 공간 타입과 일치하지 않습니다.");
+        // 설치할 슬롯이 사용 가능한지 확인
+        UserBuildingSlot targetSlot = getSlot(user, buildingType, slotNumber);
+        if (targetSlot.getIsInstalled()) {
+            throw new IllegalStateException("해당 슬롯은 이미 사용 중입니다.");
         }
         
         // 공간 설치 (코인은 이미 구매 시 차감됨)
-        slot.install(spaceType);
-        userBuildingSlotRepository.save(slot);
+        targetSlot.install(purchasedSlot.getPurchasedSpaceType());
+        userBuildingSlotRepository.save(targetSlot);
+        
+        // 구매한 슬롯 삭제 (이제 실제 슬롯에 설치됨)
+        userBuildingSlotRepository.delete(purchasedSlot);
         
         // 층 확장 체크
         checkFloorExpansion(user, buildingType);
         
-        return slot;
+        return targetSlot;
     }
     
     /**

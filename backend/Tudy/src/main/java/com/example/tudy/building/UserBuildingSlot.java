@@ -25,7 +25,7 @@ public class UserBuildingSlot {
     @Column(nullable = false)
     private BuildingType buildingType;
     
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Integer slotNumber;
     
     @Enumerated(EnumType.STRING)
@@ -73,10 +73,16 @@ public class UserBuildingSlot {
     }
     
     public int getFloor() {
+        if (slotNumber == null) {
+            return 0; // 구매만 하고 설치 안된 경우
+        }
         return ((slotNumber - 1) / BuildingConfig.getBuildingInfo(buildingType).getSlotsPerFloor()) + 1;
     }
     
     public int getPositionInFloor() {
+        if (slotNumber == null) {
+            return 0; // 구매만 하고 설치 안된 경우
+        }
         return ((slotNumber - 1) % BuildingConfig.getBuildingInfo(buildingType).getSlotsPerFloor()) + 1;
     }
 }
