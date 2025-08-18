@@ -113,7 +113,7 @@ public class BuildingController {
         }
         
         try {
-            UserBuildingSlot slot = buildingService.installSpace(targetUser, buildingType, slotNumber, request.getSpaceType());
+            UserBuildingSlot slot = buildingService.installSpace(targetUser, buildingType, request.getPurchasedSlotId(), slotNumber);
             return ResponseEntity.ok(slot);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(null);
@@ -281,10 +281,10 @@ public class BuildingController {
      * 공간 설치 요청 DTO
      */
     public static class InstallRequest {
-        private SpaceType spaceType;
+        private Long purchasedSlotId;
         
-        public SpaceType getSpaceType() { return spaceType; }
-        public void setSpaceType(SpaceType spaceType) { this.spaceType = spaceType; }
+        public Long getPurchasedSlotId() { return purchasedSlotId; }
+        public void setPurchasedSlotId(Long purchasedSlotId) { this.purchasedSlotId = purchasedSlotId; }
     }
     
     /**
