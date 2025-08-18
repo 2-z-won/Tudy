@@ -72,11 +72,10 @@ public class BuildingController {
     /**
      * 공간 구매
      */
-    @PostMapping("/{buildingType}/slots/{slotNumber}/purchase")
+    @PostMapping("/{buildingType}/purchase")
     public ResponseEntity<UserBuildingSlot> purchaseSpace(
             @PathVariable String userId,
             @PathVariable BuildingType buildingType,
-            @PathVariable Integer slotNumber,
             @RequestBody PurchaseRequest request,
             Authentication authentication) {
         
@@ -88,7 +87,7 @@ public class BuildingController {
         }
         
         try {
-            UserBuildingSlot slot = buildingService.purchaseSpace(targetUser, buildingType, slotNumber, request.getSpaceType());
+            UserBuildingSlot slot = buildingService.purchaseSpace(targetUser, buildingType, request.getSpaceType());
             return ResponseEntity.ok(slot);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(null);
