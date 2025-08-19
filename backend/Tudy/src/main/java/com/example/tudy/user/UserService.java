@@ -85,11 +85,22 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public boolean verifyPassword(String userId, String currentPassword) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
+        return passwordEncoder.matches(currentPassword, user.getPasswordHash());
+    }
+
     public void updatePassword(String userId, String currentPassword, String newPassword) {
         User user = userRepository.findByUserId(userId).orElseThrow();
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid password");
         }
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    public void updatePasswordWithoutVerification(String userId, String newPassword) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
