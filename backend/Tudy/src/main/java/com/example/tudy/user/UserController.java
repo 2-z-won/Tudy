@@ -96,11 +96,38 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @PostMapping("/{userId}/password/verify")
+    @Operation(summary = "Verify current password", description = "Verify the current password before changing it")
+    @ApiResponse(responseCode = "200", description = "Password verified")
+    @ApiResponse(responseCode = "400", description = "Invalid password")
+    public ResponseEntity<?> verifyPassword(@PathVariable String userId, 
+                                          @RequestBody PasswordVerifyRequest request,
+                                          @RequestHeader(value = "Authorization", required = false) String auth) {
+        Long uid = tokenService.resolveUserId(auth);
+        if (uid == null) return ResponseEntity.status(401).build();
+        User currentUser = userService.findByUserId(userId);
+        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        
+        boolean isValid = userService.verifyPassword(userId, request.getCurrentPassword());
+        if (isValid) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid current password"));
+        }
+    }
+
     @PutMapping("/{userId}/password")
-    @Operation(summary = "Change password")
+    @Operation(summary = "Change password", description = "Change password after verification")
     @ApiResponse(responseCode = "200", description = "Password updated")
-    public ResponseEntity<Void> changePassword(@PathVariable String userId, @RequestBody PasswordRequest request) {
-        userService.updatePassword(userId, request.getCurrentPassword(), request.getNewPassword());
+    public ResponseEntity<?> changePassword(@PathVariable String userId, 
+                                          @RequestBody PasswordChangeRequest request,
+                                          @RequestHeader(value = "Authorization", required = false) String auth) {
+        Long uid = tokenService.resolveUserId(auth);
+        if (uid == null) return ResponseEntity.status(401).build();
+        User currentUser = userService.findByUserId(userId);
+        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        
+        userService.updatePasswordWithoutVerification(userId, request.getNewPassword());
         return ResponseEntity.ok().build();
     }
 
@@ -151,9 +178,13 @@ public class UserController {
 
 
     @Data
-    private static class PasswordRequest {
-        @Schema(description = "Current password", example = "oldpass")
+    private static class PasswordVerifyRequest {
+        @Schema(description = "Current password to verify", example = "oldpass")
         private String currentPassword;
+    }
+
+    @Data
+    private static class PasswordChangeRequest {
         @Schema(description = "New password", example = "newpass")
         private String newPassword;
     }
