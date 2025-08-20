@@ -3,9 +3,11 @@ package com.example.tudy.game;
 import com.example.tudy.user.User;
 import com.example.tudy.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -22,6 +24,9 @@ public class CoinController {
      */
     @GetMapping
     public ResponseEntity<List<UserCoin>> getUserCoins(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
+        }
         User user = userService.getUserByEmail(authentication.getName());
         List<UserCoin> coins = coinService.getUserCoins(user);
         return ResponseEntity.ok(coins);
@@ -34,6 +39,9 @@ public class CoinController {
     public ResponseEntity<UserCoin> getUserCoinByType(
             @PathVariable CoinType coinType,
             Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
+        }
         User user = userService.getUserByEmail(authentication.getName());
         UserCoin coin = coinService.getUserCoinByType(user, coinType);
         return ResponseEntity.ok(coin);
@@ -44,6 +52,9 @@ public class CoinController {
      */
     @GetMapping("/total")
     public ResponseEntity<TotalCoinResponse> getTotalCoins(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
+        }
         User user = userService.getUserByEmail(authentication.getName());
         int totalCoins = user.getCoinBalance();
         
