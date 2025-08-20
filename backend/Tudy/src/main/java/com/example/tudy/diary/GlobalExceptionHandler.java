@@ -11,6 +11,7 @@ import org.springframework.validation.FieldError;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -64,6 +65,16 @@ public class GlobalExceptionHandler {
         response.put("error", "잘못된 인자가 전달되었습니다");
         response.put("message", ex.getMessage());
         response.put("status", HttpStatus.BAD_REQUEST.value());
+        return response;
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, Object> handleNoSuchElement(NoSuchElementException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", "리소스를 찾을 수 없습니다");
+        response.put("message", ex.getMessage());
+        response.put("status", HttpStatus.NOT_FOUND.value());
         return response;
     }
 
