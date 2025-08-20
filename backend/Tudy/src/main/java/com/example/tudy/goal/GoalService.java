@@ -24,6 +24,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -334,7 +336,7 @@ public class GoalService {
         User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         if (categoryName == null) {
-            return goalRepository.findByUser(user);
+            return goalRepository.findByUserWithCategory(user);
         } else {
             Category category = categoryRepository.findByUserAndName(user, categoryName)
                     .orElseThrow(() -> new EntityNotFoundException("Category not found"));
@@ -356,6 +358,40 @@ public class GoalService {
                     .orElseThrow(() -> new EntityNotFoundException("Category not found"));
             return goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqualAndCategory(user, date, date, category);
         }
+    }
+
+    public List<com.example.tudy.goal.GoalController.GoalGroupedByCategoryResponse> listGoalsByDateGroupedByCategory(String userId, LocalDate date, String categoryName) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        
+        // 카페 목표 자동 생성 (해당 날짜에 대해)
+        createDailyCafeGoal(user);
+        
+        List<Goal> goals;
+        if (categoryName == null) {
+            goals = goalRepository.findByUserAndDateWithCategory(user, date);
+        } else {
+            Category category = categoryRepository.findByUserAndName(user, categoryName)
+                    .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+            goals = goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqualAndCategory(user, date, date, category);
+        }
+        
+        // 카테고리별로 그룹화
+        Map<Category, List<Goal>> groupedGoals = goals.stream()
+                .collect(Collectors.groupingBy(Goal::getCategory));
+        
+        // 응답 DTO로 변환
+        return groupedGoals.entrySet().stream()
+                .map(entry -> {
+                    com.example.tudy.goal.GoalController.CategoryInfo categoryInfo = 
+                        new com.example.tudy.goal.GoalController.CategoryInfo(entry.getKey());
+                    List<com.example.tudy.goal.GoalController.GoalInfo> goalInfos = 
+                        entry.getValue().stream()
+                            .map(goal -> new com.example.tudy.goal.GoalController.GoalInfo(goal))
+                            .collect(Collectors.toList());
+                    return new com.example.tudy.goal.GoalController.GoalGroupedByCategoryResponse(categoryInfo, goalInfos);
+                })
+                .collect(Collectors.toList());
     }
 
     private Category getOrCreateCategory(User user, String categoryName) {
