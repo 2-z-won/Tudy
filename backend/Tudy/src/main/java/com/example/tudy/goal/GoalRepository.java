@@ -3,6 +3,8 @@ package com.example.tudy.goal;
 import com.example.tudy.user.User;
 import com.example.tudy.category.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -20,4 +22,11 @@ public interface GoalRepository extends JpaRepository<Goal, Long> {
     
     // 사용자의 친구 목표 조회
     List<Goal> findByUserAndIsFriendGoalTrue(User user);
+    
+    // category를 함께 조회하는 메서드들
+    @Query("SELECT g FROM Goal g JOIN FETCH g.category WHERE g.user = :user")
+    List<Goal> findByUserWithCategory(@Param("user") User user);
+    
+    @Query("SELECT g FROM Goal g JOIN FETCH g.category WHERE g.user = :user AND g.startDate <= :date AND g.endDate >= :date")
+    List<Goal> findByUserAndDateWithCategory(@Param("user") User user, @Param("date") java.time.LocalDate date);
 }
