@@ -5,8 +5,8 @@ import 'package:frontend/api/Group/controller/JoinGroupController.dart';
 import 'package:frontend/api/Group/model/AddGroupModel.dart';
 import 'package:frontend/utils/auth_util.dart';
 import 'package:get/get.dart';
-import 'package:frontend/components/bottomNavigation/GroupFriend/JoinAddFindfield.dart';
-import 'package:frontend/components/bottomNavigation/GroupFriend/GroupList.dart';
+import 'package:frontend/components/GroupFriend/JoinAddFindfield.dart';
+import 'package:frontend/components/GroupFriend/GroupList.dart';
 import 'package:frontend/constants/colors.dart';
 import 'package:flutter/services.dart';
 

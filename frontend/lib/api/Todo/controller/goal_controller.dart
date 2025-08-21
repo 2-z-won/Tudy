@@ -44,4 +44,28 @@ class GoalController {
       errorMessage.value = "서버 오류: $e";
     }
   }
+
+  // CategoryController.dart
+  static Future<int?> fetchGoalDurationSeconds(int goalId) async {
+    // GET /api/sessions/goal/{goalId}/duration  -> { "hours": 10, "minutes": 45 }
+    final uri = Uri.parse('${Urls.apiUrl}sessions/goal/$goalId/duration');
+    final res = await http.get(uri);
+
+    print('⏱️ duration[$goalId] status=${res.statusCode} body=${res.body}');
+    if (res.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(res.body);
+      final int hours = (data['hours'] ?? 0) as int;
+      final int minutes = (data['minutes'] ?? 0) as int;
+      return hours * 3600 + minutes * 60; // 초 단위 반환
+    } else {
+      // 실패하면 null 반환(진행률 0%로 보이게)
+      return null;
+    }
+  }
+
+  static Future<bool> deleteGoal(int goalId) async {
+    final uri = Uri.parse('${Urls.apiUrl}goals/$goalId');
+    final res = await http.delete(uri);
+    return res.statusCode >= 200 && res.statusCode < 300;
+  }
 }

@@ -65,6 +65,7 @@ class CategoryController {
     required String name,
     required int colorIndex, // 1~10
     required String categoryType,
+    required  String selectedEmoji,
   }) async {
     errorMessage.value = '';
     successMessage.value = '';
@@ -79,6 +80,7 @@ class CategoryController {
       name: name.trim(),
       color: colorIndex,
       categoryType: categoryType,
+      icon : selectedEmoji,
     );
 
     try {

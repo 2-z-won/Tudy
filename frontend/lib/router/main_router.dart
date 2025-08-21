@@ -8,6 +8,7 @@ import 'package:frontend/pages/MyPage/FriendPage.dart';
 import 'package:frontend/pages/MyPage/GroupPage.dart';
 import 'package:frontend/pages/MyPage/MyPage.dart';
 import 'package:frontend/pages/TodoPage.dart';
+import 'package:frontend/pages/TodoPage_new.dart';
 import 'package:frontend/pages/stopwatchPage.dart';
 import 'package:get/get.dart';
 import 'package:frontend/pages/stopwatchPage.dart';
@@ -15,7 +16,7 @@ import 'package:frontend/pages/stopwatchPage.dart';
 import 'package:frontend/layout/navigationLayout.dart';
 import 'package:frontend/layout/noLayout.dart';
 
-import 'package:frontend/pages/MainPage.dart';
+import 'package:frontend/pages/MainPage/MainPage.dart';
 
 class MainRouter {
   static final List<GetPage> routes = [
@@ -37,7 +38,7 @@ class MainRouter {
     ),
     GetPage(
       name: '/Todo',
-      page: () => NavigationLayout(child: TodoPageView()),
+      page: () => NavigationLayout(child: NewTodoPageView()),
     ),
     GetPage(
       name: '/diary',

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/api/StopWatch/stopwatch_controller.dart';
 import 'package:frontend/constants/colors.dart';
 import 'package:frontend/components/check.dart';
+import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:frontend/api/Todo/controller/image_controller.dart';
 
-class TodoDetail extends StatelessWidget {
+class TodoDetail extends StatefulWidget {
   final VoidCallback onClose;
   final String category; // ✅ 카테고리명
   final String group;
@@ -29,12 +33,57 @@ class TodoDetail extends StatelessWidget {
   });
 
   @override
+  State<TodoDetail> createState() => _TodoDetailState();
+}
+
+class _TodoDetailState extends State<TodoDetail> {
+  final StudySessionController session = Get.put(StudySessionController());
+  final GoalProofController proof = Get.put(GoalProofController());
+
+  @override
+  void initState() {
+    super.initState();
+    session.fetchAccumulatedTime(widget.goalId);
+  }
+
+  String _fmtHM(int seconds) {
+    final h = seconds ~/ 3600;
+    final m = (seconds % 3600) ~/ 60;
+    return '${h}h ${m}m';
+  }
+
+  int _remainSeconds(int accumulated, int target) {
+    final remain = target - accumulated;
+    return remain > 0 ? remain : 0;
+  }
+
+  Future<void> _pickThenUpload() async {
+    final picker = ImagePicker();
+    final XFile? img = await picker.pickImage(source: ImageSource.gallery);
+    if (img == null) return;
+
+    final ok = await proof.uploadProofImage(
+      goalId: widget.goalId,
+      filePath: img.path,
+    );
+
+    if (ok) {
+      // 성공 시 닫고 부모가 리스트 갱신 (이미 구현됨)
+      widget.onClose();
+    } else if (mounted && proof.error.value != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(proof.error.value!)));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 25),
       decoration: BoxDecoration(
-        color: subColor,
+        color: widget.subColor,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -50,17 +99,17 @@ class TodoDetail extends StatelessWidget {
                 height: 7,
                 margin: const EdgeInsets.only(right: 6, left: 10),
                 decoration: BoxDecoration(
-                  color: mainColor,
+                  color: widget.mainColor,
                   shape: BoxShape.circle,
                 ),
               ),
               Text(
-                "$category ($group)",
+                "${widget.category} (${widget.group})",
                 style: const TextStyle(fontSize: 12, color: Colors.black),
               ),
               const Spacer(),
               TextButton(
-                onPressed: onClose,
+                onPressed: widget.onClose,
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: const Size(0, 0),
@@ -95,7 +144,7 @@ class TodoDetail extends StatelessWidget {
                       const SizedBox(width: 10),
                       Flexible(
                         child: Text(
-                          goalText, // ✅ 전달 받은 목표 텍스트
+                          widget.goalText, // ✅ 전달 받은 목표 텍스트
                           style: const TextStyle(
                             fontSize: 13,
                             color: TextColor,
@@ -121,7 +170,7 @@ class TodoDetail extends StatelessWidget {
                         style: TextStyle(color: Colors.black, fontSize: 12),
                       ),
                       const SizedBox(height: 15),
-                      if (certificationType == 'time') ...[
+                      if (widget.certificationType == 'time') ...[
                         Row(
                           children: [
                             const SizedBox(width: 5),
@@ -136,19 +185,21 @@ class TodoDetail extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 13),
+                        const SizedBox(height: 10),
                         Center(
                           child: Text(
-                            targetTime != null
-                                ? '(목표 ${targetTime! ~/ 3600}h ${(targetTime! % 3600) ~/ 60}m)'
-                                : '',
+                            widget.targetTime != null
+                                ? '${widget.targetTime! ~/ 3600} h  ${(widget.targetTime! % 3600) ~/ 60} m'
+                                : '??h ??m',
                             style: const TextStyle(
-                              fontSize: 8,
-                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              letterSpacing: 2,
                             ),
                           ),
                         ),
-                      ] else if (certificationType == 'photo' && done) ...[
+                      ] else if (widget.certificationType == 'photo' &&
+                          widget.done) ...[
                         Row(
                           children: const [
                             SizedBox(width: 5),
@@ -163,7 +214,8 @@ class TodoDetail extends StatelessWidget {
                             ),
                           ],
                         ),
-                      ] else if (certificationType == 'photo' && !done) ...[
+                      ] else if (widget.certificationType == 'photo' &&
+                          !widget.done) ...[
                         Row(
                           children: const [
                             SizedBox(width: 5),
@@ -178,24 +230,54 @@ class TodoDetail extends StatelessWidget {
                             ),
                           ],
                         ),
-                        Center(child: Icon(Icons.add_a_photo, size: 24)),
+                        const SizedBox(height: 13),
+                        Obx(() {
+                          if (proof.isUploading.value) {
+                            return Column(
+                              children: const [
+                                Center(
+                                  child: Text(
+                                    '〰️ 인증 중 〰️',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          return Center(
+                            child: GestureDetector(
+                              onTap: _pickThenUpload,
+                              child: const Icon(Icons.add_a_photo, size: 24),
+                            ),
+                          );
+                        }),
                       ],
                     ],
                   ),
                 ),
                 const SizedBox(height: 25),
 
-                if (done) ...[
+                if (widget.done) ...[
                   const Text(
                     "🍀 목표를 완료했어요 🍀",
                     style: TextStyle(color: Colors.black, fontSize: 14),
                   ),
-                ] else if (certificationType == 'time') ...[
-                  Text(
-                    "🍀 목표 완료까지 ${targetTime != null ? '${targetTime! ~/ 3600}h ${(targetTime! % 3600) ~/ 60}m' : '##h ##m'} 남았어요 🍀",
-                    style: const TextStyle(color: Colors.black, fontSize: 14),
-                  ),
-                ] else if (certificationType == 'photo') ...[
+                ] else if (widget.certificationType == 'time') ...[
+                  Obx(() {
+                    final accSec = session.accumulatedTime.value.inSeconds;
+                    final remain = _remainSeconds(accSec, widget.targetTime!);
+                    return Text(
+                      "🍀 목표 완료까지 ${_fmtHM(remain)} 남았어요 🍀",
+                      style: const TextStyle(color: Colors.black, fontSize: 14),
+                    );
+                  }),
+                ] else if (widget.certificationType == 'photo') ...[
                   const Text(
                     "🍀 사진을 찍어 목표 달성 인증 해주세요 🍀",
                     style: TextStyle(color: Colors.black, fontSize: 14),

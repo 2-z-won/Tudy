@@ -4,10 +4,10 @@ import 'package:frontend/api/Friend/controller/AddListController.dart';
 import 'package:frontend/api/Friend/controller/FriendListController.dart';
 import 'package:frontend/utils/auth_util.dart';
 import 'package:get/get.dart';
-import 'package:frontend/components/bottomNavigation/GroupFriend/FriendList.dart';
-import 'package:frontend/components/bottomNavigation/GroupFriend/GroupFriendItem.dart';
-import 'package:frontend/components/bottomNavigation/GroupFriend/JoinAddFindfield.dart';
-import 'package:frontend/components/bottomNavigation/GroupFriend/GroupList.dart';
+import 'package:frontend/components/GroupFriend/FriendList.dart';
+import 'package:frontend/components/GroupFriend/GroupFriendItem.dart';
+import 'package:frontend/components/GroupFriend/JoinAddFindfield.dart';
+import 'package:frontend/components/GroupFriend/GroupList.dart';
 import 'package:frontend/constants/colors.dart';
 
 class Friendpage extends StatefulWidget {
@@ -40,7 +40,7 @@ class _GroupPageState extends State<Friendpage> {
       userId = uid;
     });
     _requestController.fetchRequests(uid!);
-    await _friendListcontroller.fetchFriends(uid);
+    await _friendListcontroller.fetchFriendsAndGoals(uid);
   }
 
   @override

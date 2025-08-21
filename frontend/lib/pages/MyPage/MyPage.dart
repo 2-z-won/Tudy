@@ -75,7 +75,7 @@ class MyPageView extends StatelessWidget {
                     color: Color(0xFFFF4A4A),
                     decoration: TextDecoration.underline,
                     decorationColor: Color(0xFFFF4A4A),
-                    letterSpacing: 0.14, 
+                    letterSpacing: 0.14,
                   ),
                   textAlign: TextAlign.center,
                 ),

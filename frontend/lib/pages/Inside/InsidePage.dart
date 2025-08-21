@@ -1,23 +1,76 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pages/Inside/Card/CardContainer.dart';
-import 'package:frontend/pages/Inside/Card/CustomCard.dart';
-import 'package:frontend/pages/Inside/Card/SelectCustiomCard.dart';
 import 'package:frontend/pages/Inside/CardSelector.dart';
 import 'package:frontend/pages/Inside/RoomSelectController.dart';
+import 'package:frontend/pages/Inside/SpaceList/space_catalog.dart';
+import 'package:frontend/pages/MainPage/api/building/building_controller.dart';
+import 'package:frontend/pages/MainPage/api/building/building_model.dart';
+import 'package:frontend/pages/MainPage/api/coin/coin_controller.dart';
 import 'package:get/get.dart';
+import 'package:collection/collection.dart';
 
 class InsidePageView extends StatelessWidget {
-  InsidePageView({super.key});
-
-  final RoomSelectionController controller = Get.put(RoomSelectionController());
+  const InsidePageView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final boxNumbers = List.generate(10, (index) => index + 1);
+    final args = Get.arguments as Map? ?? {};
+    final building = args['building'] as BuildingType;
+    final info = args['info'] as BuildingInfo;
+
+    final floors = info.config.floors;
+    final currentFloor = info.building.currentFloor;
+
+    final totalSlots = floors * 2;
+
+    final RoomSelectionController controller = Get.put(
+      RoomSelectionController(totalSlots),
+    );
+
+    final buildingCtrl = Get.put(BuildingController());
+    final coinsCtrl = Get.put(CoinsController());
+    coinsCtrl.ensureSelectedForBuilding(building);
+
+    controller.loadFromServer(
+      totalBoxes: totalSlots,
+      installed: info.slots
+          .where((s) => s.slotNumber != null)
+          .map(
+            (s) => {
+              'slotNumber': s.slotNumber!,
+              'spaceType': s.spaceType,
+              'level': s.currentLevel,
+            },
+          )
+          .toList(),
+    );
+
+    Future<void> refreshFromServer() async {
+      await buildingCtrl.fetchBuilding(building); // ✅ 결과는 infos에 반영됨
+      final latestInfo = buildingCtrl.infos[building];
+      if (latestInfo == null) return;
+
+      controller.loadFromServer(
+        totalBoxes: totalSlots,
+        installed: latestInfo.slots
+            .where((s) => s.slotNumber != null)
+            .map(
+              (s) => {
+                'slotNumber': s.slotNumber!,
+                'spaceType': s.spaceType,
+                'level': s.currentLevel,
+              },
+            )
+            .toList(),
+      );
+    }
+
+    final boxNumbers = List.generate(floors * 2, (index) => index + 1);
     final screenWidth = MediaQuery.of(context).size.width;
     final boxWidth = screenWidth * 0.47; // 화면 너비의 45%
     final boxHeight = boxWidth / 2;
     final double availableWidth = MediaQuery.of(context).size.width - 20;
+
+    final latest = buildingCtrl.infos[building] ?? info;
 
     print('boxWidth: $boxWidth');
     print('boxHeight: $boxHeight');
@@ -31,7 +84,7 @@ class InsidePageView extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ...List.generate(5, (rowIndex) {
+                ...List.generate(floors, (rowIndex) {
                   int start = rowIndex * 2;
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -41,6 +94,7 @@ class InsidePageView extends StatelessWidget {
                         boxWidth,
                         boxHeight,
                         controller,
+                        latest.slots,
                       ),
                       // SizedBox(width: 0.5),
                       _buildBox(
@@ -48,6 +102,7 @@ class InsidePageView extends StatelessWidget {
                         boxWidth,
                         boxHeight,
                         controller,
+                        latest.slots,
                       ),
                     ],
                   );
@@ -60,33 +115,111 @@ class InsidePageView extends StatelessWidget {
             top: 15,
             left: 15,
             right: 15,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // 왼쪽: 나가기
-                Row(
-                  children: [
-                    Icon(Icons.home_outlined, size: 26, color: Colors.black),
-                    const SizedBox(width: 4),
-                    Text(
-                      '나가기',
-                      style: TextStyle(fontSize: 18, color: Colors.black),
+            child: Obx(() {
+              final isEdit = controller.isEditMode.value;
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // 왼쪽: 일반(집+나가기) ↔ 편집(X)
+                  GestureDetector(
+                    onTap: () {
+                      if (controller.isEditMode.value) {
+                        controller.cancelEdit(); // ✅ 편집 취소 + 종료
+                      } else {
+                        // TODO: 일반 모드에서 나가기 동작 (e.g., Get.back();)
+                      }
+                    },
+                    child: Obx(
+                      () => controller.isEditMode.value
+                          ? const Icon(
+                              Icons.close,
+                              size: 26,
+                              color: Colors.black,
+                            )
+                          : Row(
+                              children: const [
+                                Icon(
+                                  Icons.home_outlined,
+                                  size: 26,
+                                  color: Colors.black,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  '나가기',
+                                  style: TextStyle(
+                                    fontFamily: 'Galmuri11',
+                                    fontSize: 18,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
-                  ],
-                ),
-                // 오른쪽: 코인
-                Row(
-                  children: [
-                    Image.asset('images/coin.png', width: 20, height: 20),
-                    const SizedBox(width: 2),
-                    Text(
-                      '1,000',
-                      style: TextStyle(fontSize: 18, color: Colors.black),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+
+                  // 오른쪽: 일반(코인) ↔ 편집(체크 아이콘 = 완료)
+                  isEdit
+                      ? GestureDetector(
+                          onTap: () async {
+                            final ok = await buildingCtrl.installMany(
+                              buildingType: building,
+                              items: controller.pendingInstalls,
+                            );
+                            if (ok) {
+                              controller.commitLocal();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('설치를 완료했어요!')),
+                              );
+                              // 서버 최신 상태 다시 가져오고 싶으면:
+                              await refreshFromServer();
+                              await coinsCtrl.refreshAfterAction(building);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    buildingCtrl.error.value.isEmpty
+                                        ? '설치에 실패했어요.'
+                                        : buildingCtrl.error.value,
+                                  ),
+                                ),
+                              );
+                              // 실패 시 staged 상태 유지(사용자 재시도 가능)
+                            }
+                          }, // 체크 누르면 편집 종료
+                          child: const Icon(
+                            Icons.check_circle,
+                            size: 26,
+                            color: Colors.black,
+                          ),
+                        )
+                      : Obx(() {
+                          final type = coinsCtrl.coinTypeOf(building);
+                          final iconPath = coinsCtrl.imagePathOf(type);
+                          final text = coinsCtrl.isLoading.value
+                              ? '...'
+                              : coinsCtrl.amountTextOf(type);
+                          return Row(
+                            children: [
+                              Image.asset(
+                                iconPath,
+                                width: 20,
+                                height: 20,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                text,
+                                style: TextStyle(
+                                  fontFamily: 'Galmuri11',
+                                  fontSize: 18,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          );
+                        }),
+                ],
+              );
+            }),
           ),
 
           Positioned(
@@ -94,101 +227,61 @@ class InsidePageView extends StatelessWidget {
             left: 20,
             child: ShadowContainer(width: availableWidth),
           ),
-          // Positioned(
-          //   bottom: 0,
-          //   left: 25,
-          //   child: Column(
-          //     crossAxisAlignment: CrossAxisAlignment.end,
-          //     children: [
-          //       Icon(Icons.settings_rounded),
-          //       CardContainer(
-          //         width: availableWidth - 5,
-          //         child: Obx(
-          //           () => StudyRoomSelector(
-          //             onCardTap: controller.selectCard,
-          //             selectedCardName: controller.selectedCard.value,
-          //           ),
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
           Positioned(
             bottom: 0,
             left: 25,
-            child: PixelCardContainer(
-              width: availableWidth,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 64,
-                    height: 79,
-                    child: Stack(
-                      children: [
-                        Align(
-                          alignment: Alignment.center,
-                          child: Container(
-                            width: 56,
-                            height: 71,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade800,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Obx(() {
+                  final isEdit = controller.isEditMode.value;
+                  return GestureDetector(
+                    onTap: () {
+                      if (!isEdit) {
+                        controller.enterEditMode(); // 일반 모드에서만 편집 모드 진입
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 5.0, right: 5.0),
+                      child: isEdit
+                          ? const Text(
+                              '편집중...',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.settings_rounded,
+                              size: 24,
+                              color: Colors.black,
                             ),
-                            child: Image.asset(
-                              'assets/images/image.png', // 정확한 경로
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.center,
-                          child: CustomPaint(
-                            painter: const CustomCardPainter(
-                              color: Color(0xFF3A1F0B),
-                              pixelSize: 4,
-                            ),
-                            size: const Size(64, 79),
-                          ),
-                        ),
-                      ],
                     ),
-                  ),
-                  SizedBox(width: 10),
-                  SizedBox(
-                    width: 70,
-                    height: 85,
-                    child: Stack(
-                      children: [
-                        Align(
-                          alignment: Alignment.center,
-                          child: Container(
-                            width: 56,
-                            height: 71,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade800,
-                            ),
-                            child: Image.asset(
-                              'assets/images/image.png', // 정확한 경로
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.center,
-                          child: CustomPaint(
-                            painter: const SelectCustomCardPainter(
-                              color: Color(0xFF3A1F0B),
-                              pixelSize: 3,
-                            ),
-                            size: const Size(70, 85),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                  );
+                }),
+
+                CardContainer(
+                  width: availableWidth - 5,
+                  child: Obx(() {
+                    final isEdit = controller.isEditMode.value;
+                    final args = Get.arguments;
+                    final building = args['building'] as BuildingType;
+                    final catalog = SpaceCatalog.byBuilding(building);
+                    final latest = buildingCtrl.infos[building] ?? info;
+                    return StudyRoomSelector(
+                      purchaseList: latest.slots,
+                      catalog: catalog,
+                      controller: controller,
+                      onCardTap: (slotId) => controller.selectSlot(slotId),
+                      selectedSlotId: controller.selectedSlotId.value,
+                      showOnlyUnlocked: isEdit,
+                      buildingType: building,
+                      onRefresh: refreshFromServer,
+                    );
+                  }),
+                ),
+              ],
             ),
           ),
         ],
@@ -201,46 +294,52 @@ class InsidePageView extends StatelessWidget {
     double width,
     double height,
     RoomSelectionController controller,
+    List<Slot> slots,
   ) {
     return Obx(() {
-      final value = controller.boxValues[index]?.value;
+      final imgPath = controller.stagedBoxImages[index]; // ✅ 여기!
       return GestureDetector(
-        onTap: () => controller.assignToBox(index),
+        onTap: () {
+          if (!controller.isEditMode.value) return;
+          final selectedId = controller.selectedSlotId.value;
+          if (selectedId == null) return;
+
+          // ✅ 선택된 구매 카드의 실제 데이터 찾기
+          final selected = slots.firstWhereOrNull((s) => s.id == selectedId);
+          if (selected == null) return;
+
+          // 선택된 카드를 이 박스(index)에 “미리 설치”
+          controller.stageInstall(
+            slotNumber: index,
+            spaceId: selected.id,
+            spaceType: selected.spaceType,
+            level: selected.currentLevel,
+          );
+        },
         child: Container(
           width: width,
           height: height,
-          // alignment: Alignment.center,
-          margin: EdgeInsets.all(2),
+          margin: const EdgeInsets.all(2),
           decoration: BoxDecoration(
             color: Colors.blue,
             borderRadius: BorderRadius.circular(2),
             border: Border.all(width: 1, color: Colors.black),
           ),
           clipBehavior: Clip.hardEdge,
-          child: Image.asset('images/image.png', fit: BoxFit.fill),
-          // Stack(
-          //   alignment: Alignment.center,
-          //   children: [
-          //     if (value != null)
-          //       Text(
-          //         value,
-          //         style: TextStyle(
-          //           fontSize: 20,
-          //           color: Colors.red,
-          //           fontWeight: FontWeight.bold,
-          //         ),
-          //       ),
-
-          //     Positioned(
-          //       top: 5,
-          //       left: 5,
-          //       child: Text(
-          //         index.toString(),
-          //         style: TextStyle(color: Colors.white, fontSize: 16),
-          //       ),
-          //     ),
-          //   ],
-          // ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (imgPath != null) Image.asset(imgPath, fit: BoxFit.cover),
+              Positioned(
+                top: 5,
+                left: 5,
+                child: Text(
+                  '$index',
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     });

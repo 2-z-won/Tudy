@@ -16,28 +16,13 @@ class CalendarHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            DateFormat('MM').format(date),
-            style: const TextStyle(fontSize: 50, color: CalendarColor),
-          ),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 10),
-            width: 1,
-            height: 50,
-            color: CalendarColor,
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                DateFormat('MMMM').format(date),
-                style: const TextStyle(fontSize: 15, color: CalendarColor),
-              ),
-              Text(
-                DateFormat('yyyy').format(date),
-                style: const TextStyle(fontSize: 15, color: CalendarColor),
-              ),
-            ],
+            "${DateFormat('MM').format(date)} ${DateFormat('MMMM').format(date)}",
+            style: const TextStyle(
+              fontFamily: "GmarketSans",
+              fontWeight: FontWeight.w700,
+              fontSize: 26,
+              color: CalendarColor,
+            ),
           ),
         ],
       ),
