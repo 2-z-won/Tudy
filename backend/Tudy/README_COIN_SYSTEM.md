@@ -87,6 +87,26 @@ Authorization: Bearer {token}
 }
 ```
 
+### 4. 코인 베팅 게임
+```http
+POST /api/coins/game?bet={amount}
+Authorization: Bearer {token}
+```
+
+**설명:**
+- `amount`: 베팅할 코인 수
+- 성공 시 베팅한 코인만큼 추가 획득
+- 실패 시 베팅한 코인만큼 차감
+- 하루 최대 3회까지 플레이 가능
+
+**응답:**
+```json
+{
+  "success": true,
+  "currentBalance": 120
+}
+```
+
 ## 🎯 **코인 획득 방법**
 
 ### 자동 지급 시스템
