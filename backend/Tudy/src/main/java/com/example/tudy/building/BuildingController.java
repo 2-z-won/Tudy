@@ -1,12 +1,11 @@
 package com.example.tudy.building;
 
+import com.example.tudy.auth.TokenService;
 import com.example.tudy.user.User;
 import com.example.tudy.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -22,25 +21,16 @@ public class BuildingController {
 
     private final BuildingService buildingService;
     private final UserService userService;
+    private final TokenService tokenService;
 
-    private User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        // 인증 객체가 없거나, principal이 없거나, 인증되지 않았거나, 익명 사용자면 401
-        if (authentication == null
-                || authentication.getPrincipal() == null
-                || !authentication.isAuthenticated()
-                || "anonymousUser".equals(authentication.getPrincipal())) {
+    private User getAuthenticatedUser(String authHeader) {
+        Long userId = tokenService.resolveUserId(authHeader);
+        if (userId == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
         }
 
-        String email = authentication.getName(); // TokenAuthenticationFilter에서 principal = email
-        if (email == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증정보가 유효하지 않습니다.");
-        }
-
         try {
-            return userService.getUserByEmail(email);
+            return userService.findById(userId);
         } catch (NoSuchElementException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증정보가 유효하지 않습니다.");
         }
@@ -60,8 +50,9 @@ public class BuildingController {
     @GetMapping("/{buildingType}")
     public ResponseEntity<BuildingResponse> getUserBuilding(
             @PathVariable String userId,
-            @PathVariable BuildingType buildingType) {
-        User authenticatedUser = getAuthenticatedUser();
+            @PathVariable BuildingType buildingType,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User authenticatedUser = getAuthenticatedUser(authHeader);
         User targetUser = getTargetUser(userId);
 
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
@@ -87,8 +78,9 @@ public class BuildingController {
     public ResponseEntity<UserBuildingSlot> getSlot(
             @PathVariable String userId,
             @PathVariable BuildingType buildingType,
-            @PathVariable Integer slotNumber) {
-        User authenticatedUser = getAuthenticatedUser();
+            @PathVariable Integer slotNumber,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User authenticatedUser = getAuthenticatedUser(authHeader);
         User targetUser = getTargetUser(userId);
 
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
@@ -106,8 +98,9 @@ public class BuildingController {
     public ResponseEntity<UserBuildingSlot> purchaseSpace(
             @PathVariable String userId,
             @PathVariable BuildingType buildingType,
-            @RequestBody PurchaseRequest request) {
-        User authenticatedUser = getAuthenticatedUser();
+            @RequestBody PurchaseRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User authenticatedUser = getAuthenticatedUser(authHeader);
         User targetUser = getTargetUser(userId);
 
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
@@ -130,8 +123,9 @@ public class BuildingController {
             @PathVariable String userId,
             @PathVariable BuildingType buildingType,
             @PathVariable Integer slotNumber,
-            @RequestBody InstallRequest request) {
-        User authenticatedUser = getAuthenticatedUser();
+            @RequestBody InstallRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User authenticatedUser = getAuthenticatedUser(authHeader);
         User targetUser = getTargetUser(userId);
 
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
@@ -153,8 +147,9 @@ public class BuildingController {
     public ResponseEntity<UserBuildingSlot> upgradeSpace(
             @PathVariable String userId,
             @PathVariable BuildingType buildingType,
-            @PathVariable Integer slotNumber) {
-        User authenticatedUser = getAuthenticatedUser();
+            @PathVariable Integer slotNumber,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User authenticatedUser = getAuthenticatedUser(authHeader);
         User targetUser = getTargetUser(userId);
 
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
@@ -175,8 +170,9 @@ public class BuildingController {
     @PostMapping("/{buildingType}/exterior/upgrade")
     public ResponseEntity<UserBuilding> upgradeExterior(
             @PathVariable String userId,
-            @PathVariable BuildingType buildingType) {
-        User authenticatedUser = getAuthenticatedUser();
+            @PathVariable BuildingType buildingType,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User authenticatedUser = getAuthenticatedUser(authHeader);
         User targetUser = getTargetUser(userId);
 
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
