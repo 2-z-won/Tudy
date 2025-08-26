@@ -18,12 +18,15 @@ public class TokenService {
         return token;
     }
 
-    public Long resolveUserId(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return null;
-        }
-        String token = authHeader.substring(7);
-        if (blacklist.contains(token)) {
+    /**
+     * 토큰 문자열을 이용해 사용자 ID 를 해석한다.
+     * 잘못된 토큰이거나 블랙리스트에 등록된 토큰인 경우 null 을 반환한다.
+     *
+     * @param token UUID 기반 토큰 문자열
+     * @return 토큰에 매핑된 사용자 ID, 없으면 null
+     */
+    public Long resolveUserId(String token) {
+        if (token == null || blacklist.contains(token)) {
             return null;
         }
         return tokens.get(token);
