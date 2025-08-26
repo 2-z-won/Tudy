@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -22,7 +23,9 @@ public class BuildingController {
     private final BuildingService buildingService;
     private final UserService userService;
 
-    private User getAuthenticatedUser(Authentication authentication) {
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
         // 인증 객체가 없거나, principal이 없거나, 인증되지 않았거나, 익명 사용자면 401
         if (authentication == null
                 || authentication.getPrincipal() == null
@@ -57,9 +60,8 @@ public class BuildingController {
     @GetMapping("/{buildingType}")
     public ResponseEntity<BuildingResponse> getUserBuilding(
             @PathVariable String userId,
-            @PathVariable BuildingType buildingType,
-            Authentication authentication) {
-        User authenticatedUser = getAuthenticatedUser(authentication);
+            @PathVariable BuildingType buildingType) {
+        User authenticatedUser = getAuthenticatedUser();
         User targetUser = getTargetUser(userId);
 
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
@@ -85,9 +87,8 @@ public class BuildingController {
     public ResponseEntity<UserBuildingSlot> getSlot(
             @PathVariable String userId,
             @PathVariable BuildingType buildingType,
-            @PathVariable Integer slotNumber,
-            Authentication authentication) {
-        User authenticatedUser = getAuthenticatedUser(authentication);
+            @PathVariable Integer slotNumber) {
+        User authenticatedUser = getAuthenticatedUser();
         User targetUser = getTargetUser(userId);
 
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
@@ -105,9 +106,8 @@ public class BuildingController {
     public ResponseEntity<UserBuildingSlot> purchaseSpace(
             @PathVariable String userId,
             @PathVariable BuildingType buildingType,
-            @RequestBody PurchaseRequest request,
-            Authentication authentication) {
-        User authenticatedUser = getAuthenticatedUser(authentication);
+            @RequestBody PurchaseRequest request) {
+        User authenticatedUser = getAuthenticatedUser();
         User targetUser = getTargetUser(userId);
 
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
@@ -130,9 +130,8 @@ public class BuildingController {
             @PathVariable String userId,
             @PathVariable BuildingType buildingType,
             @PathVariable Integer slotNumber,
-            @RequestBody InstallRequest request,
-            Authentication authentication) {
-        User authenticatedUser = getAuthenticatedUser(authentication);
+            @RequestBody InstallRequest request) {
+        User authenticatedUser = getAuthenticatedUser();
         User targetUser = getTargetUser(userId);
 
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
@@ -154,9 +153,8 @@ public class BuildingController {
     public ResponseEntity<UserBuildingSlot> upgradeSpace(
             @PathVariable String userId,
             @PathVariable BuildingType buildingType,
-            @PathVariable Integer slotNumber,
-            Authentication authentication) {
-        User authenticatedUser = getAuthenticatedUser(authentication);
+            @PathVariable Integer slotNumber) {
+        User authenticatedUser = getAuthenticatedUser();
         User targetUser = getTargetUser(userId);
 
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
@@ -177,9 +175,8 @@ public class BuildingController {
     @PostMapping("/{buildingType}/exterior/upgrade")
     public ResponseEntity<UserBuilding> upgradeExterior(
             @PathVariable String userId,
-            @PathVariable BuildingType buildingType,
-            Authentication authentication) {
-        User authenticatedUser = getAuthenticatedUser(authentication);
+            @PathVariable BuildingType buildingType) {
+        User authenticatedUser = getAuthenticatedUser();
         User targetUser = getTargetUser(userId);
 
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
