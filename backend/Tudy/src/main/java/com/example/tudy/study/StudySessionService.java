@@ -7,6 +7,7 @@ import com.example.tudy.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,9 @@ public class StudySessionService {
         int durationInSeconds = (hours * 3600) + (minutes * 60);
         session.setDuration(durationInSeconds);
         session.setCreatedAt(LocalDateTime.now());
+        user.setLastStudyDate(LocalDate.now());
+        user.setDirty(false);
+        userRepository.save(user);
         return studySessionRepository.save(session);
     }
 
