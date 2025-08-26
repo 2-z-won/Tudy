@@ -1,11 +1,11 @@
 package com.example.tudy.game;
 
-import com.example.tudy.auth.TokenService;
 import com.example.tudy.user.User;
 import com.example.tudy.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -19,16 +19,15 @@ public class CoinController {
 
     private final CoinService coinService;
     private final UserService userService;
-    private final TokenService tokenService;
+
     // 공통 인증 유저 조회
-    private User requireUser(String authHeader) {
-        Long userId = tokenService.resolveUserId(authHeader);
-        if (userId == null) {
+    private User requireUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated() || authentication.getName() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
         }
 
         try {
-            return userService.findById(userId);
+            return userService.getUserByEmail(authentication.getName());
         } catch (NoSuchElementException e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증정보가 유효하지 않습니다.");
         }
@@ -38,8 +37,8 @@ public class CoinController {
      * 사용자의 모든 코인 조회
      */
     @GetMapping
-    public ResponseEntity<List<UserCoin>> getUserCoins(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        User user = requireUser(authHeader);
+    public ResponseEntity<List<UserCoin>> getUserCoins(Authentication authentication) {
+        User user = requireUser(authentication);
         List<UserCoin> coins = coinService.getUserCoins(user);
         return ResponseEntity.ok(coins);
     }
@@ -50,9 +49,9 @@ public class CoinController {
     @GetMapping("/{coinType}")
     public ResponseEntity<UserCoin> getUserCoinByType(
             @PathVariable CoinType coinType,
-            @RequestHeader(value = "Authorization", required = false) String authHeader
+            Authentication authentication
     ) {
-        User user = requireUser(authHeader);
+        User user = requireUser(authentication);
         UserCoin coin = coinService.getUserCoinByType(user, coinType);
         return ResponseEntity.ok(coin);
     }
@@ -61,8 +60,8 @@ public class CoinController {
      * 사용자의 총 코인 수량 조회
      */
     @GetMapping("/total")
-    public ResponseEntity<TotalCoinResponse> getTotalCoins(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        User user = requireUser(authHeader);
+    public ResponseEntity<TotalCoinResponse> getTotalCoins(Authentication authentication) {
+        User user = requireUser(authentication);
 
         int totalCoins = user.getCoinBalance();
 
