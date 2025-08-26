@@ -3,9 +3,12 @@ package com.example.tudy.user;
 import com.example.tudy.auth.TokenService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.Map;
 import com.example.tudy.friend.FriendshipService;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/users")
@@ -23,6 +27,18 @@ public class UserController {
     private final UserService userService;
     private final TokenService tokenService;
     private final FriendshipService friendshipService;
+
+    private User getAuthenticatedUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated() || authentication.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
+        }
+
+        try {
+            return userService.getUserByEmail(authentication.getName());
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증정보가 유효하지 않습니다.");
+        }
+    }
 
     @PostMapping("/signup")
     @Operation(summary = "Sign up", description = "Register a new user")
@@ -46,11 +62,10 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "Name updated")
     public ResponseEntity<?> changeName(@PathVariable String userId,
                                          @RequestBody ValueRequest request,
-                                         @RequestHeader(value = "Authorization", required = false) String auth) {
-        Long uid = tokenService.resolveUserId(auth);
-        if (uid == null) return ResponseEntity.status(401).build();
+                                         Authentication authentication) {
+        User authenticatedUser = getAuthenticatedUser(authentication);
         User currentUser = userService.findByUserId(userId);
-        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        if (!authenticatedUser.getId().equals(currentUser.getId())) return ResponseEntity.status(403).build();
         User user = userService.updateName(userId, request.getValue());
         return ResponseEntity.ok(user);
     }
@@ -60,11 +75,10 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "Major updated")
     public ResponseEntity<?> changeMajor(@PathVariable String userId,
                                          @RequestBody ValueRequest request,
-                                         @RequestHeader(value = "Authorization", required = false) String auth) {
-        Long uid = tokenService.resolveUserId(auth);
-        if (uid == null) return ResponseEntity.status(401).build();
+                                         Authentication authentication) {
+        User authenticatedUser = getAuthenticatedUser(authentication);
         User currentUser = userService.findByUserId(userId);
-        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        if (!authenticatedUser.getId().equals(currentUser.getId())) return ResponseEntity.status(403).build();
         User user = userService.updateMajor(userId, request.getValue());
         return ResponseEntity.ok(user);
     }
@@ -74,11 +88,10 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "College updated")
     public ResponseEntity<?> changeCollege(@PathVariable String userId,
                                            @RequestBody ValueRequest request,
-                                           @RequestHeader(value = "Authorization", required = false) String auth) {
-        Long uid = tokenService.resolveUserId(auth);
-        if (uid == null) return ResponseEntity.status(401).build();
+                                           Authentication authentication) {
+        User authenticatedUser = getAuthenticatedUser(authentication);
         User currentUser = userService.findByUserId(userId);
-        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        if (!authenticatedUser.getId().equals(currentUser.getId())) return ResponseEntity.status(403).build();
         User user = userService.updateCollege(userId, request.getValue());
         return ResponseEntity.ok(user);
     }
@@ -88,11 +101,10 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "Birth updated")
     public ResponseEntity<?> changeBirth(@PathVariable String userId,
                                          @RequestBody ValueRequest request,
-                                         @RequestHeader(value = "Authorization", required = false) String auth) {
-        Long uid = tokenService.resolveUserId(auth);
-        if (uid == null) return ResponseEntity.status(401).build();
+                                         Authentication authentication) {
+        User authenticatedUser = getAuthenticatedUser(authentication);
         User currentUser = userService.findByUserId(userId);
-        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        if (!authenticatedUser.getId().equals(currentUser.getId())) return ResponseEntity.status(403).build();
         User user = userService.updateBirth(userId, request.getValue());
         return ResponseEntity.ok(user);
     }
@@ -101,13 +113,12 @@ public class UserController {
     @Operation(summary = "Verify current password", description = "Verify the current password before changing it")
     @ApiResponse(responseCode = "200", description = "Password verified")
     @ApiResponse(responseCode = "400", description = "Invalid password")
-    public ResponseEntity<?> verifyPassword(@PathVariable String userId, 
+    public ResponseEntity<?> verifyPassword(@PathVariable String userId,
                                           @RequestBody PasswordVerifyRequest request,
-                                          @RequestHeader(value = "Authorization", required = false) String auth) {
-        Long uid = tokenService.resolveUserId(auth);
-        if (uid == null) return ResponseEntity.status(401).build();
+                                          Authentication authentication) {
+        User authenticatedUser = getAuthenticatedUser(authentication);
         User currentUser = userService.findByUserId(userId);
-        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        if (!authenticatedUser.getId().equals(currentUser.getId())) return ResponseEntity.status(403).build();
         
         boolean isValid = userService.verifyPassword(userId, request.getCurrentPassword());
         if (isValid) {
@@ -120,13 +131,12 @@ public class UserController {
     @PutMapping("/{userId}/password")
     @Operation(summary = "Change password", description = "Change password after verification")
     @ApiResponse(responseCode = "200", description = "Password updated")
-    public ResponseEntity<?> changePassword(@PathVariable String userId, 
+    public ResponseEntity<?> changePassword(@PathVariable String userId,
                                           @RequestBody PasswordChangeRequest request,
-                                          @RequestHeader(value = "Authorization", required = false) String auth) {
-        Long uid = tokenService.resolveUserId(auth);
-        if (uid == null) return ResponseEntity.status(401).build();
+                                          Authentication authentication) {
+        User authenticatedUser = getAuthenticatedUser(authentication);
         User currentUser = userService.findByUserId(userId);
-        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        if (!authenticatedUser.getId().equals(currentUser.getId())) return ResponseEntity.status(403).build();
         
         userService.updatePasswordWithoutVerification(userId, request.getNewPassword());
         return ResponseEntity.ok().build();
@@ -135,7 +145,12 @@ public class UserController {
     @PutMapping("/{userId}/profile-image")
     @Operation(summary = "Change profile image")
     @ApiResponse(responseCode = "200", description = "Profile image updated")
-    public ResponseEntity<User> changeProfileImage(@PathVariable String userId, @RequestParam("image") MultipartFile imageFile) {
+    public ResponseEntity<User> changeProfileImage(@PathVariable String userId,
+                                                   @RequestParam("image") MultipartFile imageFile,
+                                                   Authentication authentication) {
+        User authenticatedUser = getAuthenticatedUser(authentication);
+        User currentUser = userService.findByUserId(userId);
+        if (!authenticatedUser.getId().equals(currentUser.getId())) return ResponseEntity.status(403).build();
         User user = userService.updateProfileImageWithFile(userId, imageFile);
         return ResponseEntity.ok(user);
     }
@@ -143,9 +158,11 @@ public class UserController {
     @GetMapping("/{userId}")
     @Operation(summary = "Get user info", description = "Retrieve user with friend count")
     @ApiResponse(responseCode = "200", description = "Found user")
-    public ResponseEntity<UserWithFriendCountResponse> getUserWithFriendCount(@PathVariable String userId) {
+    public ResponseEntity<UserWithFriendCountResponse> getUserWithFriendCount(@PathVariable String userId,
+                                                                             Authentication authentication) {
+        User authenticatedUser = getAuthenticatedUser(authentication);
         User user = userService.findByUserId(userId);
-        // 친구 수 계산 (FriendshipService 사용)
+        if (!authenticatedUser.getId().equals(user.getId())) return ResponseEntity.status(403).build();
         long friendCount = friendshipService.getFriendCount(user.getUserId());
         UserWithFriendCountResponse response = new UserWithFriendCountResponse(user, friendCount);
         return ResponseEntity.ok(response);
@@ -155,11 +172,10 @@ public class UserController {
     @Operation(summary = "Clean user", description = "Spend 50 coins to remove dirty status")
     @ApiResponse(responseCode = "200", description = "User cleaned")
     public ResponseEntity<User> cleanUser(@PathVariable String userId,
-                                          @RequestHeader(value = "Authorization", required = false) String auth) {
-        Long uid = tokenService.resolveUserId(auth);
-        if (uid == null) return ResponseEntity.status(401).build();
+                                          Authentication authentication) {
+        User authenticatedUser = getAuthenticatedUser(authentication);
         User currentUser = userService.findByUserId(userId);
-        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        if (!authenticatedUser.getId().equals(currentUser.getId())) return ResponseEntity.status(403).build();
         User cleaned = userService.cleanUser(userId);
         return ResponseEntity.ok(cleaned);
     }
