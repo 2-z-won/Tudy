@@ -75,7 +75,7 @@ public class CoinService {
     /**
      * 사용자에게 코인 추가
      */
-    private void addCoinsToUser(User user, CoinType coinType, Integer amount) {
+    public void addCoinsToUser(User user, CoinType coinType, Integer amount) {
         UserCoin userCoin = userCoinRepository.findByUserAndCoinType(user, coinType)
                 .orElseGet(() -> createInitialCoin(user, coinType));
         
