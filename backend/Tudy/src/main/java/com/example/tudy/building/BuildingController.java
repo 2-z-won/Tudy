@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @RestController
@@ -20,6 +21,25 @@ public class BuildingController {
     
     private final BuildingService buildingService;
     private final UserService userService;
+
+    private User getAuthenticatedUser(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
+        }
+        try {
+            return userService.getUserByEmail(authentication.getName());
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증정보가 유효하지 않습니다.");
+        }
+    }
+
+    private User getTargetUser(String userId) {
+        try {
+            return userService.findByUserId(userId);
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다.");
+        }
+    }
     
     /**
      * 유저 건물 전체 조회
@@ -29,12 +49,8 @@ public class BuildingController {
             @PathVariable String userId,
             @PathVariable BuildingType buildingType,
             Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
-        }
-        // 인증된 사용자 확인
-        User authenticatedUser = userService.getUserByEmail(authentication.getName());
-        User targetUser = userService.findByUserId(userId);
+        User authenticatedUser = getAuthenticatedUser(authentication);
+        User targetUser = getTargetUser(userId);
         
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
             return ResponseEntity.status(403).body(null);
@@ -61,11 +77,8 @@ public class BuildingController {
             @PathVariable BuildingType buildingType,
             @PathVariable Integer slotNumber,
             Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
-        }
-        User authenticatedUser = userService.getUserByEmail(authentication.getName());
-        User targetUser = userService.findByUserId(userId);
+        User authenticatedUser = getAuthenticatedUser(authentication);
+        User targetUser = getTargetUser(userId);
         
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
             return ResponseEntity.status(403).body(null);
@@ -84,11 +97,8 @@ public class BuildingController {
             @PathVariable BuildingType buildingType,
             @RequestBody PurchaseRequest request,
             Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
-        }
-        User authenticatedUser = userService.getUserByEmail(authentication.getName());
-        User targetUser = userService.findByUserId(userId);
+        User authenticatedUser = getAuthenticatedUser(authentication);
+        User targetUser = getTargetUser(userId);
         
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
             return ResponseEntity.status(403).body(null);
@@ -112,11 +122,8 @@ public class BuildingController {
             @PathVariable Integer slotNumber,
             @RequestBody InstallRequest request,
             Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
-        }
-        User authenticatedUser = userService.getUserByEmail(authentication.getName());
-        User targetUser = userService.findByUserId(userId);
+        User authenticatedUser = getAuthenticatedUser(authentication);
+        User targetUser = getTargetUser(userId);
         
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
             return ResponseEntity.status(403).body(null);
@@ -139,11 +146,8 @@ public class BuildingController {
             @PathVariable BuildingType buildingType,
             @PathVariable Integer slotNumber,
             Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
-        }
-        User authenticatedUser = userService.getUserByEmail(authentication.getName());
-        User targetUser = userService.findByUserId(userId);
+        User authenticatedUser = getAuthenticatedUser(authentication);
+        User targetUser = getTargetUser(userId);
         
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
             return ResponseEntity.status(403).body(null);
@@ -165,11 +169,8 @@ public class BuildingController {
             @PathVariable String userId,
             @PathVariable BuildingType buildingType,
             Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
-        }
-        User authenticatedUser = userService.getUserByEmail(authentication.getName());
-        User targetUser = userService.findByUserId(userId);
+        User authenticatedUser = getAuthenticatedUser(authentication);
+        User targetUser = getTargetUser(userId);
         
         if (!authenticatedUser.getId().equals(targetUser.getId())) {
             return ResponseEntity.status(403).body(null);
