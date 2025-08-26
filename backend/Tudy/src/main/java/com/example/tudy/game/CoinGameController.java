@@ -19,10 +19,14 @@ public class CoinGameController {
 
     @PostMapping
     public ResponseEntity<CoinGameService.CoinGameResult> playGame(@RequestParam int bet, Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
+        if (authentication == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
         }
-        User user = userService.getUserByEmail(authentication.getName());
+        String email = authentication.getName();
+        if (email == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증정보가 유효하지 않습니다.");
+        }
+        User user = userService.getUserByEmail(email);
         CoinGameService.CoinGameResult result = coinGameService.playGame(user, bet);
         return ResponseEntity.ok(result);
     }

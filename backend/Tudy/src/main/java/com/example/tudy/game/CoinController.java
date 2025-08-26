@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/coins")
@@ -24,10 +25,19 @@ public class CoinController {
      */
     @GetMapping
     public ResponseEntity<List<UserCoin>> getUserCoins(Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
+        if (authentication == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
         }
-        User user = userService.getUserByEmail(authentication.getName());
+        String email = authentication.getName();
+        if (email == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증정보가 유효하지 않습니다.");
+        }
+        User user;
+        try {
+            user = userService.getUserByEmail(email);
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증정보가 유효하지 않습니다.");
+        }
         List<UserCoin> coins = coinService.getUserCoins(user);
         return ResponseEntity.ok(coins);
     }
@@ -39,10 +49,19 @@ public class CoinController {
     public ResponseEntity<UserCoin> getUserCoinByType(
             @PathVariable CoinType coinType,
             Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
+        if (authentication == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
         }
-        User user = userService.getUserByEmail(authentication.getName());
+        String email = authentication.getName();
+        if (email == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증정보가 유효하지 않습니다.");
+        }
+        User user;
+        try {
+            user = userService.getUserByEmail(email);
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증정보가 유효하지 않습니다.");
+        }
         UserCoin coin = coinService.getUserCoinByType(user, coinType);
         return ResponseEntity.ok(coin);
     }
@@ -52,10 +71,19 @@ public class CoinController {
      */
     @GetMapping("/total")
     public ResponseEntity<TotalCoinResponse> getTotalCoins(Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
+        if (authentication == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
         }
-        User user = userService.getUserByEmail(authentication.getName());
+        String email = authentication.getName();
+        if (email == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증정보가 유효하지 않습니다.");
+        }
+        User user;
+        try {
+            user = userService.getUserByEmail(email);
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "인증정보가 유효하지 않습니다.");
+        }
         int totalCoins = user.getCoinBalance();
         
         TotalCoinResponse response = new TotalCoinResponse();
