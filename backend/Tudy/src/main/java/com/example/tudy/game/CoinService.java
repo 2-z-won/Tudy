@@ -54,20 +54,38 @@ public class CoinService {
         // 각 코인 타입에서 비례적으로 차감
         List<UserCoin> userCoins = getUserCoins(user);
         int totalCoins = userCoins.stream().mapToInt(UserCoin::getAmount).sum();
-        
+        int remaining = amount;
+
         for (UserCoin userCoin : userCoins) {
+            if (remaining <= 0) {
+                break;
+            }
+
             if (userCoin.getAmount() > 0) {
                 int subtractAmount = (int) Math.ceil((double) userCoin.getAmount() / totalCoins * amount);
-                subtractAmount = Math.min(subtractAmount, userCoin.getAmount());
-                
+                subtractAmount = Math.min(Math.min(subtractAmount, userCoin.getAmount()), remaining);
+
                 userCoin.subtractAmount(subtractAmount);
                 userCoinRepository.save(userCoin);
-                
-                amount -= subtractAmount;
-                if (amount <= 0) break;
+                remaining -= subtractAmount;
             }
         }
-        
+
+        // 반올림으로 남은 금액이 있으면 보유 코인에서 추가 차감
+        if (remaining > 0) {
+            for (UserCoin userCoin : userCoins) {
+                if (remaining <= 0) {
+                    break;
+                }
+                int extra = Math.min(userCoin.getAmount(), remaining);
+                if (extra > 0) {
+                    userCoin.subtractAmount(extra);
+                    userCoinRepository.save(userCoin);
+                    remaining -= extra;
+                }
+            }
+        }
+
         // User의 coinBalance 업데이트
         updateUserTotalCoinBalance(user);
     }
