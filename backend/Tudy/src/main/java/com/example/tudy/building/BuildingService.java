@@ -58,8 +58,9 @@ public class BuildingService {
         // 새로운 슬롯 생성 (slotNumber는 null, 구매만 완료)
         UserBuildingSlot slot = new UserBuildingSlot(user, buildingType, null);
         slot.purchase(spaceType);
-        userBuildingSlotRepository.save(slot);
-        
+        // 즉시 flush하여 제약조건 위반 시 예외를 컨트롤러에서 처리
+        userBuildingSlotRepository.saveAndFlush(slot);
+
         return slot;
     }
     
@@ -92,9 +93,10 @@ public class BuildingService {
         // 공간 설치 (코인은 이미 구매 시 차감됨)
         targetSlot.install(purchasedSlot.getPurchasedSpaceType());
         userBuildingSlotRepository.save(targetSlot);
-        
-        // 구매한 슬롯 삭제 (이제 실제 슬롯에 설치됨)
+
+        // 구매한 슬롯 삭제 후 즉시 flush하여 예외를 조기에 감지
         userBuildingSlotRepository.delete(purchasedSlot);
+        userBuildingSlotRepository.flush();
         
         // 층 확장 체크
         checkFloorExpansion(user, buildingType);

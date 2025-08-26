@@ -1,5 +1,6 @@
 package com.example.tudy.user;
 
+import com.example.tudy.game.CoinService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -19,6 +21,7 @@ import java.util.NoSuchElementException;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final CoinService coinService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
     // 프로필 이미지 저장 경로 설정
@@ -179,18 +182,41 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @Transactional
+    public User cleanUser(String userId) {
+        User user = userRepository.findByUserId(userId).orElseThrow();
+        coinService.subtractCoins(user, 50);
+        user.setDirty(false);
+        user.setLastStudyDate(LocalDate.now());
+        return userRepository.save(user);
+    }
+
     public User findById(Long id) {
-        return userRepository.findById(id)
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."));
+        updateDirtyStatus(user);
+        return user;
     }
 
     public User findByUserId(String userId) {
-        return userRepository.findByUserId(userId)
+        User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."));
+        updateDirtyStatus(user);
+        return user;
     }
 
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."));
+    }
+
+    private void updateDirtyStatus(User user) {
+        LocalDate last = user.getLastStudyDate();
+        if (last != null && last.isBefore(LocalDate.now().minusDays(3))) {
+            if (!user.isDirty()) {
+                user.setDirty(true);
+                userRepository.save(user);
+            }
+        }
     }
 }
