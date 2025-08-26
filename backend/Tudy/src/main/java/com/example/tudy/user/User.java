@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -36,6 +37,10 @@ public class User {
     private String profileImage;
 
     private Integer coinBalance = 0;
+
+    private LocalDate lastStudyDate;
+
+    private boolean dirty = false;
 
     public User(Long id, String email, String userId, String passwordHash, String name, String birth, String major, String college, String profileImage, Integer coinBalance) {
         this.id = id;
