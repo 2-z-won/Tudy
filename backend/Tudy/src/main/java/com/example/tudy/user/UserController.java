@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.LocalDate;
 import java.util.Map;
 import com.example.tudy.friend.FriendshipService;
 
@@ -150,6 +151,19 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{userId}/clean")
+    @Operation(summary = "Clean user", description = "Spend 50 coins to remove dirty status")
+    @ApiResponse(responseCode = "200", description = "User cleaned")
+    public ResponseEntity<User> cleanUser(@PathVariable String userId,
+                                          @RequestHeader(value = "Authorization", required = false) String auth) {
+        Long uid = tokenService.resolveUserId(auth);
+        if (uid == null) return ResponseEntity.status(401).build();
+        User currentUser = userService.findByUserId(userId);
+        if (!uid.equals(currentUser.getId())) return ResponseEntity.status(403).build();
+        User cleaned = userService.cleanUser(userId);
+        return ResponseEntity.ok(cleaned);
+    }
+
     @Data
     private static class SignUpRequest {
         @Schema(description = "Email address", example = "user@pusan.ac.kr")
@@ -225,6 +239,10 @@ public class UserController {
         private Integer coinBalance;
         @Schema(description = "Number of friends", example = "5")
         private long friendCount;
+        @Schema(description = "Dirty status", example = "false")
+        private boolean dirty;
+        @Schema(description = "Last study date", example = "2024-06-01")
+        private LocalDate lastStudyDate;
 
         public UserWithFriendCountResponse(User user, long friendCount) {
             this.id = user.getId();
@@ -238,6 +256,8 @@ public class UserController {
             this.profileImage = user.getProfileImage();
             this.coinBalance = user.getCoinBalance();
             this.friendCount = friendCount;
+            this.dirty = user.isDirty();
+            this.lastStudyDate = user.getLastStudyDate();
         }
     }
 }
