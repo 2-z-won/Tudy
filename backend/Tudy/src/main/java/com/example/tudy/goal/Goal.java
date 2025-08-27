@@ -31,6 +31,7 @@ public class Goal {
     private LocalDate startDate;
     private LocalDate endDate;
     private boolean completed = false;
+    @Column(length = 512)
     private String proofImage;
     private Boolean isGroupGoal = false;
     private Long groupId;

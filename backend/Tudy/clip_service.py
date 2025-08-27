@@ -120,14 +120,24 @@ def health_check():
     """
     서비스 상태 확인
     """
-    return jsonify({'status': 'healthy', 'model': MODEL_NAME})
+    return jsonify({
+        'status': 'healthy', 
+        'model': MODEL_NAME,
+        'endpoints': ['/classify', '/classify-text', '/health']
+    })
 
 if __name__ == '__main__':
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='CLIP Image Classification Service')
+    parser.add_argument('--port', type=int, default=5001, help='Port to run the service on (default: 5001)')
+    args = parser.parse_args()
+    
     print("Starting CLIP Image Classification Service...")
     print("Available endpoints:")
     print("  POST /classify - 카테고리 기반 분류")
     print("  POST /classify-text - 텍스트 쿼리 기반 분류") 
     print("  GET /health - 서비스 상태 확인")
-    print("\nServer starting on http://localhost:5000")
+    print(f"\nServer starting on http://localhost:{args.port}")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=args.port, debug=True)

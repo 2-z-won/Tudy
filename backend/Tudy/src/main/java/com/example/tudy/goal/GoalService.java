@@ -11,22 +11,20 @@ import com.example.tudy.study.StudySessionRepository;
 import com.example.tudy.game.CoinService;
 import com.example.tudy.ai.ClipImageClassificationService;
 import com.example.tudy.ai.CategoryMappingService;
+import com.example.tudy.service.S3FileService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GoalService {
@@ -38,11 +36,8 @@ public class GoalService {
     private final CoinService coinService;
     private final ClipImageClassificationService clipImageClassificationService;
     private final CategoryMappingService categoryMappingService;
+    private final S3FileService s3FileService;
     private static final int REWARD_COINS = 10;
-    
-    // 이미지 저장 경로 설정
-    private static final String UPLOAD_DIR = "uploads/proof-images/";
-    private static final String IMAGE_URL_PREFIX = "/proof-images/";
 
     // 카페 카테고리 자동 생성 메서드
     @Transactional
@@ -106,9 +101,23 @@ public class GoalService {
         }
     }
 
+    // 이미지 인증 결과를 담는 내부 클래스
+    public static class ImageProofResult {
+        private final Goal goal;
+        private final float confidence;
+        
+        public ImageProofResult(Goal goal, float confidence) {
+            this.goal = goal;
+            this.confidence = confidence;
+        }
+        
+        public Goal getGoal() { return goal; }
+        public float getConfidence() { return confidence; }
+    }
+
     // 이미지 파일 업로드 및 목표 완료 처리 (AI 인증 포함)
     @Transactional
-    public Goal completeImageProofGoalWithFile(Long id, MultipartFile imageFile) {
+    public ImageProofResult completeImageProofGoalWithFile(Long id, MultipartFile imageFile) {
         Goal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
         
@@ -133,8 +142,9 @@ public class GoalService {
             
             // 기본 카테고리로 분류
             List<String> categories = List.of("공부", "운동", "카페");
-            ClipImageClassificationService.ClipClassificationResult clipResult = 
-                    clipImageClassificationService.classifyImage(imageBytes, categories);
+            ClipImageClassificationService.ClipClassificationResult clipResult;
+            
+            clipResult = clipImageClassificationService.classifyImage(imageBytes, categories);
             
             CategoryMappingService.CategoryMatchResult matchResult = 
                     categoryMappingService.matchCategory(clipResult, goalCategoryName);
@@ -154,31 +164,10 @@ public class GoalService {
                     clipResult.getConfidence());
             }
             
-            // 인증 성공 - 파일 저장
-            // 업로드 디렉토리 생성
-            Path uploadPath = Paths.get(UPLOAD_DIR);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
+            // 인증 성공 - S3에 파일 저장
+            String imageUrl = s3FileService.uploadFile(imageFile, "proof-images");
             
-            // 간단한 파일명 생성
-            String originalFilename = imageFile.getOriginalFilename();
-            String fileExtension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
-            
-            // 간단한 랜덤 문자열 생성 (6자리)
-            String randomStr = generateRandomString(6);
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"));
-            String finalFilename = timestamp + "_" + randomStr + fileExtension;
-            
-            // 파일 저장
-            Path filePath = uploadPath.resolve(finalFilename);
-            Files.copy(imageFile.getInputStream(), filePath);
-            
-            // Goal에 이미지 경로 저장 (웹에서 접근 가능한 URL)
-            String imageUrl = IMAGE_URL_PREFIX + finalFilename;
+            // Goal에 이미지 URL 저장
             goal.setProofImage(imageUrl);
             goal.setCompleted(true);
             
@@ -187,22 +176,13 @@ public class GoalService {
             // 새로운 코인 시스템으로 코인 지급
             coinService.awardCoinsForGoalCompletion(goal.getUser(), goal.getCategory().getCategoryType());
             
-            return savedGoal;
+            return new ImageProofResult(savedGoal, clipResult.getConfidence());
             
         } catch (IOException e) {
             throw new RuntimeException("이미지 파일 저장 중 오류가 발생했습니다: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new RuntimeException("이미지 파일 처리 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
-    }
-
-    // 간단한 랜덤 문자열 생성 메서드
-    private String generateRandomString(int length) {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            int index = (int) (Math.random() * chars.length());
-            sb.append(chars.charAt(index));
-        }
-        return sb.toString();
     }
 
     @Transactional
