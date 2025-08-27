@@ -47,13 +47,37 @@ public class CoinController {
      * 사용자의 특정 타입 코인 조회
      */
     @GetMapping("/{coinType}")
-    public ResponseEntity<UserCoin> getUserCoinByType(
-            @PathVariable CoinType coinType,
+    public ResponseEntity<CoinBalanceResponse> getUserCoinByType(
+            @PathVariable String coinType,
             Authentication authentication
     ) {
         User user = requireUser(authentication);
-        UserCoin coin = coinService.getUserCoinByType(user, coinType);
-        return ResponseEntity.ok(coin);
+
+        CoinType type;
+        try {
+            type = CoinType.valueOf(coinType);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 코인 타입입니다.");
+        }
+
+        int balance = coinService.getUserCoinBalanceByType(user, type);
+        return ResponseEntity.ok(new CoinBalanceResponse(balance));
+    }
+
+    public static class CoinBalanceResponse {
+        private int balance;
+
+        public CoinBalanceResponse(int balance) {
+            this.balance = balance;
+        }
+
+        public int getBalance() {
+            return balance;
+        }
+
+        public void setBalance(int balance) {
+            this.balance = balance;
+        }
     }
 
     /**
