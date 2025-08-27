@@ -25,11 +25,10 @@ public class CoinService {
     }
     
     /**
-     * 사용자의 특정 타입 코인 조회
+     * 사용자의 특정 타입 코인 잔액 조회
      */
-    public UserCoin getUserCoinByType(User user, CoinType coinType) {
-        return userCoinRepository.findByUserAndCoinType(user, coinType)
-                .orElseGet(() -> createInitialCoin(user, coinType));
+    public int getUserCoinBalanceByType(User user, CoinType coinType) {
+        return userCoinRepository.sumAmountByUserAndCoinType(user, coinType);
     }
     
     /**
@@ -94,12 +93,10 @@ public class CoinService {
      * 사용자에게 코인 추가
      */
     public void addCoinsToUser(User user, CoinType coinType, Integer amount) {
-        UserCoin userCoin = userCoinRepository.findByUserAndCoinType(user, coinType)
-                .orElseGet(() -> createInitialCoin(user, coinType));
-        
+        UserCoin userCoin = new UserCoin(user, coinType);
         userCoin.addAmount(amount);
         userCoinRepository.save(userCoin);
-        
+
         // User의 coinBalance도 업데이트 (모든 코인 종류의 합계)
         updateUserTotalCoinBalance(user);
     }
@@ -139,11 +136,4 @@ public class CoinService {
         };
     }
     
-    /**
-     * 초기 코인 생성
-     */
-    private UserCoin createInitialCoin(User user, CoinType coinType) {
-        UserCoin userCoin = new UserCoin(user, coinType);
-        return userCoinRepository.save(userCoin);
-    }
 }
