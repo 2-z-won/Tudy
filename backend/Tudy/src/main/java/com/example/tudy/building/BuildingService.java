@@ -27,25 +27,23 @@ public class BuildingService {
     
     /**
      * 사용자의 특정 건물의 모든 슬롯 조회
+     * 구매한 슬롯만 반환 (초기 슬롯 자동 생성 제거)
      */
     public List<UserBuildingSlot> getUserBuildingSlots(User user, BuildingType buildingType) {
         UserBuilding building = getUserBuilding(user, buildingType);
-        List<UserBuildingSlot> slots = userBuildingSlotRepository.findByUserAndBuildingTypeOrderBySlotNumber(user, buildingType);
-        
-        // 슬롯이 없으면 초기 슬롯들 생성
-        if (slots.isEmpty()) {
-            slots = createInitialSlots(user, buildingType);
-        }
-        
-        return slots;
+        return userBuildingSlotRepository.findByUserAndBuildingTypeOrderBySlotNumber(user, buildingType);
     }
     
     /**
-     * 특정 슬롯 조회
+     * 특정 슬롯 조회 (없으면 생성)
      */
     public UserBuildingSlot getSlot(User user, BuildingType buildingType, Integer slotNumber) {
         return userBuildingSlotRepository.findByUserAndBuildingTypeAndSlotNumber(user, buildingType, slotNumber)
-                .orElseThrow(() -> new IllegalArgumentException("슬롯을 찾을 수 없습니다."));
+                .orElseGet(() -> {
+                    // 해당 슬롯이 없으면 빈 슬롯 생성
+                    UserBuildingSlot slot = new UserBuildingSlot(user, buildingType, slotNumber);
+                    return userBuildingSlotRepository.save(slot);
+                });
     }
     
     /**
@@ -84,24 +82,24 @@ public class BuildingService {
             throw new IllegalStateException("먼저 공간을 구매해야 합니다.");
         }
         
-        // 설치할 슬롯이 사용 가능한지 확인
-        UserBuildingSlot targetSlot = getSlot(user, buildingType, slotNumber);
-        if (targetSlot.getIsInstalled()) {
+        // 해당 슬롯 번호가 이미 사용 중인지 확인
+        boolean slotInUse = userBuildingSlotRepository.findByUserAndBuildingTypeAndSlotNumber(user, buildingType, slotNumber)
+                .map(UserBuildingSlot::getIsInstalled)
+                .orElse(false);
+        
+        if (slotInUse) {
             throw new IllegalStateException("해당 슬롯은 이미 사용 중입니다.");
         }
-        
-        // 공간 설치 (코인은 이미 구매 시 차감됨)
-        targetSlot.install(purchasedSlot.getPurchasedSpaceType());
-        userBuildingSlotRepository.save(targetSlot);
 
-        // 구매한 슬롯 삭제 후 즉시 flush하여 예외를 조기에 감지
-        userBuildingSlotRepository.delete(purchasedSlot);
-        userBuildingSlotRepository.flush();
+        // 구매한 슬롯에 slotNumber 설정하고 설치
+        purchasedSlot.setSlotNumber(slotNumber);
+        purchasedSlot.install(purchasedSlot.getPurchasedSpaceType());
+        userBuildingSlotRepository.save(purchasedSlot);
         
         // 층 확장 체크
         checkFloorExpansion(user, buildingType);
         
-        return targetSlot;
+        return purchasedSlot;
     }
     
     /**
@@ -147,22 +145,6 @@ public class BuildingService {
     }
     
     /**
-     * 초기 슬롯들 생성
-     */
-    private List<UserBuildingSlot> createInitialSlots(User user, BuildingType buildingType) {
-        BuildingConfig.BuildingInfo info = BuildingConfig.getBuildingInfo(buildingType);
-        int totalSlots = info.getTotalSlots();
-        
-        List<UserBuildingSlot> slots = new java.util.ArrayList<>();
-        for (int i = 1; i <= totalSlots; i++) {
-            UserBuildingSlot slot = new UserBuildingSlot(user, buildingType, i);
-            slots.add(userBuildingSlotRepository.save(slot));
-        }
-        
-        return slots;
-    }
-    
-    /**
      * 층 확장 체크
      */
     private void checkFloorExpansion(User user, BuildingType buildingType) {
@@ -175,14 +157,22 @@ public class BuildingService {
         int startSlot = (currentFloor - 1) * slotsPerFloor + 1;
         int endSlot = currentFloor * slotsPerFloor;
         
-        List<UserBuildingSlot> currentFloorSlots = userBuildingSlotRepository
-                .findByUserAndBuildingTypeOrderBySlotNumber(user, buildingType)
-                .stream()
-                .filter(slot -> slot.getSlotNumber() >= startSlot && slot.getSlotNumber() <= endSlot)
-                .toList();
+        // 현재 층의 각 슬롯 번호에 대해 설치된 슬롯이 있는지 확인
+        boolean allSlotsInstalled = true;
+        for (int slotNumber = startSlot; slotNumber <= endSlot; slotNumber++) {
+            boolean slotInstalled = userBuildingSlotRepository
+                    .findByUserAndBuildingTypeAndSlotNumber(user, buildingType, slotNumber)
+                    .map(UserBuildingSlot::getIsInstalled)
+                    .orElse(false);
+            
+            if (!slotInstalled) {
+                allSlotsInstalled = false;
+                break;
+            }
+        }
         
         // 모든 슬롯이 설치되었으면 다음 층 열기
-        if (currentFloorSlots.stream().allMatch(UserBuildingSlot::getIsInstalled)) {
+        if (allSlotsInstalled) {
             building.expandFloor();
             userBuildingRepository.save(building);
         }
