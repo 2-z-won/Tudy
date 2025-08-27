@@ -9,6 +9,8 @@ import com.example.tudy.category.CategoryRepository;
 import com.example.tudy.study.StudySession;
 import com.example.tudy.study.StudySessionRepository;
 import com.example.tudy.game.CoinService;
+import com.example.tudy.ai.ClipImageClassificationService;
+import com.example.tudy.ai.CategoryMappingService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,8 @@ public class GoalService {
     private final CategoryRepository categoryRepository;
     private final StudySessionRepository studySessionRepository;
     private final CoinService coinService;
+    private final ClipImageClassificationService clipImageClassificationService;
+    private final CategoryMappingService categoryMappingService;
     private static final int REWARD_COINS = 10;
     
     // 이미지 저장 경로 설정
@@ -102,7 +106,7 @@ public class GoalService {
         }
     }
 
-    // 이미지 파일 업로드 및 목표 완료 처리
+    // 이미지 파일 업로드 및 목표 완료 처리 (AI 인증 포함)
     @Transactional
     public Goal completeImageProofGoalWithFile(Long id, MultipartFile imageFile) {
         Goal goal = goalRepository.findById(id)
@@ -123,6 +127,34 @@ public class GoalService {
         }
         
         try {
+            // CLIP을 사용한 이미지 분류 및 카테고리 매칭
+            byte[] imageBytes = imageFile.getBytes();
+            String goalCategoryName = goal.getCategory().getName();
+            
+            // 기본 카테고리로 분류
+            List<String> categories = List.of("공부", "운동", "카페");
+            ClipImageClassificationService.ClipClassificationResult clipResult = 
+                    clipImageClassificationService.classifyImage(imageBytes, categories);
+            
+            CategoryMappingService.CategoryMatchResult matchResult = 
+                    categoryMappingService.matchCategory(clipResult, goalCategoryName);
+            
+            // 신뢰도 검증
+            if (!categoryMappingService.isConfidentEnough(clipResult.getConfidence())) {
+                throw new ImageVerificationException(
+                    String.format("이미지 분석 신뢰도가 낮습니다. (신뢰도: %.1f%%) 더 명확한 사진을 업로드해주세요.", 
+                    clipResult.getConfidence() * 100),
+                    "LOW_CONFIDENCE",
+                    clipResult.getConfidence());
+            }
+            
+            // 카테고리 매칭 검증
+            if (!matchResult.isMatches()) {
+                throw new ImageVerificationException(matchResult.getMessage(), "CATEGORY_MISMATCH", 
+                    clipResult.getConfidence());
+            }
+            
+            // 인증 성공 - 파일 저장
             // 업로드 디렉토리 생성
             Path uploadPath = Paths.get(UPLOAD_DIR);
             if (!Files.exists(uploadPath)) {
