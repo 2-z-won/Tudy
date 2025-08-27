@@ -65,8 +65,8 @@ public class GoalController {
     @ApiResponse(responseCode = "200", description = "Proof image uploaded and goal completed")
     public ResponseEntity<?> uploadProofImage(@PathVariable Long id, @RequestParam("image") MultipartFile imageFile) {
         try {
-            Goal goal = goalService.completeImageProofGoalWithFile(id, imageFile);
-            return ResponseEntity.ok(new ImageVerificationResponse(true, "이미지 인증이 완료되었습니다.", goal, null, 0.0f));
+            GoalService.ImageProofResult result = goalService.completeImageProofGoalWithFile(id, imageFile);
+            return ResponseEntity.ok(new ImageVerificationResponse(true, "이미지 인증이 완료되었습니다.", result.getGoal(), null, result.getConfidence()));
         } catch (ImageVerificationException e) {
             return ResponseEntity.badRequest()
                     .body(new ImageVerificationResponse(false, e.getMessage(), null, e.getErrorCode(), e.getConfidence()));

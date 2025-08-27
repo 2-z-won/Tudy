@@ -13,6 +13,7 @@ import com.example.tudy.ai.ClipImageClassificationService;
 import com.example.tudy.ai.CategoryMappingService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,7 +27,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GoalService {
@@ -106,9 +109,23 @@ public class GoalService {
         }
     }
 
+    // 이미지 인증 결과를 담는 내부 클래스
+    public static class ImageProofResult {
+        private final Goal goal;
+        private final float confidence;
+        
+        public ImageProofResult(Goal goal, float confidence) {
+            this.goal = goal;
+            this.confidence = confidence;
+        }
+        
+        public Goal getGoal() { return goal; }
+        public float getConfidence() { return confidence; }
+    }
+
     // 이미지 파일 업로드 및 목표 완료 처리 (AI 인증 포함)
     @Transactional
-    public Goal completeImageProofGoalWithFile(Long id, MultipartFile imageFile) {
+    public ImageProofResult completeImageProofGoalWithFile(Long id, MultipartFile imageFile) {
         Goal goal = goalRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
         
@@ -133,8 +150,9 @@ public class GoalService {
             
             // 기본 카테고리로 분류
             List<String> categories = List.of("공부", "운동", "카페");
-            ClipImageClassificationService.ClipClassificationResult clipResult = 
-                    clipImageClassificationService.classifyImage(imageBytes, categories);
+            ClipImageClassificationService.ClipClassificationResult clipResult;
+            
+            clipResult = clipImageClassificationService.classifyImage(imageBytes, categories);
             
             CategoryMappingService.CategoryMatchResult matchResult = 
                     categoryMappingService.matchCategory(clipResult, goalCategoryName);
@@ -187,7 +205,7 @@ public class GoalService {
             // 새로운 코인 시스템으로 코인 지급
             coinService.awardCoinsForGoalCompletion(goal.getUser(), goal.getCategory().getCategoryType());
             
-            return savedGoal;
+            return new ImageProofResult(savedGoal, clipResult.getConfidence());
             
         } catch (IOException e) {
             throw new RuntimeException("이미지 파일 저장 중 오류가 발생했습니다: " + e.getMessage(), e);
