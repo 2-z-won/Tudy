@@ -1,6 +1,7 @@
 package com.example.tudy.auth;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +11,7 @@ import jakarta.annotation.PostConstruct;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -19,18 +21,29 @@ public class TokenService {
     @Value("${jwt.secret}")
     private String secret;
 
+    @Value("${jwt.expiration}")
+    private long expiration;
+
     private Key key;
 
     private final Set<String> blacklist = ConcurrentHashMap.newKeySet();
 
     @PostConstruct
     void init() {
+        if (secret == null || secret.length() < 32) {
+            throw new IllegalStateException("jwt.secret must be at least 32 characters");
+        }
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateToken(Long userId) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + expiration);
+
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
                 .signWith(key)
                 .compact();
     }
@@ -53,6 +66,8 @@ public class TokenService {
                     .parseClaimsJws(token)
                     .getBody();
             return Long.parseLong(claims.getSubject());
+        } catch (ExpiredJwtException e) {
+            return null;
         } catch (Exception e) {
             return null;
         }
