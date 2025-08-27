@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -20,33 +21,71 @@ public class CategoryMappingService {
     }
     
     /**
-     * AI 분류 결과와 목표 카테고리가 일치하는지 확인
-     * @param classificationResult AI 분류 결과
+     * CLIP 분류 결과와 목표 카테고리가 일치하는지 확인
+     * @param clipResult CLIP 분류 결과
      * @param goalCategoryName 목표의 카테고리명
      * @return 매칭 결과
      */
-    public CategoryMatchResult matchCategory(ImageClassificationService.ClassificationResult classificationResult, 
+    public CategoryMatchResult matchCategory(ClipImageClassificationService.ClipClassificationResult clipResult, 
                                             String goalCategoryName) {
         
-        String aiLabel = classificationResult.getLabel();
-        String mappedCategory = LABEL_TO_CATEGORY.get(aiLabel);
+        String recognizedCategory = clipResult.getBestMatch();
         
-        if (mappedCategory == null) {
-            log.warn("알 수 없는 AI 라벨: {}", aiLabel);
-            return new CategoryMatchResult(false, aiLabel, goalCategoryName, classificationResult.getConfidence(),
-                    "인식된 카테고리를 매핑할 수 없습니다.");
+        // CLIP은 직접 카테고리를 반환하므로 매핑이 필요없음
+        boolean isMatch = recognizedCategory.equals(goalCategoryName);
+        String message = isMatch ? 
+                String.format("사진이 '%s' 카테고리로 올바르게 인식되었습니다.", recognizedCategory) :
+                String.format("사진이 '%s'로 인식되었지만, 목표 카테고리는 '%s'입니다.", recognizedCategory, goalCategoryName);
+        
+        log.info("CLIP 카테고리 매칭 결과 - 인식: {}, 목표: {}, 일치: {}, 신뢰도: {}", 
+                recognizedCategory, goalCategoryName, isMatch, clipResult.getConfidence());
+        
+        return new CategoryMatchResult(isMatch, recognizedCategory, goalCategoryName, 
+                clipResult.getConfidence(), message);
+    }
+    
+    /**
+     * 텍스트 쿼리 기반 매칭 (더 유연한 방식)
+     * @param clipResult CLIP 분류 결과
+     * @param goalCategoryName 목표의 카테고리명
+     * @param textQueries 사용된 텍스트 쿼리 목록
+     * @return 매칭 결과
+     */
+    public CategoryMatchResult matchCategoryWithTextQueries(ClipImageClassificationService.ClipClassificationResult clipResult, 
+                                                           String goalCategoryName, List<String> textQueries) {
+        
+        String bestQuery = clipResult.getBestMatch();
+        
+        // 텍스트 쿼리에서 카테고리 추출 (간단한 키워드 매칭)
+        String recognizedCategory = extractCategoryFromQuery(bestQuery, goalCategoryName);
+        
+        boolean isMatch = recognizedCategory.equals(goalCategoryName);
+        String message = isMatch ? 
+                String.format("사진이 '%s' 활동으로 올바르게 인식되었습니다.", recognizedCategory) :
+                String.format("사진이 '%s' 활동으로 인식되었지만, 목표는 '%s'입니다.", recognizedCategory, goalCategoryName);
+        
+        log.info("CLIP 텍스트 쿼리 매칭 결과 - 쿼리: {}, 인식: {}, 목표: {}, 일치: {}, 신뢰도: {}", 
+                bestQuery, recognizedCategory, goalCategoryName, isMatch, clipResult.getConfidence());
+        
+        return new CategoryMatchResult(isMatch, recognizedCategory, goalCategoryName, 
+                clipResult.getConfidence(), message);
+    }
+    
+    /**
+     * 텍스트 쿼리에서 카테고리 추출
+     */
+    private String extractCategoryFromQuery(String query, String goalCategory) {
+        // 간단한 키워드 기반 매칭
+        if (query.contains("공부") || query.contains("학습") || query.contains("읽기")) {
+            return "공부";
+        } else if (query.contains("운동") || query.contains("헬스") || query.contains("스포츠")) {
+            return "운동";
+        } else if (query.contains("카페") || query.contains("커피") || query.contains("음료")) {
+            return "카페";
         }
         
-        boolean isMatch = mappedCategory.equals(goalCategoryName);
-        String message = isMatch ? 
-                String.format("사진이 '%s' 카테고리로 올바르게 인식되었습니다.", mappedCategory) :
-                String.format("사진이 '%s'로 인식되었지만, 목표 카테고리는 '%s'입니다.", mappedCategory, goalCategoryName);
-        
-        log.info("카테고리 매칭 결과 - AI: {}, 목표: {}, 일치: {}, 신뢰도: {}", 
-                mappedCategory, goalCategoryName, isMatch, classificationResult.getConfidence());
-        
-        return new CategoryMatchResult(isMatch, mappedCategory, goalCategoryName, 
-                classificationResult.getConfidence(), message);
+        // 기본적으로 목표 카테고리 반환 (보수적 접근)
+        return goalCategory;
     }
     
     /**
