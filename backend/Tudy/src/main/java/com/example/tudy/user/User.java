@@ -34,6 +34,7 @@ public class User {
 
     private String college;
 
+    @Column(length = 512)
     private String profileImage;
 
     private Integer coinBalance = 0;
