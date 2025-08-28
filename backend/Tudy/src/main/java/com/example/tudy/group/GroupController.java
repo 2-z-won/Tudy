@@ -49,9 +49,9 @@ public class GroupController {
     @GetMapping("/search")
     @Operation(summary = "Search group")
     @ApiResponse(responseCode = "200", description = "Group found")
-    public ResponseEntity<Boolean> searchGroup(@RequestParam String name) {
-        boolean exists = groupService.searchGroup(name);
-        return ResponseEntity.ok(exists);
+    public ResponseEntity<GroupSearchResponse> searchGroup(@RequestParam String name) {
+        GroupSearchResponse response = groupService.searchGroupWithDetails(name);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/join")
@@ -116,6 +116,17 @@ public class GroupController {
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @Data
+    public static class GroupSearchResponse {
+        private boolean exists;
+        private Long groupId;
+        
+        public GroupSearchResponse(boolean exists, Long groupId) {
+            this.exists = exists;
+            this.groupId = groupId;
         }
     }
 

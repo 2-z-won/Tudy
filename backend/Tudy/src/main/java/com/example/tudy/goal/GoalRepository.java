@@ -29,4 +29,7 @@ public interface GoalRepository extends JpaRepository<Goal, Long> {
     
     @Query("SELECT g FROM Goal g JOIN FETCH g.category WHERE g.user = :user AND g.startDate <= :date AND g.endDate >= :date")
     List<Goal> findByUserAndDateWithCategory(@Param("user") User user, @Param("date") java.time.LocalDate date);
+    
+    @Query("SELECT g FROM Goal g JOIN FETCH g.category WHERE g.user = :user AND g.startDate <= :date AND g.endDate >= :date AND g.category = :category")
+    List<Goal> findByUserAndDateAndCategoryWithCategory(@Param("user") User user, @Param("date") java.time.LocalDate date, @Param("category") Category category);
 }

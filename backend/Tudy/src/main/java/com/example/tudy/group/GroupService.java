@@ -52,6 +52,21 @@ public class GroupService {
         return groupRepository.existsByName(trimmedName);
     }
 
+    public GroupController.GroupSearchResponse searchGroupWithDetails(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return new GroupController.GroupSearchResponse(false, null);
+        }
+        
+        String trimmedName = name.trim();
+        Group group = groupRepository.findByName(trimmedName);
+        
+        if (group != null) {
+            return new GroupController.GroupSearchResponse(true, group.getId());
+        } else {
+            return new GroupController.GroupSearchResponse(false, null);
+        }
+    }
+
     @Transactional
     public String joinGroup(Long groupId, Long userId, String password) {
         Group group = groupRepository.findById(groupId)
@@ -151,7 +166,8 @@ public class GroupService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         
-        return groupMemberRepository.findByUser(user).stream()
+        // JOIN FETCH를 사용하여 Group과 Owner를 함께 로드
+        return groupMemberRepository.findByUserWithGroupAndOwner(user).stream()
                 .map(GroupMember::getGroup)
                 .toList();
     }
