@@ -19,8 +19,8 @@ public class GroupService {
     private final GroupJoinRequestRepository groupJoinRequestRepository;
     private final GoalRepository goalRepository;
 
-    public Group createGroup(String name, String password, String ownerId) {
-        User owner = userRepository.findByUserId(ownerId)
+    public Group createGroup(String name, String password, Long ownerId) {
+        User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         
         Group group = new Group();
@@ -53,7 +53,7 @@ public class GroupService {
     }
 
     @Transactional
-    public String joinGroup(Long groupId, String userId, String password) {
+    public String joinGroup(Long groupId, Long userId, String password) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("그룹을 찾을 수 없습니다."));
         
@@ -62,7 +62,7 @@ public class GroupService {
             return "비밀번호가 일치하지 않습니다.";
         }
         
-        User user = userRepository.findByUserId(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         
         // 이미 멤버인지 확인
@@ -83,14 +83,14 @@ public class GroupService {
     }
 
     @Transactional
-    public String approveJoinRequest(Long requestId, String ownerId) {
+    public String approveJoinRequest(Long requestId, Long ownerId) {
         GroupJoinRequest request = groupJoinRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("가입 신청을 찾을 수 없습니다."));
         
         Group group = request.getGroup();
         
         // 그룹 소유자인지 확인
-        if (!group.getOwner().getUserId().equals(ownerId)) {
+        if (!group.getOwner().getId().equals(ownerId)) {
             return "그룹 소유자만 승인할 수 있습니다.";
         }
         
@@ -111,14 +111,14 @@ public class GroupService {
     }
 
     @Transactional
-    public String rejectJoinRequest(Long requestId, String ownerId) {
+    public String rejectJoinRequest(Long requestId, Long ownerId) {
         GroupJoinRequest request = groupJoinRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("가입 신청을 찾을 수 없습니다."));
         
         Group group = request.getGroup();
         
         // 그룹 소유자인지 확인
-        if (!group.getOwner().getUserId().equals(ownerId)) {
+        if (!group.getOwner().getId().equals(ownerId)) {
             return "그룹 소유자만 거부할 수 있습니다.";
         }
         
@@ -134,12 +134,12 @@ public class GroupService {
         return "가입 신청이 거부되었습니다.";
     }
 
-    public List<GroupJoinRequest> getPendingRequests(Long groupId, String ownerId) {
+    public List<GroupJoinRequest> getPendingRequests(Long groupId, Long ownerId) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("그룹을 찾을 수 없습니다."));
         
         // 그룹 소유자인지 확인
-        if (!group.getOwner().getUserId().equals(ownerId)) {
+        if (!group.getOwner().getId().equals(ownerId)) {
             throw new IllegalArgumentException("그룹 소유자만 신청 목록을 볼 수 있습니다.");
         }
         
@@ -147,8 +147,8 @@ public class GroupService {
     }
 
     // 사용자의 그룹 목록 조회 메서드 추가
-    public List<Group> getUserGroups(String userId) {
-        User user = userRepository.findByUserId(userId)
+    public List<Group> getUserGroups(Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         
         return groupMemberRepository.findByUser(user).stream()
@@ -157,10 +157,10 @@ public class GroupService {
     }
 
     // 사용자의 그룹과 그룹 목표 함께 조회
-    public GroupsAndGoalsResponse getUserGroupsAndGoals(String userId) {
-        User user = userRepository.findByUserId(userId)
+    public GroupsAndGoalsResponse getUserGroupsAndGoals(Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-        
+
         List<Group> groups = getUserGroups(userId);
         List<Goal> groupGoals = goalRepository.findByUserAndIsGroupGoalTrue(user);
         
