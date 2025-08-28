@@ -25,7 +25,7 @@ class LoginController extends GetxController {
 
     try {
       final response = await http.post(
-        Uri.parse('${Urls.apiUrl}users/login'),
+        Uri.parse('${Urls.usersUrl}login'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(user.toJson()),
       );

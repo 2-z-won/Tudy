@@ -6,10 +6,28 @@ import 'package:frontend/constants/url.dart';
 import 'package:get/get.dart';
 
 class GoalController {
-  static Future<List<Goal>> fetchGoals(String userId) async {
-    final uri = Uri.parse('${Urls.apiUrl}goals?userId=$userId');
+  static Future<List<Goal>> fetchGoals(String userId, {String? categoryName}) async {
+    final queryParams = {
+      'userId': userId,
+      if (categoryName != null) 'categoryName': categoryName,
+    };
+    
+    final uri = Uri.parse('${Urls.apiUrl}goals').replace(queryParameters: queryParams);
+    
+    print('🔵 목표 조회 요청 URI: $uri');
+    
+    final token = await getTokenFromStorage();
+    
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
 
-    final response = await http.get(uri);
+    print('🟡 목표 조회 응답 statusCode: ${response.statusCode}');
+    print('🟡 목표 조회 응답 body: ${response.body}');
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = json.decode(response.body);
@@ -53,7 +71,15 @@ class GoalController {
   static Future<int?> fetchGoalDurationSeconds(int goalId) async {
     // GET /api/sessions/goal/{goalId}/duration  -> { "hours": 10, "minutes": 45 }
     final uri = Uri.parse('${Urls.apiUrl}sessions/goal/$goalId/duration');
-    final res = await http.get(uri);
+    
+    final token = await getTokenFromStorage();
+    final res = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
 
     print('⏱️ duration[$goalId] status=${res.statusCode} body=${res.body}');
     if (res.statusCode == 200) {

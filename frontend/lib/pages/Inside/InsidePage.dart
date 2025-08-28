@@ -5,34 +5,112 @@ import 'package:frontend/pages/Inside/SpaceList/space_catalog.dart';
 import 'package:frontend/pages/MainPage/api/building/building_controller.dart';
 import 'package:frontend/pages/MainPage/api/building/building_model.dart';
 import 'package:frontend/pages/MainPage/api/coin/coin_controller.dart';
+import 'package:frontend/utils/auth_util.dart';
 import 'package:get/get.dart';
 import 'package:collection/collection.dart';
 
-class InsidePageView extends StatelessWidget {
+class InsidePageView extends StatefulWidget {
   const InsidePageView({super.key});
+  @override
+  State<InsidePageView> createState() => _InsidePageViewState();
+}
+
+class _InsidePageViewState extends State<InsidePageView> {
+  late final RoomSelectionController controller;
+  late final BuildingController buildingCtrl;
+  late final CoinsController coinsCtrl;
+
+  late final BuildingType building;
+  late BuildingInfo info;
+  late int floors, totalSlots;
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+
     final args = Get.arguments as Map? ?? {};
-    final building = args['building'] as BuildingType;
-    final info = args['info'] as BuildingInfo;
+    building = args['building'] as BuildingType;
+    info     = args['info'] as BuildingInfo;
 
-    final floors = info.config.floors;
-    final currentFloor = info.building.currentFloor;
+    floors     = info.config.floors;
+    totalSlots = floors * 2;
 
-    final totalSlots = floors * 2;
+    // GetX 컨트롤러들이 등록되어 있는지 확인하고 가져오기
+    try {
+      buildingCtrl = Get.find<BuildingController>();
+    } catch (e) {
+      print('🔥 BuildingController를 찾을 수 없습니다: $e');
+      buildingCtrl = Get.put(BuildingController());
+    }
+    
+    try {
+      coinsCtrl = Get.find<CoinsController>();
+    } catch (e) {
+      print('🔥 CoinsController를 찾을 수 없습니다: $e');
+      coinsCtrl = Get.put(CoinsController());
+    }
+    coinsCtrl.ensureSelectedForBuilding(building); // 읽기 전용 보장
 
-    final RoomSelectionController controller = Get.put(
-      RoomSelectionController(totalSlots),
-    );
+    // ① 컨트롤러 동기 생성 (빌드 전에 보장)
+    // 기존 컨트롤러가 있다면 삭제 후 새로 생성
+    try {
+      Get.delete<RoomSelectionController>();
+    } catch (e) {
+      // 컨트롤러가 없으면 무시
+    }
+    controller = Get.put(RoomSelectionController(totalSlots));
 
-    final buildingCtrl = Get.find<BuildingController>();
-    final coinsCtrl = Get.find<CoinsController>();
-    coinsCtrl.ensureSelectedForBuilding(building);
+    // ② 비동기 초기화 시작 (await는 여기서 안 함)
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    try {
+      // 로그인/유저 준비
+      final uid = await getUserIdFromStorage();
+      if (!mounted) return;        // 페이지 떠났으면 중단
+      if (uid == null) {
+        debugPrint('❌ 저장된 사용자 ID가 없습니다.');
+        return;
+      }
+
+      // ③ 준비되었을 때만 서버 상태 반영 (이 시점은 build() 바깥)
+      await controller.loadFromServer(
+        totalBoxes: totalSlots,
+        installed: info.slots
+            .where((s) => s.slotNumber != null)
+            .map((s) => {
+                  'slotNumber': s.slotNumber!,
+                  'spaceType' : s.spaceType,
+                  'level'     : s.currentLevel,
+                })
+            .toList(),
+      );
+      
+      print('✅ InsidePage 초기화 완료');
+    } catch (e, stackTrace) {
+      print('🔥 InsidePage 초기화 중 에러 발생: $e');
+      print('🔥 Stack trace: $stackTrace');
+    }
+  }
+
+  @override
+  void dispose() {
+    if (Get.isRegistered<RoomSelectionController>()) {
+      Get.delete<RoomSelectionController>();
+    }
+    super.dispose();
+  }
+
+
+  Future<void> refreshFromServer() async {
+    await buildingCtrl.fetchBuilding(building);
+    final latestInfo = buildingCtrl.infos[building];
+    if (latestInfo == null) return;
 
     controller.loadFromServer(
       totalBoxes: totalSlots,
-      installed: info.slots
+      installed: latestInfo.slots
           .where((s) => s.slotNumber != null)
           .map(
             (s) => {
@@ -43,34 +121,17 @@ class InsidePageView extends StatelessWidget {
           )
           .toList(),
     );
+  }
 
-    Future<void> refreshFromServer() async {
-      await buildingCtrl.fetchBuilding(building); // ✅ 결과는 infos에 반영됨
-      final latestInfo = buildingCtrl.infos[building];
-      if (latestInfo == null) return;
-
-      controller.loadFromServer(
-        totalBoxes: totalSlots,
-        installed: latestInfo.slots
-            .where((s) => s.slotNumber != null)
-            .map(
-              (s) => {
-                'slotNumber': s.slotNumber!,
-                'spaceType': s.spaceType,
-                'level': s.currentLevel,
-              },
-            )
-            .toList(),
-      );
-    }
-
-    final boxNumbers = List.generate(floors * 2, (index) => index + 1);
+  @override
+  Widget build(BuildContext context) {
+   
     final screenWidth = MediaQuery.of(context).size.width;
     final boxWidth = screenWidth * 0.47; // 화면 너비의 45%
     final boxHeight = boxWidth / 2;
     final double availableWidth = MediaQuery.of(context).size.width - 20;
 
-    final latest = buildingCtrl.infos[building] ?? info;
+    
 
     print('boxWidth: $boxWidth');
     print('boxHeight: $boxHeight');
@@ -81,35 +142,40 @@ class InsidePageView extends StatelessWidget {
             child: Image.asset('images/background.png', fit: BoxFit.cover),
           ),
           Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ...List.generate(floors, (rowIndex) {
-                  int start = rowIndex * 2;
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildBox(
-                        boxNumbers[start],
-                        boxWidth,
-                        boxHeight,
-                        controller,
-                        latest.slots,
-                      ),
-                      // SizedBox(width: 0.5),
-                      _buildBox(
-                        boxNumbers[start + 1],
-                        boxWidth,
-                        boxHeight,
-                        controller,
-                        latest.slots,
-                      ),
-                    ],
-                  );
-                }).reversed,
-                SizedBox(height: 230),
-              ],
-            ),
+            child: Obx(() {
+              final latest = buildingCtrl.infos[building] ?? info;
+               final boxNumbers = List.generate(floors * 2, (index) => index + 1);
+               
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ...List.generate(floors, (rowIndex) {
+                    int start = rowIndex * 2;
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildBox(
+                          boxNumbers[start],
+                          boxWidth,
+                          boxHeight,
+                          controller,
+                          latest.slots,
+                        ),
+                        // SizedBox(width: 0.5),
+                        _buildBox(
+                          boxNumbers[start + 1],
+                          boxWidth,
+                          boxHeight,
+                          controller,
+                          latest.slots,
+                        ),
+                      ],
+                    );
+                  }).reversed,
+                  SizedBox(height: 230),
+                ],
+              );
+            }),
           ),
           Positioned(
             top: 15,

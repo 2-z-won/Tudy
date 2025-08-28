@@ -164,12 +164,14 @@ class _NewTodoPageViewState extends State<NewTodoPageView> {
             categories: ctrl.categories,
             onAddCategory: _openAddCategory,
             showAddButton: _inner == _InnerPane.todo,
-            onAllSelected: () {
+            onAllSelected: () async {
               setState(() {
                 selectedCategory = null; // All
               });
+              // 모든 카테고리 목표 로딩
+              await ctrl.loadGoalsByCategory(null);
             },
-            onCategorySelected: (c) {
+            onCategorySelected: (c) async {
               setState(() {
                 if (selectedCategory?.id == c.id) {
                   selectedCategory = null; // 같은 걸 다시 누르면 All
@@ -177,6 +179,8 @@ class _NewTodoPageViewState extends State<NewTodoPageView> {
                   selectedCategory = c;
                 }
               });
+              // 선택된 카테고리 목표 로딩
+              await ctrl.loadGoalsByCategory(selectedCategory?.name);
             },
           );
         }),

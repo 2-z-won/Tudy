@@ -49,10 +49,10 @@ class RoomSelectionController extends GetxController {
 
   // ===== 서버에서 받은 현재 설치 상태를 반영 =====
   // installed 예시: [{slotNumber: 3, spaceType: "LECTURE", level: 2}, ...]
-  void loadFromServer({
+  Future<void> loadFromServer({
     required int totalBoxes,
-    required List<Map<String, dynamic>> installed,
-  }) {
+    required List<Map<String, dynamic>> installed,}) 
+  async {
     // 초기화
     for (int i = 1; i <= totalBoxes; i++) {
       originalBoxImages[i] = null;
@@ -65,7 +65,8 @@ class RoomSelectionController extends GetxController {
       final sn = m['slotNumber'] as int;
       final st = m['spaceType'] as String;
       final lv = m['level'] as int;
-      final img = 'assets/images/spaces/${st}_$lv.png';
+      // spaces 폴더가 삭제되어 기본 이미지 사용
+      final img = 'assets/images/profile.jpg';
       originalBoxImages[sn] = img;
       stagedBoxImages[sn] = img;
     }
@@ -81,8 +82,8 @@ class RoomSelectionController extends GetxController {
   }) {
     if (!isEditMode.value) return;
 
-    // 미리보기 이미지
-    stagedBoxImages[slotNumber] = 'assets/images/spaces/${spaceType}_$level.png';
+    // 미리보기 이미지 (spaces 폴더가 삭제되어 기본 이미지 사용)
+    stagedBoxImages[slotNumber] = 'assets/images/profile.jpg';
 
     // 서버 전송 대기 목록 갱신(덮어쓰기)
     pendingInstalls[slotNumber] = PendingInstall(

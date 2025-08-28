@@ -1,7 +1,7 @@
 class GroupRequest {
   final int id;
-  final Map<String, dynamic> fromUser; // = user
-  final Map<String, dynamic> group;
+  final Map<String, dynamic>? fromUser; // = user (nullable)
+  final Map<String, dynamic>? group; // (nullable)
   final String status;
   final String createdAt;
 
@@ -15,11 +15,11 @@ class GroupRequest {
 
   factory GroupRequest.fromJson(Map<String, dynamic> json) {
     return GroupRequest(
-      id: json['id'],
-      fromUser: json['user'],
-      group: json['group'],
-      status: json['status'],
-      createdAt: json['createdAt'],
+      id: json['id'] as int,
+      fromUser: json['user'] as Map<String, dynamic>?,
+      group: json['group'] as Map<String, dynamic>?,
+      status: json['status'] as String,
+      createdAt: json['createdAt'] as String,
     );
   }
 }

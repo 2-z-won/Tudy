@@ -157,18 +157,18 @@ class _MainPageViewState extends State<MainPageView> {
         },
         child: Builder(
           builder: (context) {
-            // 직접 assets/images/ 경로에서 로드
-            final directPath = 'assets/images/${type.name.toLowerCase()}.png';
+            // assets/images/buildings/ 경로에서 로드
+            final buildingPath = 'assets/images/buildings/${type.name.toLowerCase()}.png';
             
-            print('🖼️ 직접 경로 시도: $directPath');
+            print('🖼️ 건물 이미지 경로: $buildingPath');
             
             return Image.asset(
-              directPath,
+              buildingPath,
               width: 160,
               height: 160,
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
-                print('🔥 직접 경로 실패: $directPath - $error');
+                print('🔥 건물 이미지 로드 실패: $buildingPath - $error');
                 // 실패하면 대체 이미지 표시
                 return Container(
                   width: 160,

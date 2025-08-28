@@ -58,7 +58,7 @@ class _AddCategoryFormState extends State<AddCategoryForm>
   // 폭 상태
   double _lastMaxW = 0;
 
-  final _categoryController = CategoryController();
+  final _categoryController = Get.find<CategoryController>();
   String? _userId;
 
   Future<void> _loadUserId() async {
