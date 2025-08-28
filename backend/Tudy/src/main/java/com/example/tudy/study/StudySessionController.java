@@ -38,10 +38,10 @@ public class StudySessionController {
     }
 
     @GetMapping("/ranking")
-    @Operation(summary = "Ranking by major")
+    @Operation(summary = "Ranking by accumulated study time")
     @ApiResponse(responseCode = "200", description = "Ranking returned")
-    public ResponseEntity<Map<String, Long>> ranking() {
-        return ResponseEntity.ok(service.rankingByMajor());
+    public ResponseEntity<RankingResponse> ranking() {
+        return ResponseEntity.ok(service.ranking());
     }
 
     @Data

@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,8 +39,10 @@ public class StudySessionService {
         return studySessionRepository.findTotalDurationByGoalId(goalId);
     }
 
-    public Map<String, Long> rankingByMajor() {
-        return studySessionRepository.totalDurationByMajor().stream()
-                .collect(Collectors.toMap(r -> (String) r[0], r -> (Long) r[1]));
+    public RankingResponse ranking() {
+        List<RankingResponse.RankItem> items = studySessionRepository.totalDurationByUser().stream()
+                .map(r -> new RankingResponse.RankItem((String) r[0], (String) r[1], (Long) r[2]))
+                .collect(Collectors.toList());
+        return new RankingResponse(items);
     }
 }
