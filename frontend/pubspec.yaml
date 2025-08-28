@@ -30,6 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  flutter_secure_storage: ^9.2.2
+
   flutter_localizations:
     sdk: flutter
   get: ^4.6.6
@@ -43,6 +46,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   image_picker: ^1.0.4
   syncfusion_flutter_datepicker: ^30.1.42
+  dio: ^5.9.0
+  flutter_slidable: ^3.0.0
+
 
 dev_dependencies:
   flutter_test:

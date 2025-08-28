@@ -23,94 +23,165 @@ class _MainPageViewState extends State<TodoPageView> {
   List<TodoItem> todoList = [];
   List<Category> categoryList = [];
 
-  @override
-  void initState() {
-    super.initState();
-    loadUserId();
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   loadUserId();
+  // }
+
+  // String? userId;
+  // int? selectedGoalId;
+
+  // Future<void> loadUserId() async {
+  //   final uid = await getUserIdFromStorage();
+  //   if (uid == null) {
+  //     print('❌ 저장된 사용자 ID가 없습니다.');
+  //     return;
+  //   }
+
+  //   print("로딩됨");
+
+  //   setState(() {
+  //     userId = uid;
+  //   });
+  //   await loadCategories();
+  //   await loadGoalsForDate(selectedDate); // ✅ userId 로딩 후 목표 불러오기까지 연결
+  // }
+
+  // Future<void> loadCategories() async {
+  //   print('🟨 loadCategories 시작');
+  //   print(userId);
+  //   if (userId == null) return;
+  //   try {
+  //     final list = await CategoryController.fetchCategories(userId!);
+  //     print('✅ 응답 왔음');
+  //     setState(() {
+  //       categoryList = list;
+  //     });
+  //     print("📦 불러온 카테고리: ${list.map((c) => c.name).toList()}");
+  //   } catch (e) {
+  //     print("❌ 카테고리 불러오기 실패: $e");
+  //   }
+  // }
+
+  // Future<void> loadGoalsForDate(DateTime date) async {
+  //   if (userId == null) return;
+
+  //   try {
+  //     final formattedDate = date.toIso8601String().substring(0, 10);
+  //     List<TodoItem> allItems = [];
+
+  //     for (final category in categoryList) {
+  //       final goals = await CategoryController.fetchGoalsByDate(
+  //         userId: userId!,
+  //         date: formattedDate,
+  //         categoryName: category.name,
+  //       );
+
+  //       final int colorIndex = (category.color ?? 1) - 1;
+  //       final Color mainColor =
+  //           mainColors[colorIndex.clamp(0, mainColors.length - 1)];
+  //       final Color subColor =
+  //           subColors[colorIndex.clamp(0, subColors.length - 1)];
+
+  //       final List<SubTodo> subTodos = goals.map((goal) {
+  //         return SubTodo(
+  //           goalId: goal.id,
+  //           goalTitle: goal.title,
+  //           isGroup: goal.isGroupGoal,
+  //           isDone: goal.completed,
+  //           isTimerRequired: goal.proofType == 'TIME',
+  //           isPhotoRequired: goal.proofType == 'IMAGE',
+  //           targetTime: goal.targetTime,
+  //         );
+  //       }).toList();
+
+  //       allItems.add(
+  //         TodoItem(
+  //           category: category.name,
+  //           mainColor: mainColor,
+  //           subColor: subColor,
+  //           subTodos: subTodos,
+  //         ),
+  //       );
+  //     }
+
+  //     setState(() {
+  //       todoList = allItems;
+  //     });
+  //   } catch (e) {
+  //     print('목표 불러오기 오류: $e');
+  //   }
+  // }
 
   String? userId;
   int? selectedGoalId;
 
-  Future<void> loadUserId() async {
-    final uid = await getUserIdFromStorage();
-    if (uid == null) {
-      print('❌ 저장된 사용자 ID가 없습니다.');
-      return;
-    }
-
-    print("로딩됨");
-
-    setState(() {
-      userId = uid;
-    });
-    await loadCategories();
-    await loadGoalsForDate(selectedDate); // ✅ userId 로딩 후 목표 불러오기까지 연결
+  @override
+  void initState() {
+    super.initState();
+    loadCategories();
+    loadGoalsForDate(selectedDate);
   }
 
   Future<void> loadCategories() async {
-    print('🟨 loadCategories 시작');
-    print(userId);
-    if (userId == null) return;
-    try {
-      final list = await CategoryController.fetchCategories(userId!);
-      print('✅ 응답 왔음');
-      setState(() {
-        categoryList = list;
-      });
-      print("📦 불러온 카테고리: ${list.map((c) => c.name).toList()}");
-    } catch (e) {
-      print("❌ 카테고리 불러오기 실패: $e");
-    }
+    await Future.delayed(const Duration(milliseconds: 200)); // 로딩 시뮬
+    setState(() {
+      categoryList = [
+        Category(id: 1, name: '운동', color: 1, categoryType: "EXERCISE"),
+        Category(id: 2, name: '공부', color: 2, categoryType: "STUDY"),
+        Category(id: 3, name: '독서', color: 3, categoryType: "ETC"),
+      ];
+    });
   }
 
   Future<void> loadGoalsForDate(DateTime date) async {
-    if (userId == null) return;
-
-    try {
-      final formattedDate = date.toIso8601String().substring(0, 10);
-      List<TodoItem> allItems = [];
-
-      for (final category in categoryList) {
-        final goals = await CategoryController.fetchGoalsByDate(
-          userId: userId!,
-          date: formattedDate,
-          categoryName: category.name,
-        );
-
-        final int colorIndex = (category.color ?? 1) - 1;
-        final Color mainColor =
-            mainColors[colorIndex.clamp(0, mainColors.length - 1)];
-        final Color subColor =
-            subColors[colorIndex.clamp(0, subColors.length - 1)];
-
-        final List<SubTodo> subTodos = goals.map((goal) {
-          return SubTodo(
-            goalId: goal.id,
-            goalTitle: goal.title,
-            isGroup: goal.isGroupGoal,
-            isDone: goal.completed,
-            isTimerRequired: goal.proofType == 'TIME',
-            isPhotoRequired: goal.proofType == 'PHOTO',
-          );
-        }).toList();
-
-        allItems.add(
-          TodoItem(
-            category: category.name,
-            mainColor: mainColor,
-            subColor: subColor,
-            subTodos: subTodos,
-          ),
-        );
-      }
-
-      setState(() {
-        todoList = allItems;
-      });
-    } catch (e) {
-      print('목표 불러오기 오류: $e');
-    }
+    await Future.delayed(const Duration(milliseconds: 200)); // 로딩 시뮬
+    setState(() {
+      todoList = [
+        TodoItem(
+          category: '운동',
+          mainColor: mainColors[0],
+          subColor: subColors[0],
+          subTodos: [
+            SubTodo(
+              goalId: 101,
+              goalTitle: '조깅',
+              isGroup: false,
+              isDone: false,
+              isTimerRequired: true,
+              isPhotoRequired: false,
+              //targetTime: 30,
+            ),
+            SubTodo(
+              goalId: 102,
+              goalTitle: '스트레칭',
+              isGroup: true,
+              isDone: true,
+              isTimerRequired: false,
+              isPhotoRequired: true,
+              // targetTime: null,
+            ),
+          ],
+        ),
+        TodoItem(
+          category: '공부',
+          mainColor: mainColors[1],
+          subColor: subColors[1],
+          subTodos: [
+            SubTodo(
+              goalId: 201,
+              goalTitle: '알고리즘 문제 풀기',
+              isGroup: false,
+              isDone: false,
+              isTimerRequired: true,
+              isPhotoRequired: false,
+              //targetTime: 90,
+            ),
+          ],
+        ),
+      ];
+    });
   }
 
   DateTime selectedDate = DateTime.now(); // ✅ 선택된 날짜 저장
@@ -130,6 +201,7 @@ class _MainPageViewState extends State<TodoPageView> {
   bool isDone = false;
   String selectedGroupType = '';
   String selectedCertType = '';
+  int? selectedTargetTime;
 
   void toggleView() {
     setState(() {
@@ -231,10 +303,11 @@ class _MainPageViewState extends State<TodoPageView> {
                                         : subTodo.isPhotoRequired
                                         ? 'photo'
                                         : '';
+                                    selectedGoalId = subTodo.goalId;
+                                    //selectedTargetTime = subTodo.targetTime;
                                     isDetailVisible = false;
                                     isDoneDetailVisible = true;
                                     isAddCategoryVisible = false;
-                                    selectedGoalId = subTodo.goalId;
                                   });
                                 },
                           ),
@@ -320,6 +393,7 @@ class _MainPageViewState extends State<TodoPageView> {
                 mainColor: selectedMainColor,
                 subColor: selectedSubColor,
                 goalId: selectedGoalId!,
+                targetTime: selectedTargetTime,
                 onClose: () {
                   setState(() {
                     isDoneDetailVisible = false;

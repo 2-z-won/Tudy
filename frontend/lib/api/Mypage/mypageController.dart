@@ -13,14 +13,16 @@ class MyPageController extends GetxController {
   // 프로필
   final name = ''.obs;
   final college = ''.obs;
-  final department = ''.obs; // = major
+  final department = ''.obs;
   final profileImage = ''.obs;
+  final birth = ''.obs;
+  final password = ''.obs;
 
   // 지표
   final coinBalance = 0.obs;
   final friendCount = 0.obs;
   final todayGoalCount = 0.obs;
-  final groupCount = 0.obs; // 아직 API 없으면 0 유지
+  final groupCount = 0.obs;
 
   final isLoading = false.obs;
   String? _userId;
@@ -39,11 +41,7 @@ class MyPageController extends GetxController {
       return;
     }
 
-    await Future.wait([
-      _fetchUser(), // /api/users/{userId}
-      _fetchTodayGoalCount(), // 기존 by-date 사용
-      //_fetchGroupCount(),     // 있으면 붙이고, 없으면 0
-    ]);
+    await Future.wait([_fetchUser(), _fetchTodayGoalCount()]);
 
     isLoading.value = false;
   }
@@ -56,7 +54,7 @@ class MyPageController extends GetxController {
         final data = jsonDecode(res.body);
         userId.value = (data['id'] as num?)?.toInt();
         userEmail.value = (data['email'] as String?) ?? '';
-
+        birth.value = (data['birth'] as String?) ?? '';
         name.value = data['name'] ?? '';
         college.value = data['college'] ?? '';
         department.value = data['major'] ?? '';
