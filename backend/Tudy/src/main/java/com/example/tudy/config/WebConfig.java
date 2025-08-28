@@ -16,14 +16,9 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowCredentials(false);
     }
     
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 업로드된 이미지 파일을 정적 리소스로 서빙
-        registry.addResourceHandler("/proof-images/**")
-                .addResourceLocations("file:uploads/proof-images/");
-        
-        // 프로필 이미지 파일을 정적 리소스로 서빙
-        registry.addResourceHandler("/profile-images/**")
-                .addResourceLocations("file:uploads/profile-images/");
-    }
+    // S3 사용으로 인해 로컬 파일 서빙은 더 이상 필요 없음
+    // @Override
+    // public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    //     // S3를 사용하므로 로컬 파일 서빙 비활성화
+    // }
 } 

@@ -13,35 +13,51 @@ class MyPageView extends StatelessWidget {
     final user = Get.put(MyPageController());
     return Scaffold(
       body: Padding(
-        padding: EdgeInsets.only(left: 40, right: 40, top: 60),
+        padding: const EdgeInsets.only(left: 40, right: 40, top: 60),
         child: Obx(() {
-          if (user.isLoading.value) {
-            return const Center(child: CircularProgressIndicator());
-          }
           return Column(
             children: [
-              GestureDetector(
-                onTap: () {
-                  Get.toNamed(
-                    "/editMypage",
-                    arguments: {
-                      'name': user.name.value,
-                      'email': user.userEmail.value,
-                      'id': 'testVersion',
-                      'password': 'test123!',
-                      'birth': '2000.01.01',
-                      'college': user.college.value,
-                      'department': user.department.value,
-                    },
-                  );
-                },
-                child: StudentCard(
-                  name: user.name.value,
-                  birth: "2004.12.25",
-                  college: user.college.value,
-                  department: user.department.value,
-                  profileImageAsset: 'images/profile.jpg',
-                  qrImageAsset: 'images/profile.jpg',
+              AbsorbPointer(
+                absorbing: user.isLoading.value,
+                child: Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Get.toNamed(
+                          "/editMypage",
+                          arguments: {
+                            'name': user.name.value,
+                            'email': user.userEmail.value,
+                            'id': user.userId.value,
+                            'birth': user.birth.value,
+                            'college': user.college.value,
+                            'department': user.department.value,
+                          },
+                        );
+                      },
+                      child: StudentCard(
+                        name: user.name.value,
+                        birth: user.birth.value,
+                        college: user.college.value,
+                        department: user.department.value,
+                        profileImageAsset: 'images/profile.jpg',
+                        qrImageAsset: 'images/profile.jpg',
+                      ),
+                    ),
+
+                    if (user.isLoading.value)
+                      Positioned.fill(
+                        child: Container(
+                          alignment: Alignment.center,
+                          color: Colors.black.withOpacity(0.12),
+                          child: const SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: CircularProgressIndicator(strokeWidth: 3),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               SizedBox(height: 40),

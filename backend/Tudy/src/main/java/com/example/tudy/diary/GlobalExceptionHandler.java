@@ -7,6 +7,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.validation.FieldError;
 
 import java.util.HashMap;
@@ -75,6 +76,15 @@ public class GlobalExceptionHandler {
         response.put("error", "리소스를 찾을 수 없습니다");
         response.put("message", ex.getMessage());
         response.put("status", HttpStatus.NOT_FOUND.value());
+        return response;
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public Map<String, Object> handleResponseStatus(ResponseStatusException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", ex.getReason());
+        response.put("message", ex.getReason());
+        response.put("status", ex.getStatusCode().value());
         return response;
     }
 

@@ -63,12 +63,37 @@ public class GoalController {
     @PostMapping("/{id}/proof-image")
     @Operation(summary = "Upload proof image for image proof goal")
     @ApiResponse(responseCode = "200", description = "Proof image uploaded and goal completed")
-    public ResponseEntity<Goal> uploadProofImage(@PathVariable Long id, @RequestParam("image") MultipartFile imageFile) {
-        Goal goal = goalService.completeImageProofGoalWithFile(id, imageFile);
-        return ResponseEntity.ok(goal);
+    public ResponseEntity<?> uploadProofImage(@PathVariable Long id, @RequestParam("image") MultipartFile imageFile) {
+        try {
+            GoalService.ImageProofResult result = goalService.completeImageProofGoalWithFile(id, imageFile);
+            return ResponseEntity.ok(new ImageVerificationResponse(true, "이미지 인증이 완료되었습니다.", result.getGoal(), null, result.getConfidence()));
+        } catch (ImageVerificationException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ImageVerificationResponse(false, e.getMessage(), null, e.getErrorCode(), e.getConfidence()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ImageVerificationResponse(false, "이미지 처리 중 오류가 발생했습니다: " + e.getMessage(), null, "PROCESSING_ERROR", 0.0f));
+        }
     }
 
 
+
+    @Data
+    private static class ImageVerificationResponse {
+        private final boolean success;
+        private final String message;
+        private final Goal goal;
+        private final String errorCode;
+        private final float confidence;
+        
+        public ImageVerificationResponse(boolean success, String message, Goal goal, String errorCode, float confidence) {
+            this.success = success;
+            this.message = message;
+            this.goal = goal;
+            this.errorCode = errorCode;
+            this.confidence = confidence;
+        }
+    }
 
     @Data
     private static class GoalUpdateRequest {
