@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/constants/url.dart';
+import 'package:frontend/utils/auth_util.dart';
 
 class FriendAddRequestController {
   static var errorMessage = ''.obs;
@@ -10,11 +11,18 @@ class FriendAddRequestController {
     required String userId,
     required String toUserId,
   }) async {
+    final token = await getTokenFromStorage();
     final uri = Uri.parse(
       "${Urls.apiUrl}friends/request",
     ).replace(queryParameters: {'userId': userId, 'toUserId': toUserId});
 
-    final response = await http.post(uri);
+    final response = await http.post(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);

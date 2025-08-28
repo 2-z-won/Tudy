@@ -6,5 +6,5 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 public interface DiaryRepository extends JpaRepository<Diary, Long> {
-    Optional<Diary> findByDate(LocalDate date);
+    Optional<Diary> findByUserIdAndDate(String userId, LocalDate date);
 }

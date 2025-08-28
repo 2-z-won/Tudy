@@ -33,17 +33,34 @@ class DiaryApi {
   static Future<DiaryDto?> getDiary({
     required String date,
     String? token,
+    String? userId,
   }) async {
     final uri = Uri.parse(
-      '$baseUrl/api/diary',
-    ).replace(queryParameters: {'date': date});
+      '$baseUrl/diary',
+    ).replace(queryParameters: {'date': date, 'userId': userId});
+
+    print('🔍 일기 조회 API 호출: $uri');
+    print('🔍 요청 헤더: ${_headers(token)}');
+    print('🔍 사용자 ID: $userId');
 
     final res = await http.get(uri, headers: _headers(token));
 
+    print('🟡 일기 조회 응답 상태: ${res.statusCode}');
+    print('🟡 일기 조회 응답 내용: ${res.body}');
+
     if (res.statusCode == 200) {
-      return DiaryDto.fromJson(jsonDecode(res.body));
+      try {
+        final jsonData = jsonDecode(res.body);
+        print('✅ 일기 조회 성공 - 파싱된 데이터: $jsonData');
+        return DiaryDto.fromJson(jsonData);
+      } catch (e) {
+        print('🔥 일기 조회 응답 파싱 실패: $e');
+        return null;
+      }
+    } else {
+      print('🔥 일기 조회 실패 - HTTP ${res.statusCode}: ${res.body}');
+      return null;
     }
-    return null;
   }
 
   static Future<DiaryDto?> upsertDiary({
@@ -51,18 +68,43 @@ class DiaryApi {
     required String emoji,
     required String content,
     String? token,
+    String? userId,
   }) async {
-    final uri = Uri.parse('$baseUrl/api/diary');
+    final uri = Uri.parse('$baseUrl/diary');
+    
+    final requestBody = {
+      'userId': userId,
+      'date': date, 
+      'emoji': emoji, 
+      'content': content
+    };
+    
+    print('🔍 일기 저장 API 호출: $uri');
+    print('🔍 요청 헤더: ${_headers(token)}');
+    print('🔍 요청 본문: $requestBody');
+    print('🔍 사용자 ID: $userId');
 
     final res = await http.post(
       uri,
       headers: _headers(token),
-      body: jsonEncode({'date': date, 'emoji': emoji, 'content': content}),
+      body: jsonEncode(requestBody),
     );
 
+    print('🟡 일기 저장 응답 상태: ${res.statusCode}');
+    print('🟡 일기 저장 응답 내용: ${res.body}');
+
     if (res.statusCode == 200) {
-      return DiaryDto.fromJson(jsonDecode(res.body));
+      try {
+        final jsonData = jsonDecode(res.body);
+        print('✅ 일기 저장 성공 - 파싱된 데이터: $jsonData');
+        return DiaryDto.fromJson(jsonData);
+      } catch (e) {
+        print('🔥 일기 저장 응답 파싱 실패: $e');
+        return null;
+      }
+    } else {
+      print('🔥 일기 저장 실패 - HTTP ${res.statusCode}: ${res.body}');
+      return null;
     }
-    return null;
   }
 }

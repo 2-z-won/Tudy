@@ -19,13 +19,13 @@ class Friend {
 
   factory Friend.fromJson(Map<String, dynamic> json) {
     return Friend(
-      id: json['id'],
-      email: json['email'],
-      name: json['name'],
-      major: json['major'],
-      college: json['college'],
-      profileImage: json['profileImage'],
-      coinBalance: json['coinBalance'],
+      id: json['id'] ?? 0,
+      email: json['email'] ?? '',
+      name: json['name'] ?? '',
+      major: json['major'] ?? '',
+      college: json['college'] ?? '',
+      profileImage: json['profileImage'] ?? '',
+      coinBalance: json['coinBalance'] ?? 0,
     );
   }
 }

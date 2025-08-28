@@ -23,17 +23,17 @@ class MyPageView extends StatelessWidget {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        Get.toNamed(
-                          "/editMypage",
-                          arguments: {
-                            'name': user.name.value,
-                            'email': user.userEmail.value,
-                            'id': user.userId.value,
-                            'birth': user.birth.value,
-                            'college': user.college.value,
-                            'department': user.department.value,
-                          },
-                        );
+                        final editArgs = {
+                          'name': user.name.value.toString(),
+                          'email': user.userEmail.value.toString(),
+                          'userId': user.userId.value.toString(), // user_id 컬럼 값 전달
+                          'birth': user.birth.value.toString(),
+                          'college': user.college.value.toString(),
+                          'department': user.department.value.toString(),
+                        };
+                        print('🔍 MyPage - EditMyPage로 전달하는 데이터: $editArgs');
+                        print('🔍 MyPage - 사용자 ID: ${user.userId.value}');
+                        Get.toNamed("/editMypage", arguments: editArgs);
                       },
                       child: StudentCard(
                         name: user.name.value,
@@ -74,7 +74,7 @@ class MyPageView extends StatelessWidget {
                     '친구',
                     () => Get.toNamed('/friend'),
                   ),
-                  _statItem(1, '그룹', () => Get.toNamed('/group')),
+                  _statItem(user.groupCount.value, '그룹', () => Get.toNamed('/group')),
                 ],
               ),
               SizedBox(height: 40),
