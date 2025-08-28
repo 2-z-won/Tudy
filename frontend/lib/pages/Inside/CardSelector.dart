@@ -36,8 +36,8 @@ class StudyRoomSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final purchasedCards = purchaseList.map((s) {
+    // Obx 제거 - observable 변수가 없음
+    final purchasedCards = purchaseList.map((s) {
         final def = _defOf(s.spaceType);
         return {
           'kind': 'purchased',
@@ -137,7 +137,6 @@ class StudyRoomSelector extends StatelessWidget {
           );
         }).toList(),
       );
-    });
   }
 
   Widget _buildRoomCard(Map<String, dynamic> room) {
@@ -338,7 +337,7 @@ class _PurchaseDialogBody extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           // ✅ 원본 배경 이미지 (그대로)
-          Image.asset('images/button/purchase_bg.png', fit: BoxFit.none),
+          Image.asset('assets/images/button/purchase_bg.png', fit: BoxFit.none),
 
           // ✅ 이미지 위에 내용
           Positioned.fill(
@@ -350,7 +349,7 @@ class _PurchaseDialogBody extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      "images/coin/ACADEMIC_SAEDO.png",
+                      "assets/images/coin/ACADEMIC_SAEDO.png",
                       width: 20,
                       height: 20,
                     ),
@@ -384,13 +383,13 @@ class _PurchaseDialogBody extends StatelessWidget {
                     PressableButton(
                       onTap: () => Navigator.of(context).pop(false),
                       label: '취소',
-                      imagePath: "images/button/cancel_purchase.png",
+                      imagePath: "assets/images/button/cancel_purchase.png",
                     ),
                     const SizedBox(width: 10),
                     PressableButton(
                       onTap: () => Navigator.of(context).pop(true),
                       label: '구매',
-                      imagePath: "images/button/purchase.png",
+                      imagePath: "assets/images/button/purchase.png",
                     ),
                   ],
                 ),

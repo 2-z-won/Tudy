@@ -23,7 +23,7 @@ class EmailVerifyController extends GetxController {
       return;
     }
 
-    final url = Uri.parse('${Urls.apiUrl}auth/send-email');
+    final url = Uri.parse('${Urls.authUrl}send-email');
 
     try {
       final response = await http.post(
@@ -61,7 +61,7 @@ class EmailVerifyController extends GetxController {
       return;
     }
 
-    final url = Uri.parse('${Urls.apiUrl}auth/verify-email');
+    final url = Uri.parse('${Urls.authUrl}verify-email');
     final requestData = EmailVerificationRequest(email: email, code: code);
 
     try {

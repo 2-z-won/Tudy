@@ -12,17 +12,17 @@ class GameDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = <_GameItem>[
       _GameItem(
-        iconPath: 'images/game_buttons/button1.png',
+        iconPath: 'assets/images/game_buttons/button1.png',
         title: '', // 제목 숨김
         page: const OddEvenGamePage(),
       ),
       _GameItem(
-        iconPath: 'images/game_buttons/button2.png',
+        iconPath: 'assets/images/game_buttons/button2.png',
         title: '', // 제목 숨김
         page: const UpDownGamePage(),
       ),
       _GameItem(
-        iconPath: 'images/game_buttons/button3.png',
+        iconPath: 'assets/images/game_buttons/button3.png',
         title: '', // 제목 숨김
         page: const CoinTossGamePage(),
       ),

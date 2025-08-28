@@ -229,7 +229,7 @@ class _CoinTossGamePageState extends State<CoinTossGamePage>
                       children: [
                         Expanded(
                           child: PixelImageButton(
-                            asset: 'images/ui/btn_red.png',
+                            asset: 'assets/images/ui/btn_red.png',
                             label: '앞면',
                             onTap: _isFlipping ? null : () => _play(true),
                           ),
@@ -237,7 +237,7 @@ class _CoinTossGamePageState extends State<CoinTossGamePage>
                         const SizedBox(width: 12),
                         Expanded(
                           child: PixelImageButton(
-                            asset: 'images/ui/btn_blue.png',
+                            asset: 'assets/images/ui/btn_blue.png',
                             label: '뒷면',
                             onTap: _isFlipping ? null : () => _play(false),
                           ),

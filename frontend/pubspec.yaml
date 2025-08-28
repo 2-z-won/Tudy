@@ -76,7 +76,12 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/.env
+    - assets/images/buildings/
+    - assets/images/coin/
+    - assets/images/button/
+    - assets/images/insideMiniGame/
+    - assets/images/ui/
+    - assets/images/game_buttons/
 
   fonts:
     - family: Galmuri11

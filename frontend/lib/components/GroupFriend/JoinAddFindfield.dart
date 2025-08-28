@@ -187,7 +187,7 @@ class _JoinAddFieldState extends State<JoinAddField> {
                         ? GestureDetector(
                             onTap: widget.onEnter!,
                             child: Image.asset(
-                              'assets/images/util_enter.png',
+                              'assets/images/uil_enter.png',
                               width: 24,
                               height: 24,
                             ),

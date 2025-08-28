@@ -187,15 +187,79 @@ class _TodoDetailState extends State<TodoDetail> {
                         ),
                         const SizedBox(height: 10),
                         Center(
-                          child: Text(
-                            widget.targetTime != null
-                                ? '${widget.targetTime! ~/ 3600} h  ${(widget.targetTime! % 3600) ~/ 60} m'
-                                : '??h ??m',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              letterSpacing: 2,
-                            ),
+                          child: Column(
+                            children: [
+                              Text(
+                                '🎯 목표 시간',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Text(
+                                widget.targetTime != null
+                                    ? '${widget.targetTime! ~/ 3600} h  ${(widget.targetTime! % 3600) ~/ 60} m'
+                                    : '??h ??m',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                              const SizedBox(height: 15),
+                              Obx(() {
+                                final accumulatedSeconds = session.accumulatedTime.value.inSeconds;
+                                final targetSeconds = widget.targetTime ?? 0;
+                                final remainingSeconds = _remainSeconds(accumulatedSeconds, targetSeconds);
+                                
+                                return Column(
+                                  children: [
+                                    Text(
+                                      '⏱️ 누적 시간',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    Text(
+                                      _fmtHM(accumulatedSeconds),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: Colors.blue,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      '⏳ 남은 시간',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    Text(
+                                      _fmtHM(remainingSeconds),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: remainingSeconds > 0 ? Colors.orange : Colors.green,
+                                      ),
+                                    ),
+                                    if (remainingSeconds == 0) ...[
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        '🎉 목표 달성!',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                );
+                              }),
+                            ],
                           ),
                         ),
                       ] else if (widget.certificationType == 'photo' &&

@@ -45,7 +45,7 @@ class _MainPageViewState extends State<MainPageView> {
             right: 0,
             bottom: 0,
             child: Image.asset(
-              'images/buildings/background.png',
+              'assets/images/background.png',
               fit: BoxFit.fitWidth, // 가로 꽉 채움, 세로는 비율에 맞게
               width: double.infinity,
             ),
@@ -85,7 +85,7 @@ class _MainPageViewState extends State<MainPageView> {
                   );
                 },
                 child: Image.asset(
-                  'images/buildings/arcade.png',
+                  'assets/images/buildings/arcade.png',
                   width: 160, // 원하는 크기로 조절
                   height: 160,
                   fit: BoxFit.contain,
@@ -155,11 +155,51 @@ class _MainPageViewState extends State<MainPageView> {
           coinsCtrl.ensureSelectedForBuilding(type);
           Get.toNamed("/inside", arguments: {'building': type, 'info': ready});
         },
-        child: Image.asset(
-          'images/buildings/${type.name.toLowerCase()}.png',
-          width: 160,
-          height: 160,
-          fit: BoxFit.contain,
+        child: Builder(
+          builder: (context) {
+            // assets/images/buildings/ 경로에서 로드
+            final buildingPath = 'assets/images/buildings/${type.name.toLowerCase()}.png';
+            
+            print('🖼️ 건물 이미지 경로: $buildingPath');
+            
+            return Image.asset(
+              buildingPath,
+              width: 160,
+              height: 160,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                print('🔥 건물 이미지 로드 실패: $buildingPath - $error');
+                // 실패하면 대체 이미지 표시
+                return Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        type == BuildingType.DEPARTMENT ? Icons.school :
+                        type == BuildingType.LIBRARY ? Icons.local_library :
+                        type == BuildingType.CAFE ? Icons.local_cafe :
+                        type == BuildingType.GYM ? Icons.fitness_center :
+                        Icons.business,
+                        size: 50,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        type.name,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
         ),
       );
     });

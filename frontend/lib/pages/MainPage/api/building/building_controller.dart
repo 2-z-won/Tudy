@@ -28,7 +28,7 @@ class BuildingController extends GetxController {
       if (userId == null || token == null) throw 'Not logged in';
 
       final uri = Uri.parse(
-        '${Urls.apiUrl}users/$userId/buildings/${type.name}',
+        Urls.userBuilding(userId, type.name),
       );
       final res = await http.get(
         uri,

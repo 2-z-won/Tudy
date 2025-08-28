@@ -66,7 +66,7 @@ class SignUpController extends GetxController {
 
     try {
       final response = await http.post(
-        Uri.parse('${Urls.apiUrl}users/signup'),
+        Uri.parse('${Urls.usersUrl}signup'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(user.toJson()),
       );

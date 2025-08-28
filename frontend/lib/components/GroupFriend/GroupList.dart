@@ -49,7 +49,6 @@ class _GroupDropdownCardState extends State<GroupDropdownCard> {
     await _groupController.ensureLoaded(uid);
     await _requestController.fetchGroupRequests(
       groupId: widget.groupId,
-      ownerId: ownerId!,
     );
   }
 
@@ -124,19 +123,18 @@ class _GroupDropdownCardState extends State<GroupDropdownCard> {
                       return Column(
                         children: _requestController.requests.map((request) {
                           final fromUser = request.fromUser;
+                          final userName = fromUser?['name'] ?? fromUser?['userId'] ?? '이름 없음';
                           return JoinRequestRow(
-                            name: fromUser['name'] ?? '이름 없음',
-                            imageAsset: 'assets/profile.jpg',
+                            name: userName,
+                            imageAsset: 'assets/images/profile.jpg',
                             onApprove: () async {
                               await _requestController.approveRequest(
                                 request.id,
-                                ownerId!,
                               );
                             },
                             onReject: () async {
                               await _requestController.rejectRequest(
                                 request.id,
-                                ownerId!,
                               );
                             },
                           );

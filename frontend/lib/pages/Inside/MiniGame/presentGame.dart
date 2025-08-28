@@ -496,7 +496,7 @@ class _GamePageState extends State<GamePage> {
                   SizedBox(
                     height: 96,
                     child: Image.asset(
-                      'images/present.png',
+                      'assets/images/present.png',
                       filterQuality: FilterQuality.none,
                     ),
                   ),

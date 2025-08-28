@@ -1,12 +1,11 @@
 class AddGroup {
   final String name;
   final String password;
-  final String ownerId;
 
-  AddGroup({required this.name, required this.password, required this.ownerId});
+  AddGroup({required this.name, required this.password});
 
   Map<String, dynamic> toJson() {
-    return {'name': name, 'password': password, 'ownerId': ownerId};
+    return {'name': name, 'password': password};
   }
 }
 

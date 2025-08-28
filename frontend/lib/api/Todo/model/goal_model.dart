@@ -43,22 +43,38 @@ class Goal {
   });
 
   factory Goal.fromJson(Map<String, dynamic> json) {
-    return Goal(
-      id: json['id'] as int,
-      title: (json['title'] ?? '').toString(),
-      category: Category.fromJson(json['category'] as Map<String, dynamic>),
-      startDate: DateTime.parse(json['startDate']),
-      endDate: DateTime.parse(json['endDate']),
-      completed: json['completed'] as bool,
-      isGroupGoal: json['isGroupGoal'] as bool,
-      groupId: json['groupId'] as int?,
-      isFriendGoal: json['isFriendGoal'] as bool,
-      friendName: (json['friendName'] ?? json['friendNickname']) as String?,
-      proofType: json['proofType'] as String,
-      targetTime: json['targetTime'] as int?,
-      proofImage: json['proofImage'] as String?,
-      totalDuration: json['totalDuration'] as int?,
-    );
+    try {
+      print('🔍 Goal JSON 파싱 시작 - id: ${json['id']}');
+      
+      // category 필드 안전 체크
+      final categoryJson = json['category'];
+      if (categoryJson == null) {
+        throw Exception('Category 필드가 null입니다: ${json.toString()}');
+      }
+      
+      print('🔍 Category JSON: $categoryJson');
+      
+      return Goal(
+        id: json['id'] as int,
+        title: (json['title'] ?? '').toString(),
+        category: Category.fromJson(categoryJson as Map<String, dynamic>),
+        startDate: DateTime.parse(json['startDate']),
+        endDate: DateTime.parse(json['endDate']),
+        completed: json['completed'] as bool,
+        isGroupGoal: json['isGroupGoal'] as bool,
+        groupId: json['groupId'] as int?,
+        isFriendGoal: json['isFriendGoal'] as bool,
+        friendName: (json['friendName'] ?? json['friendNickname']) as String?,
+        proofType: json['proofType'] as String,
+        targetTime: json['targetTime'] as int?,
+        proofImage: json['proofImage'] as String?,
+        totalDuration: json['totalDuration'] as int?,
+      );
+    } catch (e) {
+      print('🔥 Goal.fromJson 에러: $e');
+      print('🔥 JSON 데이터: ${json.toString()}');
+      rethrow;
+    }
   }
 
   /// 유틸: 시간 목표 진행률 (0.0 ~ 1.0)

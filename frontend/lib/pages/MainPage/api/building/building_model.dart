@@ -79,11 +79,13 @@ class BuildingConfig {
   final int floors;
   final int slotsPerFloor;
   final int exteriorUpgradeFloor;
+  final int totalSlots;
 
   BuildingConfig({
     required this.floors,
     required this.slotsPerFloor,
     required this.exteriorUpgradeFloor,
+    required this.totalSlots,
   });
 
   factory BuildingConfig.fromJson(Map<String, dynamic> json) {
@@ -91,6 +93,7 @@ class BuildingConfig {
       floors: json['floors'] as int,
       slotsPerFloor: json['slotsPerFloor'] as int,
       exteriorUpgradeFloor: json['exteriorUpgradeFloor'] as int,
+      totalSlots:  json['totalSlots'] as int,
     );
   }
 }

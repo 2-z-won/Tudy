@@ -330,11 +330,13 @@ public class GoalService {
         createDailyCafeGoal(user);
         
         if (categoryName == null) {
-            return goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date, date);
+            // JOIN FETCH를 사용하여 category 정보를 함께 조회
+            return goalRepository.findByUserAndDateWithCategory(user, date);
         } else {
             Category category = categoryRepository.findByUserAndName(user, categoryName)
                     .orElseThrow(() -> new EntityNotFoundException("Category not found"));
-            return goalRepository.findByUserAndStartDateLessThanEqualAndEndDateGreaterThanEqualAndCategory(user, date, date, category);
+            // JOIN FETCH를 사용하여 category 정보를 함께 조회
+            return goalRepository.findByUserAndDateAndCategoryWithCategory(user, date, category);
         }
     }
 
@@ -347,6 +349,35 @@ public class GoalService {
                     category.setUser(user);
                     category.setName(categoryName);
                     category.setColor(1); // 기본 색상(1)로 생성, 필요시 파라미터로 받을 수 있음
+                    category.setIcon("📚"); // 기본 아이콘 설정
+                    // 카테고리 이름에 따른 기본 아이콘 설정
+                    switch (categoryName.toLowerCase()) {
+                        case "study":
+                        case "스터디":
+                        case "공부":
+                            category.setIcon("📚");
+                            category.setCategoryType(Category.CategoryType.STUDY);
+                            break;
+                        case "exercise":
+                        case "운동":
+                        case "헬스":
+                            category.setIcon("💪");
+                            category.setCategoryType(Category.CategoryType.EXERCISE);
+                            break;
+                        case "work":
+                        case "일":
+                        case "업무":
+                            category.setIcon("💼");
+                            break;
+                        case "hobby":
+                        case "취미":
+                            category.setIcon("🎨");
+                            break;
+                        default:
+                            category.setIcon("📝");
+                            category.setCategoryType(Category.CategoryType.ETC);
+                            break;
+                    }
                     return categoryRepository.save(category);
                 });
     }

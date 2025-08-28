@@ -35,6 +35,7 @@ class _StopwatchPageState extends State<StopwatchPage> {
   // ✅ 변경
   int _seconds = 0;
   bool _isRunning = false;
+  int _sessionStartSeconds = 0; // 이번 세션 시작 시간
 
   // ✅ TodoSection 컨트롤러 준비
   final _todoCtrl = TodoSectionController();
@@ -82,6 +83,7 @@ class _StopwatchPageState extends State<StopwatchPage> {
   }
 
   void _startTimer() {
+    _sessionStartSeconds = _seconds; // 세션 시작 시간 기록
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {
         _seconds++;
@@ -90,6 +92,7 @@ class _StopwatchPageState extends State<StopwatchPage> {
     setState(() {
       _isRunning = true;
     });
+    print('⏱️ 타이머 시작 - 시작 시간: ${_sessionStartSeconds}초');
   }
 
   Future<void> _stopTimer() async {
@@ -97,24 +100,50 @@ class _StopwatchPageState extends State<StopwatchPage> {
     setState(() => _isRunning = false);
 
     if (selectedGoalId != null && userId != null) {
-      await _sessionController.logStudyTime(
-        userId: userId!,
-        goalId: selectedGoalId!,
-        seconds: _seconds,
-      );
+      final sessionDuration = _seconds - _sessionStartSeconds; // 이번 세션에서 측정한 시간
+      
+      print('⏱️ 타이머 종료 - 세션 시간: ${sessionDuration}초 (${_sessionStartSeconds}초 → ${_seconds}초)');
+      
+      if (sessionDuration > 0) {
+        await _sessionController.logStudyTime(
+          userId: userId!,
+          goalId: selectedGoalId!,
+          seconds: sessionDuration, // 이번 세션 시간만 저장
+        );
 
-      // (선택) 진행률 새로고침
-      await ctrl.loadGoalsForDate(ctrl.selectedDate.value);
+        // (선택) 진행률 새로고침
+        await ctrl.loadGoalsForDate(ctrl.selectedDate.value);
+      } else {
+        print('⚠️ 측정된 시간이 없어서 저장하지 않습니다.');
+      }
     }
   }
 
-  void _onGoalTap({required Goal goal}) {
+  void _onGoalTap({required Goal goal}) async {
     final idx = (goal.category.color - 1).clamp(0, subColors.length - 1);
     setState(() {
       selectedGoalId = goal.id;
       _selectedGoalTitle = goal.title;
       _selectedSubColor = subColors[idx];
     });
+
+    // 선택된 목표의 누적 시간 조회
+    if (goal.proofType == 'TIME') {
+      await _sessionController.fetchAccumulatedTime(goal.id);
+      final accumulatedSeconds = _sessionController.accumulatedTime.value.inSeconds;
+      
+      setState(() {
+        _seconds = accumulatedSeconds; // 누적 시간부터 시작
+      });
+      
+      print('🎯 목표 "${goal.title}" 선택됨 - 누적 시간: ${_formattedTime}');
+    } else {
+      // 시간 측정 목표가 아닌 경우 0부터 시작
+      setState(() {
+        _seconds = 0;
+      });
+      print('🎯 목표 "${goal.title}" 선택됨 - 사진 인증 목표');
+    }
   }
 
   @override
@@ -187,6 +216,8 @@ class _StopwatchPageState extends State<StopwatchPage> {
                       _selectedGoalTitle ?? '목표 선택',
                       style: TextStyle(fontSize: 16),
                     ),
+                    if (selectedGoalId != null) ...[
+                                        ],
                     const SizedBox(height: 8),
                     Text(
                       _formattedTime,

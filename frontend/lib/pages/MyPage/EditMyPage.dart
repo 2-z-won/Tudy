@@ -427,7 +427,7 @@ class _EditMypageViewState extends State<EditMypageView> {
                       child: _profileImage != null
                           ? Image.file(_profileImage!, fit: BoxFit.cover)
                           : Image.asset(
-                              'images/profile.jpg',
+                              'assets/images/profile.jpg',
                               fit: BoxFit.cover,
                             ),
                     ),
