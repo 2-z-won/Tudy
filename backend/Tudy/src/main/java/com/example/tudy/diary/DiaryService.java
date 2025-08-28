@@ -3,6 +3,7 @@ package com.example.tudy.diary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.example.tudy.user.UserRepository;
+import com.example.tudy.user.User;
 
 import java.time.LocalDate;
 
@@ -13,7 +14,7 @@ public class DiaryService {
     private final UserRepository userRepository;
 
     public DiaryResponseDTO getDiaryByDate(String userId, LocalDate date) {
-        return diaryRepository.findByUserIdAndDate(userId, date)
+        return diaryRepository.findByUser_UserIdAndDate(userId, date)
                 .map(d -> new DiaryResponseDTO(d.getDate(), d.getEmoji(), d.getContent()))
                 .orElse(new DiaryResponseDTO(date, "\uD83D\uDCDD", "아직 작성된 일기가 없습니다."));
     }
@@ -22,7 +23,7 @@ public class DiaryService {
         User user = userRepository.findByUserId(dto.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        Diary diary = diaryRepository.findByUserIdAndDate(dto.getUserId(), dto.getDate())
+        Diary diary = diaryRepository.findByUser_UserIdAndDate(dto.getUserId(), dto.getDate())
                 .orElse(new Diary());
         
         diary.setUser(user);
