@@ -28,9 +28,8 @@ class MyPageView extends StatelessWidget {
                           arguments: {
                             'name': user.name.value,
                             'email': user.userEmail.value,
-                            'id': 'testVersion',
-                            'password': 'test123!',
-                            'birth': '2000.01.01',
+                            'id': user.userId.value,
+                            'birth': user.birth.value,
                             'college': user.college.value,
                             'department': user.department.value,
                           },
@@ -38,7 +37,7 @@ class MyPageView extends StatelessWidget {
                       },
                       child: StudentCard(
                         name: user.name.value,
-                        birth: "2004.12.25",
+                        birth: user.birth.value,
                         college: user.college.value,
                         department: user.department.value,
                         profileImageAsset: 'images/profile.jpg',

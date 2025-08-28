@@ -3,6 +3,7 @@ import 'package:frontend/pages/DiaryPage/BallonBubble.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/components/Calendar/CustomWeekCalendar.dart';
 import 'package:frontend/constants/colors.dart';
+import 'package:frontend/api/diary_api.dart';
 
 class DiaryPage extends StatefulWidget {
   const DiaryPage({super.key});
@@ -23,6 +24,11 @@ class _DiaryPageState extends State<DiaryPage> {
   int _currentPage = centerPage;
   String? editingDateKey;
   String? balloonDateKey;
+
+  String formatDisplay(DateTime d) => DateFormat('yyyy.MM.dd').format(d);
+  String formatApi(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
+  final Set<String> _loadingDates = {};
+  bool _saving = false;
 
   final Map<String, TextEditingController> contentControllers = {};
   final Map<String, TextEditingController> emojiControllers = {};
@@ -67,10 +73,74 @@ class _DiaryPageState extends State<DiaryPage> {
   void initState() {
     super.initState();
     baseDate = DateTime.now();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDiaryForIndex(_currentPage);
+    });
   }
 
   String formatDate(DateTime date) => DateFormat('yyyy.MM.dd').format(date);
   String getWeekday(DateTime date) => DateFormat('EEEE').format(date);
+
+  Future<void> _loadDiaryForIndex(int index) async {
+    final date = baseDate.add(Duration(days: index - centerPage));
+    final dateKey = formatDisplay(date);
+    if (_loadingDates.contains(dateKey)) return;
+    if (diaryMap.containsKey(dateKey)) return;
+
+    _loadingDates.add(dateKey);
+    try {
+      final dto = await DiaryApi.getDiary(date: formatApi(date));
+
+      if (!mounted) return;
+      setState(() {
+        diaryMap[dateKey] = {
+          'emoji': dto?.emoji ?? '',
+          'content': dto?.content ?? '',
+        };
+      });
+    } finally {
+      _loadingDates.remove(dateKey);
+    }
+  }
+
+  Future<bool> _saveDiary({
+    required String dateKey, // yyyy.MM.dd
+    required String emoji,
+    required String content,
+  }) async {
+    if (_saving) return false;
+    _saving = true;
+    try {
+      final date = DateFormat('yyyy.MM.dd').parse(dateKey);
+      final dto = await DiaryApi.upsertDiary(
+        date: formatApi(date),
+        emoji: emoji,
+        content: content,
+      );
+      if (dto == null) return false;
+
+      if (!mounted) return true;
+      setState(() {
+        diaryMap[dateKey] = {'emoji': dto.emoji, 'content': dto.content};
+      });
+      return true;
+    } finally {
+      _saving = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    for (final c in contentControllers.values) {
+      c.dispose();
+    }
+    for (final c in emojiControllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +164,7 @@ class _DiaryPageState extends State<DiaryPage> {
                     curve: Curves.easeInOut,
                   );
                   setState(() => _currentPage = selectedIndex);
+                  _loadDiaryForIndex(selectedIndex);
                 }
               },
             ),
@@ -104,7 +175,11 @@ class _DiaryPageState extends State<DiaryPage> {
             child: PageView.builder(
               controller: _pageController,
               itemCount: maxIndex + 1,
-              onPageChanged: (index) => setState(() => _currentPage = index),
+              onPageChanged: (index) {
+                setState(() => _currentPage = index);
+                _loadDiaryForIndex(index);
+              },
+
               itemBuilder: (context, index) {
                 final date = baseDate.add(Duration(days: index - centerPage));
                 final dateKey = formatDate(date);
@@ -130,6 +205,15 @@ class _DiaryPageState extends State<DiaryPage> {
                 final isSubmitEnabled =
                     contentController.text.trim().isNotEmpty &&
                     emojiController.text.trim().isNotEmpty;
+
+                if (!isEditing) {
+                  if (contentController.text != originalContent) {
+                    contentController.text = originalContent;
+                  }
+                  if (emojiController.text != originalEmoji) {
+                    emojiController.text = originalEmoji;
+                  }
+                }
 
                 return AnimatedOpacity(
                   duration: const Duration(milliseconds: 300),
@@ -201,14 +285,20 @@ class _DiaryPageState extends State<DiaryPage> {
                                           ? Container(
                                               width: 50,
                                               height: 50,
-                                              decoration: const BoxDecoration(
+                                              decoration: BoxDecoration(
                                                 shape: BoxShape.circle,
-                                                color: Color(0xFFE1DDD4),
+                                                color: const Color(0xFFFFFFFF),
+                                                border: Border.all(
+                                                  color: const Color(
+                                                    0xFFB7B7B7,
+                                                  ),
+                                                  width: 2,
+                                                ),
                                               ),
                                               child: const Icon(
                                                 Icons.add_rounded,
-                                                size: 25,
-                                                color: Colors.white,
+                                                size: 22,
+                                                color: Color(0xFFB7B7B7),
                                               ),
                                             )
                                           : Text(
@@ -253,58 +343,132 @@ class _DiaryPageState extends State<DiaryPage> {
                                             ),
                                             const Spacer(),
                                             Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.spaceAround,
                                               children: [
-                                                GestureDetector(
-                                                  onTap: () {
-                                                    setState(() {
-                                                      contentController.text =
-                                                          originalContent;
-                                                      emojiController.text =
-                                                          originalEmoji;
-                                                      editingDateKey = null;
-                                                      balloonDateKey = null;
-                                                    });
-                                                  },
-                                                  child: const Icon(
-                                                    Icons.close,
-                                                    color: Color(0xFFE1DDD4),
-                                                    size: 25,
+                                                // 취소 버튼
+                                                Expanded(
+                                                  child: Material(
+                                                    color: const Color(
+                                                      0xFFD0D0D0,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
+                                                    child: InkWell(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            6,
+                                                          ),
+                                                      onTap: () {
+                                                        setState(() {
+                                                          contentController
+                                                                  .text =
+                                                              originalContent;
+                                                          emojiController.text =
+                                                              originalEmoji;
+                                                          editingDateKey = null;
+                                                          balloonDateKey = null;
+                                                        });
+                                                      },
+                                                      child: const SizedBox(
+                                                        height: 43,
+                                                        child: Center(
+                                                          child: Icon(
+                                                            Icons.close,
+                                                            color: Color(
+                                                              0xFFFFFFFF,
+                                                            ),
+                                                            size: 24,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
                                                   ),
                                                 ),
-                                                GestureDetector(
-                                                  onTap: isSubmitEnabled
-                                                      ? () {
-                                                          setState(() {
-                                                            diaryMap[dateKey] = {
-                                                              'emoji':
-                                                                  emojiController
-                                                                      .text,
-                                                              'content':
-                                                                  contentController
-                                                                      .text,
-                                                            };
-                                                            editingDateKey =
-                                                                null;
-                                                            balloonDateKey =
-                                                                null;
-                                                          });
-                                                        }
-                                                      : null,
-                                                  child: Icon(
-                                                    Icons.check,
+
+                                                const SizedBox(width: 20),
+
+                                                // 확인 버튼
+                                                Expanded(
+                                                  child: Material(
                                                     color: isSubmitEnabled
                                                         ? const Color(
-                                                            0xFFE1DDD4,
+                                                            0xFF3F3F3F,
                                                           )
-                                                        : const Color.fromARGB(
-                                                            255,
-                                                            243,
-                                                            240,
-                                                            240,
+                                                        : const Color(
+                                                            0xFF404040,
                                                           ),
-                                                    size: 25,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
+                                                    child: InkWell(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            6,
+                                                          ),
+                                                      onTap: isSubmitEnabled
+                                                          ? () async {
+                                                              final ok = await _saveDiary(
+                                                                dateKey:
+                                                                    dateKey, // yyyy.MM.dd
+                                                                emoji:
+                                                                    emojiController
+                                                                        .text,
+                                                                content:
+                                                                    contentController
+                                                                        .text,
+                                                              );
+                                                              if (!mounted)
+                                                                return;
+                                                              if (ok) {
+                                                                setState(() {
+                                                                  editingDateKey =
+                                                                      null;
+                                                                  balloonDateKey =
+                                                                      null;
+                                                                });
+                                                                ScaffoldMessenger.of(
+                                                                  context,
+                                                                ).showSnackBar(
+                                                                  const SnackBar(
+                                                                    content: Text(
+                                                                      '일기를 저장했어요.',
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              } else {
+                                                                ScaffoldMessenger.of(
+                                                                  context,
+                                                                ).showSnackBar(
+                                                                  const SnackBar(
+                                                                    content: Text(
+                                                                      '저장 실패',
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              }
+                                                            }
+                                                          : null,
+
+                                                      child: SizedBox(
+                                                        height: 43,
+                                                        child: Center(
+                                                          child: Icon(
+                                                            Icons.check,
+                                                            color:
+                                                                isSubmitEnabled
+                                                                ? const Color(
+                                                                    0xFFFFFFFF,
+                                                                  )
+                                                                : const Color(
+                                                                    0xFFBDBDBD,
+                                                                  ),
+                                                            size: 24,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
                                                   ),
                                                 ),
                                               ],

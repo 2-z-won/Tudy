@@ -72,6 +72,60 @@ class _EditMypageViewState extends State<EditMypageView> {
     }
   }
 
+  DateTime? _parseDotDate(String s) {
+    final m = RegExp(r'^(\d{4})\.(\d{2})\.(\d{2})$').firstMatch(s.trim());
+    if (m == null) return null;
+    final y = int.parse(m.group(1)!);
+    final mo = int.parse(m.group(2)!);
+    final d = int.parse(m.group(3)!);
+    final dt = DateTime(y, mo, d);
+    //비유효 날짜 방지
+    final ok = dt.year == y && dt.month == mo && dt.day == d;
+    return ok ? dt : null;
+  }
+
+  String _formatDot(DateTime dt) {
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '${dt.year}.${two(dt.month)}.${two(dt.day)}';
+  }
+
+  bool _isValidBirthDot(String s) {
+    final dt = _parseDotDate(s);
+    if (dt == null) return false;
+
+    final today = DateTime.now();
+    if (dt.isAfter(DateTime(today.year, today.month, today.day))) return false;
+    if (dt.year < 1900) return false;
+    return true;
+  }
+
+  Future<void> _pickBirthByCalendar() async {
+    final now = DateTime.now();
+    final first = DateTime(1900, 1, 1);
+    final last = DateTime(now.year, now.month, now.day);
+
+    final current = _parseDotDate(birthController.text) ?? last;
+    final init = (current.isBefore(first) || current.isAfter(last))
+        ? last
+        : current;
+
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: init,
+      firstDate: first,
+      lastDate: last,
+      helpText: '생일 선택',
+      cancelText: '취소',
+      initialEntryMode: DatePickerEntryMode.calendarOnly,
+    );
+
+    if (selected != null) {
+      setState(() {
+        birthController.text = _formatDot(selected); // YYYY.MM.DD로 표기
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -95,6 +149,15 @@ class _EditMypageViewState extends State<EditMypageView> {
     oldCollege = selectedCollege;
     initPw = pwController.text.trim();
     oldBirth = birthController.text.trim();
+
+    final parsed =
+        _parseDotDate(oldBirth) ?? _parseDotDate(oldBirth.replaceAll('-', '.'));
+    if (parsed != null) {
+      final dot = _formatDot(parsed);
+      birthController.text = dot;
+      oldBirth = dot;
+    }
+
     loadUserId();
   }
 
@@ -118,10 +181,6 @@ class _EditMypageViewState extends State<EditMypageView> {
     deptController.dispose();
     super.dispose();
   }
-
-  bool isValidBirth(String s) =>
-      RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(s) &&
-      DateTime.tryParse(s) != null;
 
   @override
   Widget build(BuildContext context) {
@@ -171,7 +230,7 @@ class _EditMypageViewState extends State<EditMypageView> {
                           emailController,
                           editable: false,
                         ),
-                        buildInputField("Birth", birthController),
+                        buildBirthField(),
                         buildDropdown("단과대", colleges, selectedCollege, (val) {
                           setState(() => selectedCollege = val!);
                         }),
@@ -210,6 +269,41 @@ class _EditMypageViewState extends State<EditMypageView> {
 
                                 final futures = <Future<bool>>[];
 
+                                String onlyDigits(String s) =>
+                                    s.replaceAll(RegExp(r'[^0-9]'), '');
+                                String normalizeDot(String s) {
+                                  final dt =
+                                      _parseDotDate(s) ??
+                                      _parseDotDate(s.replaceAll('-', '.'));
+                                  return dt == null ? s.trim() : _formatDot(dt);
+                                }
+
+                                final inputRaw = birthController.text.trim();
+                                final newBirth = normalizeDot(inputRaw);
+                                final oldBirthNorm = normalizeDot(oldBirth);
+                                /*print(
+                                  '[BIRTH] input="$inputRaw" -> normalized="$newBirth", old="$oldBirthNorm"',
+                                );*/
+
+                                if (onlyDigits(newBirth) !=
+                                    onlyDigits(oldBirthNorm)) {
+                                  if (!_isValidBirthDot(newBirth)) {
+                                    Get.snackbar(
+                                      '형식 오류',
+                                      '생일은 YYYY.MM.DD 형식으로 선택/입력해 주세요.',
+                                    );
+                                    return;
+                                  }
+
+                                  futures.add(
+                                    c.updateBirth(
+                                      userId: userId!,
+                                      birthDate: newBirth,
+                                      bodyKey: 'birth',
+                                    ),
+                                  );
+                                }
+
                                 if (nameController.text.trim() != oldName) {
                                   futures.add(
                                     c.updateName(
@@ -240,25 +334,6 @@ class _EditMypageViewState extends State<EditMypageView> {
                                   return;
                                 }
 
-                                final newBirth = birthController.text.trim();
-                                if (newBirth != oldBirth) {
-                                  if (!isValidBirth(newBirth)) {
-                                    Get.snackbar(
-                                      '형식 오류',
-                                      '생일은 YYYY-MM-DD 형식으로 입력해 주세요.',
-                                    );
-                                    return;
-                                  }
-                                  futures.add(
-                                    c.updateBirth(
-                                      userId: userId!,
-                                      birthDate: newBirth,
-                                      bodyKey:
-                                          'birth', // 서버가 {"value": "..."}면 'value'로 바꿔주세요
-                                    ),
-                                  );
-                                }
-
                                 final results = await Future.wait(futures);
                                 if (results.every((e) => e)) {
                                   // 스냅샷 갱신
@@ -268,8 +343,16 @@ class _EditMypageViewState extends State<EditMypageView> {
                                   oldBirth = newBirth;
                                   initPw = pwController.text.trim();
 
-                                  Get.snackbar('완료', '프로필이 업데이트됐어요');
-                                  Get.back();
+                                  Get.snackbar(
+                                    '완료',
+                                    '프로필이 업데이트됐어요',
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    duration: const Duration(seconds: 2),
+                                  );
+                                  await Future.delayed(
+                                    const Duration(milliseconds: 600),
+                                  );
+                                  if (mounted) Get.back();
                                 } else {
                                   Get.snackbar('실패', c.errorMessage.value);
                                 }
@@ -417,7 +500,10 @@ class _EditMypageViewState extends State<EditMypageView> {
                     obscureText
                         ? '*' * controller.text.length
                         : controller.text,
-                    style: const TextStyle(color: Colors.black, fontSize: 16),
+                    style: const TextStyle(
+                      color: Color(0xFF000000),
+                      fontSize: 16,
+                    ),
                   ),
             if (!isEditing && editable && label != "ID") ...[
               const SizedBox(width: 10),
@@ -445,7 +531,7 @@ class _EditMypageViewState extends State<EditMypageView> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFDCDAE2), width: 1.5),
       ),
@@ -579,5 +665,43 @@ class _EditMypageViewState extends State<EditMypageView> {
       },
     );
     return result ?? false;
+  }
+
+  Widget buildBirthField() {
+    return GestureDetector(
+      onTap: _pickBirthByCalendar,
+      child: Container(
+        width: double.infinity,
+        height: 45,
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.fromLTRB(12, 0, 15, 0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFDCDAE2), width: 2),
+        ),
+        child: Row(
+          children: [
+            const Text(
+              'Birth',
+              style: TextStyle(fontSize: 14, color: Color(0xFF6E6E6E)),
+            ),
+            const Spacer(),
+            Text(
+              (birthController.text.trim().isEmpty)
+                  ? '선택'
+                  : birthController.text,
+              style: const TextStyle(color: Color(0xFF000000), fontSize: 16),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.calendar_today_rounded,
+              size: 18,
+              color: Color(0xFF6E6E6E),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

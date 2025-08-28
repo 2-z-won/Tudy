@@ -44,4 +44,10 @@ class GoalController {
       errorMessage.value = "서버 오류: $e";
     }
   }
+
+  static Future<bool> deleteGoal(int goalId) async {
+    final uri = Uri.parse('${Urls.apiUrl}goals/$goalId');
+    final res = await http.delete(uri);
+    return res.statusCode >= 200 && res.statusCode < 300;
+  }
 }

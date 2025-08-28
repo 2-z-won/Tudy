@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:frontend/api/SignupLogin/controller/email_verify_controller.dart';
 import 'package:frontend/constants/colors.dart';
 import 'package:get/get.dart';
-import 'package:frontend/pages/LoginSignup/SingUpPage.dart';
 import 'package:frontend/pages/LoginSignup/component.dart';
 
 class SignUpEmailPage extends StatefulWidget {
