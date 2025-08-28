@@ -19,18 +19,18 @@ class BaseUrl {
 }
 
 class Urls {
-  static String get apiUrl => '${BaseUrl.baseUrl}/';
+  static String get apiUrl => '${BaseUrl.baseUrl}';
   
   // 자주 사용하는 엔드포인트들을 미리 정의
-  static String get authUrl => '${apiUrl}auth/';
-  static String get usersUrl => '${apiUrl}users/';
-  static String get goalsUrl => '${apiUrl}goals/';
-  static String get groupsUrl => '${apiUrl}groups/';
-  static String get friendsUrl => '${apiUrl}friends/';
-  static String get categoriesUrl => '${apiUrl}categories/';
-  static String get coinsUrl => '${apiUrl}coins/';
-  static String get sessionsUrl => '${apiUrl}sessions/';
-  static String get buildingsUrl => '${apiUrl}users/';
+  static String get authUrl => '${apiUrl}/auth/';
+  static String get usersUrl => '${apiUrl}/users/';
+  static String get goalsUrl => '${apiUrl}/goals/';
+  static String get groupsUrl => '${apiUrl}/groups/';
+  static String get friendsUrl => '${apiUrl}/friends/';
+  static String get categoriesUrl => '${apiUrl}/categories/';
+  static String get coinsUrl => '${apiUrl}/coins/';
+  static String get sessionsUrl => '${apiUrl}/sessions/';
+  static String get buildingsUrl => '${apiUrl}/users/';
   
   // 도우미 메서드들
   static String userBuilding(String userId, String buildingType) => 

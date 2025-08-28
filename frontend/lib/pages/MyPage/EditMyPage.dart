@@ -133,13 +133,17 @@ class _EditMypageViewState extends State<EditMypageView> {
     c = Get.put(EditMypageController());
 
     final args = (Get.arguments ?? {}) as Map<String, dynamic>;
-    nameController.text = (args['name'] ?? '') as String;
-    emailController.text = (args['email'] ?? '') as String;
-    idController.text = (args['id'] ?? '') as String;
-    pwController.text = (args['password'] ?? '') as String;
-    birthController.text = (args['birth'] ?? '') as String;
-    deptController.text = (args['department'] ?? '') as String;
-    final argCollege = args['college'] as String?;
+    nameController.text = (args['name']?.toString() ?? '');
+    emailController.text = (args['email']?.toString() ?? '');
+    // userId를 idController에 설정
+    final userIdValue = args['userId']?.toString() ?? args['id']?.toString() ?? '';
+    idController.text = userIdValue;
+    print('🔍 EditMyPage - 설정된 userId: $userIdValue');
+    print('🔍 EditMyPage - 전체 args: $args');
+    pwController.text = (args['password']?.toString() ?? '');
+    birthController.text = (args['birth']?.toString() ?? '');
+    deptController.text = (args['department']?.toString() ?? '');
+    final argCollege = args['college']?.toString();
     selectedCollege = (argCollege != null && colleges.contains(argCollege))
         ? argCollege
         : colleges.first;

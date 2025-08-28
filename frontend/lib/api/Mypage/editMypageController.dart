@@ -55,15 +55,22 @@ class EditMypageController extends GetxController {
     );
     isSaving.value = false;
 
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      if (res.body.isNotEmpty) {
-        lastUserJson.value = jsonDecode(res.body) as Map<String, dynamic>;
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+        if (res.body.isNotEmpty) {
+          try {
+            final decoded = jsonDecode(res.body);
+            if (decoded is Map<String, dynamic>) {
+              lastUserJson.value = decoded;
+            }
+          } catch (e) {
+            print('🔥 JSON 파싱 에러: $e');
+          }
+        }
+        return true;
+      } else {
+        errorMessage.value = '단과대 변경 실패 [${res.statusCode}] ${res.body}';
+        return false;
       }
-      return true;
-    } else {
-      errorMessage.value = '단과대 변경 실패 [${res.statusCode}] ${res.body}';
-      return false;
-    }
   }
 
   //학과/학부(전공) 변경
@@ -82,7 +89,14 @@ class EditMypageController extends GetxController {
     isSaving.value = false;
     if (res.statusCode >= 200 && res.statusCode < 300) {
       if (res.body.isNotEmpty) {
-        lastUserJson.value = jsonDecode(res.body) as Map<String, dynamic>;
+        try {
+          final decoded = jsonDecode(res.body);
+          if (decoded is Map<String, dynamic>) {
+            lastUserJson.value = decoded;
+          }
+        } catch (e) {
+          print('🔥 JSON 파싱 에러: $e');
+        }
       }
       return true;
     } else {

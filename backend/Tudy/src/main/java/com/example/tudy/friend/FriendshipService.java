@@ -75,7 +75,7 @@ public class FriendshipService {
             return List.of();
         }
         Long id = userOpt.get().getId();
-        List<Friendship> friendships = friendshipRepository.findByFromUser_IdOrToUser_IdAndStatus(id, id, Friendship.Status.ACCEPTED);
+        List<Friendship> friendships = friendshipRepository.findByFromUser_IdOrToUser_IdAndStatus(id, Friendship.Status.ACCEPTED);
         return friendships.stream().map(f -> {
             if (f.getFromUser().getId().equals(id)) return f.getToUser();
             else return f.getFromUser();
