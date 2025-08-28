@@ -12,6 +12,8 @@ import 'package:intl/intl.dart';
 import 'dart:ui' show lerpDouble;
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:frontend/api/Todo/controller/image_controller.dart';
+import 'package:get/get.dart';
 
 import 'package:percent_indicator/circular_percent_indicator.dart';
 
@@ -46,6 +48,7 @@ class _TodoDetailFormState extends State<TodoDetailForm>
   File? _imageFile;
 
   Future<void> _pickImage() async {
+    print('🔍 _pickImage 함수 시작');
     final picker = ImagePicker();
     final picked = await picker.pickImage(
       source: ImageSource.gallery, // 갤러리에서 선택 (카메라는 ImageSource.camera)
@@ -53,9 +56,55 @@ class _TodoDetailFormState extends State<TodoDetailForm>
     );
 
     if (picked != null) {
+      print('🔍 이미지 선택됨: ${picked.path}');
       setState(() {
         _imageFile = File(picked.path);
       });
+      
+      // 이미지 업로드 실행
+      await _uploadImage(picked.path);
+    } else {
+      print('🔍 이미지 선택 안됨');
+    }
+  }
+
+  Future<void> _uploadImage(String imagePath) async {
+    print('🔍 _uploadImage 함수 시작');
+    try {
+      // GoalProofController 찾기 또는 생성
+      GoalProofController proof;
+      try {
+        proof = Get.find<GoalProofController>();
+        print('🔍 기존 GoalProofController 찾음');
+      } catch (e) {
+        print('🔍 GoalProofController 생성 중...');
+        proof = Get.put(GoalProofController());
+        print('🔍 새로운 GoalProofController 생성됨');
+      }
+      
+      print('🔍 이미지 업로드 시작: goalId=${widget.goal.id}, path=$imagePath');
+      final success = await proof.uploadProofImage(
+        goalId: widget.goal.id,
+        filePath: imagePath,
+      );
+      
+      if (success) {
+        print('🔍 이미지 업로드 성공!');
+        // 성공 시 UI 갱신 또는 메시지 표시
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('이미지 인증이 완료되었습니다!')),
+        );
+      } else {
+        print('🔍 이미지 업로드 실패: ${proof.error.value}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('이미지 업로드 실패: ${proof.error.value}')),
+        );
+      }
+    } catch (e) {
+      print('🔍 이미지 업로드 중 에러: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('이미지 업로드 오류: $e')),
+      );
     }
   }
 
@@ -95,6 +144,16 @@ class _TodoDetailFormState extends State<TodoDetailForm>
   @override
   void initState() {
     super.initState();
+    
+    // GoalProofController 미리 등록
+    try {
+      Get.find<GoalProofController>();
+      print('🔍 기존 GoalProofController 사용');
+    } catch (e) {
+      print('🔍 새로운 GoalProofController 등록');
+      Get.put(GoalProofController());
+    }
+    
     // 헤더, 상단Row(카테고리+목표), 기간 섹션, 인증 섹션, 진행률 섹션, 버튼 = 6개
     _inCtrl = AnimationController(
       vsync: this,
