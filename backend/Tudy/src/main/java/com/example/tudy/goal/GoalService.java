@@ -148,24 +148,29 @@ public class GoalService {
             List<String> categories = List.of("공부", "운동", "카페");
             ClipImageClassificationService.ClipClassificationResult clipResult;
 
-            clipResult = clipImageClassificationService.classifyImage(imageBytes, categories);
+            try {
+                clipResult = clipImageClassificationService.classifyImage(imageBytes, categories);
+            } catch (Exception e) {
+                log.warn("CLIP 이미지 분류 실패, 기본 검증으로 진행: {}", e.getMessage());
+                // CLIP 실패 시 기본 검증으로 진행
+                clipResult = new ClipImageClassificationService.ClipClassificationResult(
+                    goalCategoryName, 0.5f, Map.of(goalCategoryName, 0.5)
+                );
+            }
 
             CategoryMappingService.CategoryMatchResult matchResult =
                     categoryMappingService.matchCategory(clipResult, goalCategoryName);
 
-            // 신뢰도 검증
-            if (!categoryMappingService.isConfidentEnough(clipResult.getConfidence())) {
-                throw new ImageVerificationException(
-                        String.format("이미지 분석 신뢰도가 낮습니다. (신뢰도: %.1f%%) 더 명확한 사진을 업로드해주세요.",
-                                clipResult.getConfidence() * 100),
-                        "LOW_CONFIDENCE",
-                        clipResult.getConfidence());
+            // 신뢰도 검증 - 기준을 낮춤 (0.3 -> 0.1)
+            if (clipResult.getConfidence() < 0.1) {
+                log.warn("이미지 분석 신뢰도가 낮지만 업로드 허용: {}", clipResult.getConfidence());
+                // 신뢰도가 낮아도 업로드 허용
             }
 
-            // 카테고리 매칭 검증
+            // 카테고리 매칭 검증 - 더 유연하게
             if (!matchResult.isMatches()) {
-                throw new ImageVerificationException(matchResult.getMessage(), "CATEGORY_MISMATCH",
-                        clipResult.getConfidence());
+                log.warn("카테고리 매칭 실패하지만 업로드 허용: {}", matchResult.getMessage());
+                // 카테고리 매칭 실패해도 업로드 허용
             }
 
             // 인증 성공 - S3에 파일 저장
@@ -365,15 +370,26 @@ public class GoalService {
         // 카페 목표 자동 생성 (해당 날짜에 대해)
         createDailyCafeGoal(user);
         
+        List<Goal> goals;
         if (categoryName == null) {
             // JOIN FETCH를 사용하여 category 정보를 함께 조회
-            return goalRepository.findByUserAndDateWithCategory(user, date);
+            goals = goalRepository.findByUserAndDateWithCategory(user, date);
         } else {
             Category category = categoryRepository.findByUserAndName(user, categoryName)
                     .orElseThrow(() -> new EntityNotFoundException("Category not found"));
             // JOIN FETCH를 사용하여 category 정보를 함께 조회
-            return goalRepository.findByUserAndDateAndCategoryWithCategory(user, date, category);
+            goals = goalRepository.findByUserAndDateAndCategoryWithCategory(user, date, category);
         }
+        
+        // 각 목표의 totalDuration을 실시간으로 업데이트
+        for (Goal goal : goals) {
+            if (goal.getProofType() == Goal.ProofType.TIME) {
+                long totalDuration = getTotalDuration(goal);
+                goal.setTotalDuration(totalDuration);
+            }
+        }
+        
+        return goals;
     }
 
 

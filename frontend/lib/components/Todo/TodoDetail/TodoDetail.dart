@@ -58,19 +58,35 @@ class _TodoDetailState extends State<TodoDetail> {
   }
 
   Future<void> _pickThenUpload() async {
+    print('🔍 _pickThenUpload 함수 시작');
+    print('🔍 widget.goalId: ${widget.goalId}');
+    print('🔍 widget.certificationType: ${widget.certificationType}');
+    print('🔍 widget.done: ${widget.done}');
+    
     final picker = ImagePicker();
+    print('🔍 ImagePicker 생성 완료');
+    
     final XFile? img = await picker.pickImage(source: ImageSource.gallery);
-    if (img == null) return;
+    print('🔍 이미지 선택 결과: ${img?.path ?? '선택 안됨'}');
+    
+    if (img == null) {
+      print('🔍 이미지가 선택되지 않음');
+      return;
+    }
 
+    print('🔍 이미지 업로드 시작: ${img.path}');
     final ok = await proof.uploadProofImage(
       goalId: widget.goalId,
       filePath: img.path,
     );
+    print('🔍 이미지 업로드 결과: $ok');
 
     if (ok) {
+      print('🔍 이미지 업로드 성공!');
       // 성공 시 닫고 부모가 리스트 갱신 (이미 구현됨)
       widget.onClose();
     } else if (mounted && proof.error.value != null) {
+      print('🔍 이미지 업로드 실패: ${proof.error.value}');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(proof.error.value!)));
@@ -79,6 +95,11 @@ class _TodoDetailState extends State<TodoDetail> {
 
   @override
   Widget build(BuildContext context) {
+    print('🔍 TodoDetail build 시작');
+    print('🔍 widget.certificationType: ${widget.certificationType}');
+    print('🔍 widget.done: ${widget.done}');
+    print('🔍 widget.goalId: ${widget.goalId}');
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 25),
@@ -296,7 +317,11 @@ class _TodoDetailState extends State<TodoDetail> {
                         ),
                         const SizedBox(height: 13),
                         Obx(() {
+                          print('🔍 사진 인증 버튼 Obx 실행');
+                          print('🔍 proof.isUploading.value: ${proof.isUploading.value}');
+                          
                           if (proof.isUploading.value) {
+                            print('🔍 업로드 중 상태 - 로딩 UI 표시');
                             return Column(
                               children: const [
                                 Center(
@@ -314,9 +339,13 @@ class _TodoDetailState extends State<TodoDetail> {
                               ],
                             );
                           }
+                          print('🔍 업로드 완료 상태 - 사진 업로드 버튼 표시');
                           return Center(
                             child: GestureDetector(
-                              onTap: _pickThenUpload,
+                              onTap: () {
+                                print('🔍 사진 업로드 버튼 터치됨!');
+                                _pickThenUpload();
+                              },
                               child: const Icon(Icons.add_a_photo, size: 24),
                             ),
                           );
