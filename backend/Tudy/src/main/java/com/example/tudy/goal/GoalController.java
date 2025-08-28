@@ -67,9 +67,6 @@ public class GoalController {
         try {
             GoalService.ImageProofResult result = goalService.completeImageProofGoalWithFile(id, imageFile);
             return ResponseEntity.ok(new ImageVerificationResponse(true, "이미지 인증이 완료되었습니다.", result.getGoal(), null, result.getConfidence()));
-        } catch (ImageVerificationException e) {
-            return ResponseEntity.badRequest()
-                    .body(new ImageVerificationResponse(false, e.getMessage(), null, e.getErrorCode(), e.getConfidence()));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new ImageVerificationResponse(false, "이미지 처리 중 오류가 발생했습니다: " + e.getMessage(), null, "PROCESSING_ERROR", 0.0f));
