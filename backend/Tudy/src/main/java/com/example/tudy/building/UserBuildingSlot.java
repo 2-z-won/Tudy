@@ -35,7 +35,7 @@ public class UserBuildingSlot {
     private SpaceType purchasedSpaceType;  // 구매한 공간 타입 (설치 전)
     
     @Column(nullable = false)
-    private Integer currentLevel = 0;
+    private Integer currentLevel = 1;
     
     @Column(nullable = false)
     private Boolean isInstalled = false;
@@ -44,7 +44,7 @@ public class UserBuildingSlot {
         this.user = user;
         this.buildingType = buildingType;
         this.slotNumber = slotNumber;
-        this.currentLevel = 0;
+        this.currentLevel = 1;
         this.isInstalled = false;
     }
     
