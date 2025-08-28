@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:frontend/utils/auth_util.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/constants/url.dart';
@@ -10,7 +11,14 @@ class StudySessionController extends GetxController {
     final uri = Uri.parse('${Urls.apiUrl}sessions/goal/$goalId/duration');
 
     try {
-      final response = await http.get(uri);
+      final token = await getTokenFromStorage();
+      final response = await http.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final hours = data['hours'] ?? 0;
@@ -40,11 +48,15 @@ class StudySessionController extends GetxController {
       "hours": hours,
       "minutes": minutes,
     };
-
+    print("시간 기록 내용 $body");
     try {
+      final token = await getTokenFromStorage();
       final response = await http.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
         body: jsonEncode(body),
       );
 

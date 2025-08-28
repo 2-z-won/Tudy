@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:frontend/utils/auth_util.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/constants/url.dart';
@@ -13,8 +14,15 @@ class FriendListController extends GetxController {
 
   // 전체 친구/목표 한번에 가져오기 (백엔드 응답 구조에 맞춤)
   Future<void> fetchFriendsAndGoals(String userId) async {
+    final token = await getTokenFromStorage();
     final uri = Uri.parse('${Urls.apiUrl}friends/$userId'); // ← 스샷 API 경로
-    final res = await http.get(uri);
+    final res = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
 
     if (res.statusCode != 200) {
       throw Exception('Failed to load friends & goals: ${res.statusCode}');

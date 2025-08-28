@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:frontend/utils/auth_util.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/api/Group/model/GroupModel.dart';
@@ -12,8 +13,15 @@ class MyGroupController extends GetxController {
 
   /// 기존 단일 조회가 필요하면 내부에서 이걸 호출해도 됨.
   Future<void> fetchMyGroups(String userId) async {
+    final token = await getTokenFromStorage();
     final uri = Uri.parse("${Urls.apiUrl}user/$userId/groups");
-    final res = await http.get(uri);
+    final res = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
     if (res.statusCode == 200) {
       final List<dynamic> data = jsonDecode(res.body);
       myGroups.value = data.map((g) => Group.fromJson(g)).toList();

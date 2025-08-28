@@ -39,6 +39,7 @@ class BuildingController extends GetxController {
       );
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
+         print('🏢 건물 조회 성공 (${type.name}): ${res.body}');
         final Map<String, dynamic> json = jsonDecode(res.body);
         infos[type] = BuildingInfo.fromJson(json);
         infos.refresh(); // 응답 이후에만 Rx 변경 👍

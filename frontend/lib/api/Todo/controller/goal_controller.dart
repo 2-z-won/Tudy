@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:frontend/utils/auth_util.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/api/Todo/model/goal_model.dart';
 import 'package:frontend/constants/url.dart';
@@ -27,10 +28,13 @@ class GoalController {
 
     try {
       print('📤 목표 생성 요청 데이터: ${jsonEncode(goalRequest.toJson())}');
-
+      final token = await getTokenFromStorage();
       final response = await http.post(
         Uri.parse('${Urls.apiUrl}goals'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
         body: jsonEncode(goalRequest.toJson()),
       );
 

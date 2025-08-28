@@ -10,6 +10,8 @@ import 'package:frontend/components/check.dart';
 import 'package:frontend/constants/colors.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' show lerpDouble;
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 import 'package:percent_indicator/circular_percent_indicator.dart';
 
@@ -40,6 +42,22 @@ class TodoDetailForm extends StatefulWidget {
 class _TodoDetailFormState extends State<TodoDetailForm>
     with TickerProviderStateMixin {
   final TextEditingController _title = TextEditingController();
+
+  File? _imageFile;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery, // 갤러리에서 선택 (카메라는 ImageSource.camera)
+      maxWidth: 1024, // 원하는 경우 리사이즈
+    );
+
+    if (picked != null) {
+      setState(() {
+        _imageFile = File(picked.path);
+      });
+    }
+  }
 
   late bool isTimeSelected;
   late Duration targetDuration;
@@ -272,7 +290,7 @@ class _TodoDetailFormState extends State<TodoDetailForm>
                                           (widget.goal.friendName ?? '')
                                               .isNotEmpty
                                       ? Text(
-                                         '(${widget.goal.friendName})',
+                                          '(${widget.goal.friendName})',
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontSize: 12,
@@ -388,20 +406,32 @@ class _TodoDetailFormState extends State<TodoDetailForm>
                                             onTap: () {},
                                           ),
                                           Expanded(
-                                            child: Icon(
-                                              Icons
-                                                  .add_photo_alternate_outlined,
-                                              color:
-                                                  mainColors[(widget
-                                                              .goal
-                                                              .category
-                                                              .color -
-                                                          1)
-                                                      .clamp(
-                                                        0,
-                                                        mainColors.length - 1,
-                                                      )],
-                                              size: 24,
+                                            child: GestureDetector(
+                                              onTap: _pickImage,
+                                              child: _imageFile == null
+                                                  ? Icon(
+                                                      Icons
+                                                          .add_photo_alternate_outlined,
+                                                      color:
+                                                          mainColors[(widget
+                                                                      .goal
+                                                                      .category
+                                                                      .color -
+                                                                  1)
+                                                              .clamp(
+                                                                0,
+                                                                mainColors
+                                                                        .length -
+                                                                    1,
+                                                              )],
+                                                      size: 24,
+                                                    )
+                                                  : Row(children: [Image.file(
+                                                      _imageFile!,
+                                                      width: 100,
+                                                      height: 100,
+                                                      fit: BoxFit.cover,
+                                                    ),Text("인증하기")],)
                                             ),
                                           ),
                                         ],

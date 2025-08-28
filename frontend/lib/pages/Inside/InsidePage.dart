@@ -26,8 +26,8 @@ class InsidePageView extends StatelessWidget {
       RoomSelectionController(totalSlots),
     );
 
-    final buildingCtrl = Get.put(BuildingController());
-    final coinsCtrl = Get.put(CoinsController());
+    final buildingCtrl = Get.find<BuildingController>();
+    final coinsCtrl = Get.find<CoinsController>();
     coinsCtrl.ensureSelectedForBuilding(building);
 
     controller.loadFromServer(
@@ -195,20 +195,15 @@ class InsidePageView extends StatelessWidget {
                       : Obx(() {
                           final type = coinsCtrl.coinTypeOf(building);
                           final iconPath = coinsCtrl.imagePathOf(type);
-                          final text = coinsCtrl.isLoading.value
-                              ? '...'
-                              : coinsCtrl.amountTextOf(type);
+                          final amount = coinsCtrl.amountOf(type); // 없으면 0
+
                           return Row(
                             children: [
-                              Image.asset(
-                                iconPath,
-                                width: 20,
-                                height: 20,
-                              ),
+                              Image.asset(iconPath, width: 20, height: 20),
                               const SizedBox(width: 2),
                               Text(
-                                text,
-                                style: TextStyle(
+                                '$amount', // 로딩/에러 상관없이 0 또는 실제 값
+                                style: const TextStyle(
                                   fontFamily: 'Galmuri11',
                                   fontSize: 18,
                                   color: Colors.black,

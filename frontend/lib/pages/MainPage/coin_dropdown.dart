@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pages/MainPage/api/coin/coin_controller.dart';
 import 'package:get/get.dart';
+import 'package:frontend/pages/MainPage/api/coin/coin_controller.dart';
 
-/// 컨트롤러만 주면 선택/목록/이미지/금액 표시는 모두 내부에서 처리
 class CoinDropdownSimple extends StatefulWidget {
   final CoinsController ctrl;
-  final bool showTypeLabel; // 선택행에 타입 텍스트도 보일지(옵션)
+  final bool showTypeLabel;
   const CoinDropdownSimple({
     super.key,
     required this.ctrl,
@@ -27,7 +26,7 @@ class _CoinDropdownSimpleState extends State<CoinDropdownSimple>
   void initState() {
     super.initState();
     _ac = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 180),
       vsync: this,
     );
     _size = CurvedAnimation(parent: _ac, curve: Curves.easeInOut);
@@ -64,11 +63,8 @@ class _CoinDropdownSimpleState extends State<CoinDropdownSimple>
             width: 20,
             height: 20,
             filterQuality: FilterQuality.none,
-            errorBuilder: (_, __, ___) => const SizedBox(
-              width: 20,
-              height: 20,
-              child: Icon(Icons.monetization_on, size: 18),
-            ),
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.monetization_on, size: 18),
           ),
           const SizedBox(width: 6),
           if (typeLabel != null) ...[
@@ -83,50 +79,20 @@ class _CoinDropdownSimpleState extends State<CoinDropdownSimple>
     final ctrl = widget.ctrl;
 
     return Obx(() {
-      // 로딩/에러/빈 상태 처리
-      if (ctrl.error.isNotEmpty) {
-        return Text(
-          ctrl.error.value,
-          style: const TextStyle(color: Colors.red),
-        );
-      }
-      if (ctrl.isLoading.value && ctrl.coins.isEmpty) {
-        // 로딩 중일 때: 그냥 아이콘 + 0 보여주기
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'images/coin/ACADEMIC_SAEDO.png', // 기본 코인 아이콘 (새도)
-              width: 20,
-              height: 20,
-              filterQuality: FilterQuality.none,
-              errorBuilder: (_, __, ___) =>
-                  const Icon(Icons.monetization_on, size: 18),
-            ),
-            const SizedBox(width: 6),
-            const Text("0", style: TextStyle(color: Colors.black)),
-          ],
-        );
-      }
-
-      if (ctrl.coins.isEmpty) {
-        return const Text(
-          '코인 정보가 없습니다',
-          style: TextStyle(color: Colors.black54),
-        );
-      }
-
-      // 선택된 타입 결정 (없으면 리스트 첫 번째로 대체)
+      // 선택 타입: 있으면 그걸 쓰고, 없으면 ACADEMIC_SAEDO 우선, 그것도 없으면 첫 코인 타입
       final selectedType = (ctrl.selectedType.value.isNotEmpty)
           ? ctrl.selectedType.value
           : (ctrl.coins.any((c) => c.coinType == 'ACADEMIC_SAEDO')
                 ? 'ACADEMIC_SAEDO'
-                : ctrl.coins.first.coinType);
+                : (ctrl.coins.isNotEmpty
+                      ? ctrl.coins.first.coinType
+                      : 'ACADEMIC_SAEDO'));
 
-      final selectedAmount = ctrl.amountTextOf(selectedType);
+      // ★ 요구사항: 데이터 오기 전엔 0, 오면 바로 교체
+      final selectedAmount = ctrl.amountTextOf(selectedType); // 없으면 "0" 리턴
       final selectedImg = ctrl.imagePathOf(selectedType);
 
-      // 펼침 목록(선택 제외)
+      // 펼침 목록(선택 제외). coins가 비어도 그냥 빈 목록 → 메뉴는 안 뜸
       final menuTypes = ctrl.coins
           .map((c) => c.coinType)
           .where((t) => t != selectedType)
@@ -135,9 +101,12 @@ class _CoinDropdownSimpleState extends State<CoinDropdownSimple>
       return Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // 선택된 항목
+          // 선택된 항목 (탭하면 토글)
           GestureDetector(
-            onTap: _toggle,
+            onTap: () {
+              if (menuTypes.isEmpty) return; // 항목 없으면 펼치지 않음
+              _toggle();
+            },
             child: coinRow(
               img: selectedImg,
               amount: selectedAmount,
@@ -156,8 +125,7 @@ class _CoinDropdownSimpleState extends State<CoinDropdownSimple>
                 children: menuTypes.map((type) {
                   return GestureDetector(
                     onTap: () {
-                      ctrl.select(type); // 선택만 바꾸면 Obx가 갱신
-                      // 필요 시 최신화: ctrl.fetchOne(type);
+                      ctrl.select(type); // 선택 변경만 → 상단 즉시 갱신
                       _toggle();
                     },
                     child: Padding(

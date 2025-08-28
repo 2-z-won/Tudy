@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:frontend/api/StopWatch/rank_controller.dart';
 import 'package:frontend/api/Todo/TodoPageController.dart';
 import 'package:frontend/api/Todo/controller/category_controller.dart';
 import 'package:frontend/api/Todo/model/category_model.dart';
@@ -21,6 +22,8 @@ class StopwatchPage extends StatefulWidget {
 }
 
 class _StopwatchPageState extends State<StopwatchPage> {
+  final StudyRankingController rankCtrl = Get.put(StudyRankingController());
+
   String? userId;
 
   final StudySessionController _sessionController = Get.put(
@@ -61,6 +64,7 @@ class _StopwatchPageState extends State<StopwatchPage> {
     }
     userId = uid; // ⬅️ 저장 (저장 시간 전송에 필요)
     await ctrl.init(uid); // 카테고리+목표 로드
+    await rankCtrl.fetchAndStart();
   }
 
   String get _formattedTime {
@@ -128,9 +132,30 @@ class _StopwatchPageState extends State<StopwatchPage> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text(
-              '🏆 1st: 정보의생명공학대학', //일단 텍스트 처리해놨어
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: Obx(() {
+                if (rankCtrl.error.isNotEmpty) {
+                  return Text(
+                    '랭킹 불러오기 실패',
+                    key: const ValueKey('error'),
+                    style: const TextStyle(fontSize: 16),
+                  );
+                }
+                final cur = rankCtrl.current;
+                final rank = rankCtrl.currentRank;
+                final text = (cur == null)
+                    ? '🏆 순위 없음'
+                    : '🏆 $rank등: ${cur.major} (${cur.value})';
+                return Text(
+                  text,
+                  key: ValueKey(text),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                );
+              }),
             ),
             const SizedBox(height: 40),
 

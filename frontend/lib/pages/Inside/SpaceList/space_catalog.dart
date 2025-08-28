@@ -17,7 +17,7 @@ class SpaceDef {
 }
 
 /// 건물 타입
-enum BuildingType { DEPARTMENT, LIBRARY, GYM, CAFE }
+enum BuildingType { DEPARTMENT, LIBRARY, CAFE, GYM }
 
 /// 카탈로그 정의 (네 SpaceType 주석 그룹 그대로 매핑)
 class SpaceCatalog {

@@ -1,5 +1,8 @@
 import 'package:frontend/pages/DiaryPage/DiaryPage.dart';
 import 'package:frontend/pages/Inside/InsidePage.dart';
+import 'package:frontend/pages/Inside/MiniGame/classroomGame.dart';
+import 'package:frontend/pages/Inside/MiniGame/grymGame.dart';
+import 'package:frontend/pages/Inside/MiniGame/presentGame.dart';
 import 'package:frontend/pages/LoginSignup/LoginPage.dart';
 import 'package:frontend/pages/LoginSignup/SignupPage_Email.dart';
 import 'package:frontend/pages/LoginSignup/SingUpPage.dart';
@@ -63,6 +66,18 @@ class MainRouter {
     GetPage(
       name: '/editMypage',
       page: () => NoLayout(child: EditMypageView()),
+    ),
+    GetPage(
+      name: '/presentGame',
+      page: () => NoLayout(child: SeminarGameApp()),
+    ),
+    GetPage(
+      name: '/classroomGame',
+      page: () => NoLayout(child: ClassroomCategorySelectPage()),
+    ),
+    GetPage(
+      name: '/gymGame',
+      page: () => NoLayout(child: GymGameApp(),),
     ),
     GetPage(
       name: '/stopwatch',
