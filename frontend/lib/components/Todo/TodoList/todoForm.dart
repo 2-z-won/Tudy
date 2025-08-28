@@ -226,7 +226,8 @@ class _TodoSectionState extends State<TodoSection>
                   ),
                 ],
 
-                if (widget.showAddButton) ...[
+                if (widget.showAddButton &&
+                    widget.selectedCategory != null) ...[
                   AddTodoCard(onTap: widget.onAddTodoTap)
                       .popIn(_inAnims[1 + itemCount])
                       .popOut(_outAnims[1 + itemCount]),
