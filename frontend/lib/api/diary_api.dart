@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:frontend/constants/url.dart';
 
-final Uri baseUrl = Uri.parse(Urls.apiUrl);
-
 class DiaryDto {
   final String date;
   final String emoji;
@@ -36,7 +34,7 @@ class DiaryApi {
     String? userId,
   }) async {
     final uri = Uri.parse(
-      '$baseUrl/diary',
+      Urls.diaryUrl,
     ).replace(queryParameters: {'date': date, 'userId': userId});
 
     print('🔍 일기 조회 API 호출: $uri');
@@ -70,7 +68,7 @@ class DiaryApi {
     String? token,
     String? userId,
   }) async {
-    final uri = Uri.parse('$baseUrl/diary');
+    final uri = Uri.parse(Urls.diaryUrl);
     
     final requestBody = {
       'userId': userId,
