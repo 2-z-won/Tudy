@@ -40,8 +40,9 @@ public class StudySessionController {
     @GetMapping("/ranking")
     @Operation(summary = "Ranking by major")
     @ApiResponse(responseCode = "200", description = "Ranking returned")
-    public ResponseEntity<Map<String, Long>> ranking() {
-        return ResponseEntity.ok(service.rankingByMajor());
+    public ResponseEntity<RankingResponse> ranking() {
+        List<RankingResponse.RankItem> rankings = service.rankingByMajor();
+        return ResponseEntity.ok(new RankingResponse(rankings));
     }
 
     @Data
