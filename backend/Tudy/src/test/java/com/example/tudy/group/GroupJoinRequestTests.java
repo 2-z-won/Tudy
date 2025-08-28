@@ -36,7 +36,7 @@ public class GroupJoinRequestTests {
         userRepository.save(owner);
 
         // 그룹 생성
-        Group group = groupService.createGroup("테스트 그룹", "123456", owner.getUserId());
+        Group group = groupService.createGroup("테스트 그룹", "123456", owner.getId());
 
         assertNotNull(group);
         assertEquals("테스트 그룹", group.getName());
@@ -62,14 +62,14 @@ public class GroupJoinRequestTests {
         userRepository.save(applicant);
 
         // 그룹 생성
-        Group group = groupService.createGroup("테스트 그룹", "123456", owner.getUserId());
+        Group group = groupService.createGroup("테스트 그룹", "123456", owner.getId());
 
         // 가입 신청
-        String result = groupService.joinGroup(group.getId(), applicant.getUserId(), "123456");
+        String result = groupService.joinGroup(group.getId(), applicant.getId(), "123456");
         assertEquals("가입 신청이 완료되었습니다.", result);
 
         // 대기중인 신청 목록 확인
-        var pendingRequests = groupService.getPendingRequests(group.getId(), owner.getUserId());
+        var pendingRequests = groupService.getPendingRequests(group.getId(), owner.getId());
         assertEquals(1, pendingRequests.size());
         assertEquals(applicant.getId(), pendingRequests.get(0).getUser().getId());
     }
@@ -92,20 +92,20 @@ public class GroupJoinRequestTests {
         userRepository.save(applicant);
 
         // 그룹 생성
-        Group group = groupService.createGroup("테스트 그룹", "123456", owner.getUserId());
+        Group group = groupService.createGroup("테스트 그룹", "123456", owner.getId());
 
         // 가입 신청
-        groupService.joinGroup(group.getId(), applicant.getUserId(), "123456");
+        groupService.joinGroup(group.getId(), applicant.getId(), "123456");
 
         // 신청 승인
-        var pendingRequests = groupService.getPendingRequests(group.getId(), owner.getUserId());
+        var pendingRequests = groupService.getPendingRequests(group.getId(), owner.getId());
         Long requestId = pendingRequests.get(0).getId();
 
-        String result = groupService.approveJoinRequest(requestId, owner.getUserId());
+        String result = groupService.approveJoinRequest(requestId, owner.getId());
         assertEquals("가입 신청이 승인되었습니다.", result);
 
         // 승인 후 대기중인 신청이 없어야 함
-        var remainingRequests = groupService.getPendingRequests(group.getId(), owner.getUserId());
+        var remainingRequests = groupService.getPendingRequests(group.getId(), owner.getId());
         assertEquals(0, remainingRequests.size());
     }
 
@@ -127,20 +127,20 @@ public class GroupJoinRequestTests {
         userRepository.save(applicant);
 
         // 그룹 생성
-        Group group = groupService.createGroup("테스트 그룹", "123456", owner.getUserId());
+        Group group = groupService.createGroup("테스트 그룹", "123456", owner.getId());
 
         // 가입 신청
-        groupService.joinGroup(group.getId(), applicant.getUserId(), "123456");
+        groupService.joinGroup(group.getId(), applicant.getId(), "123456");
 
         // 신청 거부
-        var pendingRequests = groupService.getPendingRequests(group.getId(), owner.getUserId());
+        var pendingRequests = groupService.getPendingRequests(group.getId(), owner.getId());
         Long requestId = pendingRequests.get(0).getId();
 
-        String result = groupService.rejectJoinRequest(requestId, owner.getUserId());
+        String result = groupService.rejectJoinRequest(requestId, owner.getId());
         assertEquals("가입 신청이 거부되었습니다.", result);
 
         // 거부 후 대기중인 신청이 없어야 함
-        var remainingRequests = groupService.getPendingRequests(group.getId(), owner.getUserId());
+        var remainingRequests = groupService.getPendingRequests(group.getId(), owner.getId());
         assertEquals(0, remainingRequests.size());
     }
 } 
