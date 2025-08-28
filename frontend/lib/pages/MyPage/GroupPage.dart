@@ -44,9 +44,24 @@ class _GroupPageState extends State<GroupPage> {
     }
   }
 
-  void _onCreateGroup(String name, String password, String ownerId) {
-    final newGroup = AddGroup(name: name, password: password, ownerId: ownerId);
-    _groupAddController.createGroup(newGroup);
+  Future<void> _onCreateGroup(String name, String password) async {
+    final newGroup = AddGroup(name: name, password: password);
+    await _groupAddController.createGroup(newGroup);
+    
+    // 성공/실패 메시지 표시
+    if (_groupAddController.successMessage.value.isNotEmpty) {
+      showMessage("success", _groupAddController.successMessage.value);
+      // 성공시 내 그룹 목록 새로고침
+      if (userId != null) {
+        _myGroupController.fetchMyGroups(userId!);
+      }
+      // 메시지 초기화
+      _groupAddController.successMessage.value = '';
+    } else if (_groupAddController.errorMessage.value.isNotEmpty) {
+      showMessage("error", _groupAddController.errorMessage.value);
+      // 메시지 초기화
+      _groupAddController.errorMessage.value = '';
+    }
   }
 
   @override
@@ -70,11 +85,13 @@ class _GroupPageState extends State<GroupPage> {
     // 그룹 존재 → 비밀번호 입력창 열기
     setState(() {
       selectedGroupId = groupId;
-      message = "password";
     });
+    
+    // 비밀번호 입력 다이얼로그 표시
+    _showJoinGroupPasswordDialog();
   }
 
-  void onEnter() async {
+  Future<void> onEnter() async {
     if (selectedGroupId == null) {
       showMessage("error", "그룹을 먼저 선택하세요.");
       return;
@@ -88,7 +105,6 @@ class _GroupPageState extends State<GroupPage> {
 
     await _joinGroupController.joinGroup(
       groupId: selectedGroupId!,
-      userId: userId!,
       password: password,
     );
 
@@ -266,6 +282,150 @@ class _GroupPageState extends State<GroupPage> {
     );
   }
 
+  void _showJoinGroupPasswordDialog() {
+    // 비밀번호 입력 필드 초기화
+    for (var controller in _digitControllers) {
+      controller.clear();
+    }
+    
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: const Color.fromRGBO(110, 110, 110, 0.2),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              child: Container(
+                width: 340,
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color.fromRGBO(0, 0, 0, 0.25),
+                      offset: const Offset(0, 4),
+                      blurRadius: 12.9,
+                      spreadRadius: 0,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "그룹 참여",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "그룹 비밀번호를 입력하세요",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: SubTextColor,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(6, (index) {
+                        return Container(
+                          width: 35,
+                          height: 40,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF6E5),
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(color: Color(0xFFE1DDD4)),
+                          ),
+                          child: TextField(
+                            controller: _digitControllers[index],
+                            focusNode: _focusNodes[index],
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLength: 1,
+                            buildCounter: (context, {currentLength = 0, isFocused = false, maxLength}) => null,
+                            onChanged: (value) {
+                              setState(() {});
+                              if (value.isNotEmpty && index < 5) {
+                                _focusNodes[index + 1].requestFocus();
+                              } else if (value.isEmpty && index > 0) {
+                                _focusNodes[index - 1].requestFocus();
+                              }
+                            },
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              counterText: "",
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pop(context);
+                          },
+                          child: const Text(
+                            "취소",
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                              letterSpacing: 2.0,
+                            ),
+                          ),
+                        ),
+                        (_digitControllers.every((c) => c.text.trim().isNotEmpty))
+                            ? GestureDetector(
+                                                            onTap: () async {
+                              Navigator.pop(context); // 먼저 다이얼로그 닫기
+                              await onEnter(); // 그룹 가입 실행
+                            },
+                                child: const Text(
+                                  "참여",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: SubTextColor,
+                                    letterSpacing: 2.0,
+                                  ),
+                                ),
+                              )
+                            : const Text(
+                                "참여",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                  letterSpacing: 2.0,
+                                ),
+                              ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showCreateGroupDialog() {
     TextEditingController groupNameController = TextEditingController();
 
@@ -402,13 +562,13 @@ class _GroupPageState extends State<GroupPage> {
                               (c) => c.text.trim().isNotEmpty,
                             ))
                         ? GestureDetector(
-                            onTap: () {
+                            onTap: () async {
                               final groupName = groupNameController.text.trim();
                               final password = _digitControllers
                                   .map((c) => c.text)
                                   .join();
-                              _onCreateGroup(groupName, password, userId!);
-                              Navigator.pop(context);
+                              Navigator.pop(context); // 먼저 다이얼로그 닫기
+                              await _onCreateGroup(groupName, password);
                             },
                             child: Text(
                               "완료",

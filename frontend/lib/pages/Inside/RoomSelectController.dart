@@ -65,7 +65,7 @@ class RoomSelectionController extends GetxController {
       final sn = m['slotNumber'] as int;
       final st = m['spaceType'] as String;
       final lv = m['level'] as int;
-      final img = 'images/spaces/${st}_$lv.png';
+      final img = 'assets/images/spaces/${st}_$lv.png';
       originalBoxImages[sn] = img;
       stagedBoxImages[sn] = img;
     }
@@ -82,7 +82,7 @@ class RoomSelectionController extends GetxController {
     if (!isEditMode.value) return;
 
     // 미리보기 이미지
-    stagedBoxImages[slotNumber] = 'images/spaces/${spaceType}_$level.png';
+    stagedBoxImages[slotNumber] = 'assets/images/spaces/${spaceType}_$level.png';
 
     // 서버 전송 대기 목록 갱신(덮어쓰기)
     pendingInstalls[slotNumber] = PendingInstall(

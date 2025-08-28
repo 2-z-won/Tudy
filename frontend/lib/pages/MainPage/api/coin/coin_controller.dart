@@ -112,7 +112,7 @@ class CoinsController extends GetxController {
 
   String amountTextOf(String type) => _fmt.format(amountOf(type));
 
-  String imagePathOf(String type) => 'images/coin/$type.png';
+  String imagePathOf(String type) => 'assets/images/coin/$type.png';
 
   List<String> get otherTypes => coins
       .map((c) => c.coinType)

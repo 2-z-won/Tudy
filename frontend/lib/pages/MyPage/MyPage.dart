@@ -40,8 +40,8 @@ class MyPageView extends StatelessWidget {
                         birth: user.birth.value,
                         college: user.college.value,
                         department: user.department.value,
-                        profileImageAsset: 'images/profile.jpg',
-                        qrImageAsset: 'images/profile.jpg',
+                        profileImageAsset: 'assets/images/profile.jpg',
+                        qrImageAsset: 'assets/images/profile.jpg',
                       ),
                     ),
 

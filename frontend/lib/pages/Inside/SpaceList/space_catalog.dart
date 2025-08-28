@@ -21,7 +21,7 @@ enum BuildingType { DEPARTMENT, LIBRARY, CAFE, GYM }
 
 /// 카탈로그 정의 (네 SpaceType 주석 그룹 그대로 매핑)
 class SpaceCatalog {
-  static const _img = 'images/profile.jpg'; // 임시 이미지(필요 시 각각 다르게)
+  static const _img = 'assets/images/profile.jpg'; // 임시 이미지(필요 시 각각 다르게)
 
   // 학과 건물
   static const department = <SpaceDef>[
