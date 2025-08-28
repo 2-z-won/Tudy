@@ -30,9 +30,10 @@ class AddTodo extends StatefulWidget {
 class _TodoDetailState extends State<AddTodo> {
   final GoalController _goalController = GoalController();
   final MyGroupController _groupController = Get.put(MyGroupController());
-  final FriendListController _friendController = Get.put(
-    FriendListController(),
-  );
+  final FriendListController _friendController =
+      Get.isRegistered<FriendListController>()
+      ? Get.find<FriendListController>()
+      : Get.put(FriendListController());
 
   bool isTimeSelected = true;
   bool isFriendSelected = false;
@@ -104,11 +105,16 @@ class _TodoDetailState extends State<AddTodo> {
 
     if (uid != null) {
       await _groupController.fetchMyGroups(uid);
-      await _friendController.fetchFriends(uid);
+      await _friendController.fetchFriendsAndGoals(uid);
     }
   }
 
   TextEditingController titleController = TextEditingController();
+
+  int? selectedGroupId;
+  String? selectedFriendName;
+  bool get isGroupGoal => selectedGroupId != null;
+  bool get isFriendGoal => selectedFriendName != null;
 
   @override
   Widget build(BuildContext context) {
@@ -157,10 +163,10 @@ class _TodoDetailState extends State<AddTodo> {
                     categoryName: widget.category,
                     startDate: formatter.format(startDate),
                     endDate: formatter.format(endDate),
-                    isGroupGoal: false,
-                    groupId: null,
-                    isFriendGoal: false,
-                    friendName: null,
+                    isGroupGoal: isGroupGoal,
+                    groupId: selectedGroupId,
+                    isFriendGoal: isFriendGoal,
+                    friendName: selectedFriendName,
                     proofType: isTimeSelected ? "TIME" : "IMAGE",
                     targetTime: isTimeSelected
                         ? selectedDuration.inSeconds
@@ -435,7 +441,8 @@ class _TodoDetailState extends State<AddTodo> {
                           ..._groupController.myGroups.map(
                             (group) => GestureDetector(
                               onTap: () {
-                                // 선택 처리 로직
+                                selectedGroupId = group.id;
+                                selectedFriendName = null;
                               },
                               child: Row(
                                 children: [
@@ -459,7 +466,8 @@ class _TodoDetailState extends State<AddTodo> {
                           ..._friendController.friendList.map(
                             (friend) => GestureDetector(
                               onTap: () {
-                                // 선택 처리 로직
+                                selectedGroupId = null;
+                                selectedFriendName = friend.name;
                               },
                               child: Row(
                                 children: [

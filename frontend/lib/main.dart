@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/api/SignupLogin/controller/login_controller.dart';
+import 'package:frontend/pages/MinigamePage/controller/money_controller.dart';
 import 'package:get/get.dart';
-import 'package:frontend/pages/MainPage.dart';
+import 'package:frontend/pages/MainPage/MainPage.dart';
 import 'package:frontend/router/main_router.dart';
 import 'package:frontend/constants/colors.dart';
 
@@ -11,6 +12,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
+  Get.put(MoneyController());
   Get.put(LoginController());
   runApp(const MyApp());
 }

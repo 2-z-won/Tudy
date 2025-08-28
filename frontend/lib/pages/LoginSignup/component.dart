@@ -13,7 +13,12 @@ Widget buildInputField({
         padding: EdgeInsetsGeometry.only(left: 7, bottom: 1),
         child: Text(
           title,
-          style: TextStyle(fontSize: 14, color: Color(0xFF6E6E6E)),
+          style: TextStyle(
+            fontSize: 14,
+            color: Color(0xFF6E6E6E),
+            fontFamily: "GmarketSans",
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       Container(
@@ -28,7 +33,12 @@ Widget buildInputField({
         child: TextField(
           controller: controller,
           obscureText: obscureText,
-          style: const TextStyle(fontSize: 16, color: Color(0xFF494949)),
+          style: const TextStyle(
+            fontSize: 16,
+            color: Color(0xFF494949),
+            fontFamily: "GmarketSans",
+            fontWeight: FontWeight.w500,
+          ),
           decoration: InputDecoration(
             isDense: true,
             contentPadding: EdgeInsets.zero,
@@ -59,7 +69,12 @@ Widget buildInputButtonField({
         padding: EdgeInsetsGeometry.only(left: 7, bottom: 1),
         child: Text(
           title,
-          style: TextStyle(fontSize: 14, color: Color(0xFF6E6E6E)),
+          style: TextStyle(
+            fontSize: 14,
+            color: Color(0xFF6E6E6E),
+            fontFamily: "GmarketSans",
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       Container(
@@ -76,14 +91,24 @@ Widget buildInputButtonField({
               child: TextField(
                 controller: controller,
                 obscureText: obscureText,
-                style: const TextStyle(fontSize: 14, color: Color(0xFF494949)),
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF494949),
+                  fontFamily: "GmarketSans",
+                  fontWeight: FontWeight.w500,
+                ),
                 decoration: InputDecoration(
                   isDense: true,
                   contentPadding: EdgeInsets.zero,
                   border: InputBorder.none,
                   hintText: hintText,
                   hintStyle: hintText.isNotEmpty
-                      ? const TextStyle(fontSize: 14, color: Color(0xFFCECECE))
+                      ? const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFFCECECE),
+                          fontFamily: "GmarketSans",
+                          fontWeight: FontWeight.w500,
+                        )
                       : null,
                 ),
               ),
@@ -105,6 +130,8 @@ Widget buildInputButtonField({
                       fontSize: 12,
                       letterSpacing: 0.1,
                       color: Color(0xFF565656),
+                      fontFamily: "GmarketSans",
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -158,7 +185,8 @@ class _PressableButtonState extends State<_PressableButton> {
               style: const TextStyle(
                 fontSize: 20,
                 color: Color(0xFF6E6E6E),
-                fontWeight: FontWeight.bold,
+                fontFamily: "GmarketSans",
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),

@@ -1,3 +1,4 @@
+import 'package:frontend/utils/auth_util.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:frontend/api/Todo/model/goal_model.dart';
@@ -27,7 +28,15 @@ class CategoryController {
 
     print('🔵 요청 URI: $uri');
 
-    final response = await http.get(uri);
+    final token = await getTokenFromStorage();
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json', // GET은 Accept만으로 충분
+      },
+    );
 
     print('🟡 응답 statusCode: ${response.statusCode}');
     print('🟡 응답 body: ${response.body}');
@@ -46,9 +55,15 @@ class CategoryController {
       '${Urls.apiUrl}categories',
     ).replace(queryParameters: {'userId': userId});
 
-    print("uri: $uri");
+    final token = await getTokenFromStorage();
+    final response = await http.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json', // GET은 Accept만으로 충분
+      },
+    );
 
-    final response = await http.get(uri);
     print("status: ${response.statusCode}");
     print("body: ${response.body}");
 
@@ -65,6 +80,7 @@ class CategoryController {
     required String name,
     required int colorIndex, // 1~10
     required String categoryType,
+    required String selectedEmoji,
   }) async {
     errorMessage.value = '';
     successMessage.value = '';
@@ -79,6 +95,7 @@ class CategoryController {
       name: name.trim(),
       color: colorIndex,
       categoryType: categoryType,
+      icon: selectedEmoji,
     );
 
     try {

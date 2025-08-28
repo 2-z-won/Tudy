@@ -29,8 +29,8 @@ class _LoginPageState extends State<LoginPage> {
                 'TUDY',
                 style: TextStyle(
                   fontSize: 32,
-                  //fontFamily: "Inter",
-                  fontWeight: FontWeight.bold,
+                  fontFamily: "GmarketSans",
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.5,
                   color: Color(0xFF595959),
                 ),

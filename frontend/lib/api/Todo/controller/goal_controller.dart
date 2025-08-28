@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:frontend/utils/auth_util.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/api/Todo/model/goal_model.dart';
 import 'package:frontend/constants/url.dart';
@@ -27,10 +28,13 @@ class GoalController {
 
     try {
       print('📤 목표 생성 요청 데이터: ${jsonEncode(goalRequest.toJson())}');
-
+      final token = await getTokenFromStorage();
       final response = await http.post(
         Uri.parse('${Urls.apiUrl}goals'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
         body: jsonEncode(goalRequest.toJson()),
       );
 
@@ -42,6 +46,24 @@ class GoalController {
       }
     } catch (e) {
       errorMessage.value = "서버 오류: $e";
+    }
+  }
+
+  // CategoryController.dart
+  static Future<int?> fetchGoalDurationSeconds(int goalId) async {
+    // GET /api/sessions/goal/{goalId}/duration  -> { "hours": 10, "minutes": 45 }
+    final uri = Uri.parse('${Urls.apiUrl}sessions/goal/$goalId/duration');
+    final res = await http.get(uri);
+
+    print('⏱️ duration[$goalId] status=${res.statusCode} body=${res.body}');
+    if (res.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(res.body);
+      final int hours = (data['hours'] ?? 0) as int;
+      final int minutes = (data['minutes'] ?? 0) as int;
+      return hours * 3600 + minutes * 60; // 초 단위 반환
+    } else {
+      // 실패하면 null 반환(진행률 0%로 보이게)
+      return null;
     }
   }
 

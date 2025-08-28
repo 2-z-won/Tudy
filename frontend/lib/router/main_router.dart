@@ -1,5 +1,8 @@
 import 'package:frontend/pages/DiaryPage/DiaryPage.dart';
 import 'package:frontend/pages/Inside/InsidePage.dart';
+import 'package:frontend/pages/Inside/MiniGame/classroomGame.dart';
+import 'package:frontend/pages/Inside/MiniGame/grymGame.dart';
+import 'package:frontend/pages/Inside/MiniGame/presentGame.dart';
 import 'package:frontend/pages/LoginSignup/LoginPage.dart';
 import 'package:frontend/pages/LoginSignup/SignupPage_Email.dart';
 import 'package:frontend/pages/LoginSignup/SingUpPage.dart';
@@ -8,6 +11,7 @@ import 'package:frontend/pages/MyPage/FriendPage.dart';
 import 'package:frontend/pages/MyPage/GroupPage.dart';
 import 'package:frontend/pages/MyPage/MyPage.dart';
 import 'package:frontend/pages/TodoPage.dart';
+import 'package:frontend/pages/TodoPage_new.dart';
 import 'package:frontend/pages/stopwatchPage.dart';
 import 'package:get/get.dart';
 import 'package:frontend/pages/stopwatchPage.dart';
@@ -15,7 +19,7 @@ import 'package:frontend/pages/stopwatchPage.dart';
 import 'package:frontend/layout/navigationLayout.dart';
 import 'package:frontend/layout/noLayout.dart';
 
-import 'package:frontend/pages/MainPage.dart';
+import 'package:frontend/pages/MainPage/MainPage.dart';
 
 class MainRouter {
   static final List<GetPage> routes = [
@@ -37,7 +41,7 @@ class MainRouter {
     ),
     GetPage(
       name: '/Todo',
-      page: () => NavigationLayout(child: TodoPageView()),
+      page: () => NavigationLayout(child: NewTodoPageView()),
     ),
     GetPage(
       name: '/diary',
@@ -62,6 +66,18 @@ class MainRouter {
     GetPage(
       name: '/editMypage',
       page: () => NoLayout(child: EditMypageView()),
+    ),
+    GetPage(
+      name: '/presentGame',
+      page: () => NoLayout(child: SeminarGameApp()),
+    ),
+    GetPage(
+      name: '/classroomGame',
+      page: () => NoLayout(child: ClassroomCategorySelectPage()),
+    ),
+    GetPage(
+      name: '/gymGame',
+      page: () => NoLayout(child: GymGameApp(),),
     ),
     GetPage(
       name: '/stopwatch',
