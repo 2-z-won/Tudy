@@ -7,7 +7,9 @@ final Uri baseUrl = Uri.parse(Urls.apiUrl);
 class DiaryDto {
   final String date;
   final String emoji;
+  final String content;
 
+  DiaryDto({required this.date, required this.emoji, required this.content});
 
   factory DiaryDto.fromJson(Map<String, dynamic> j) => DiaryDto(
     date: j['date'] ?? '',
