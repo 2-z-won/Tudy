@@ -141,11 +141,11 @@ public class BuildingController {
     /**
      * 공간 업그레이드
      */
-    @PostMapping("/{buildingType}/slots/{slotNumber}/upgrade")
+    @PostMapping("/{buildingType}/slots/{slotId}/upgrade")
     public ResponseEntity<UserBuildingSlot> upgradeSpace(
             @PathVariable String userId,
             @PathVariable BuildingType buildingType,
-            @PathVariable Integer slotNumber,
+            @PathVariable Long slotId,
             Authentication authentication) {
         User authenticatedUser = getAuthenticatedUser(authentication);
         User targetUser = getTargetUser(userId);
@@ -155,7 +155,7 @@ public class BuildingController {
         }
 
         try {
-            UserBuildingSlot slot = buildingService.upgradeSpace(targetUser, buildingType, slotNumber);
+            UserBuildingSlot slot = buildingService.upgradeSpaceById(targetUser, buildingType, slotId);
             return ResponseEntity.ok(slot);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(null);
