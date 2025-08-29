@@ -1,3 +1,5 @@
+import 'package:frontend/pages/Inside/SpaceList/space_catalog.dart';
+import 'package:frontend/pages/Inside/space_image.dart';
 import 'package:get/get.dart';
 
 /// 서버에 보낼 설치 대기 항목
@@ -13,6 +15,18 @@ class PendingInstall {
 }
 
 class RoomSelectionController extends GetxController {
+  final int totalSlots;
+  final BuildingType buildingType;
+
+  RoomSelectionController({
+    required this.totalSlots,
+    required this.buildingType,
+  }) {
+    for (int i = 1; i <= totalSlots; i++) {
+      originalBoxImages[i] = null;
+      stagedBoxImages[i] = null;
+    }
+  }
   // 편집 모드 여부
   final isEditMode = false.obs;
 
@@ -26,13 +40,6 @@ class RoomSelectionController extends GetxController {
 
   /// 완료 시 서버에 보낼 설치 대기 목록 (slotNumber -> PendingInstall)
   final pendingInstalls = <int, PendingInstall>{}.obs;
-
-  RoomSelectionController(int totalBoxes) {
-    for (int i = 1; i <= totalBoxes; i++) {
-      originalBoxImages[i] = null;
-      stagedBoxImages[i] = null;
-    }
-  }
 
   // ===== 편집 모드 제어 =====
   void enterEditMode() {
@@ -49,10 +56,12 @@ class RoomSelectionController extends GetxController {
 
   // ===== 서버에서 받은 현재 설치 상태를 반영 =====
   // installed 예시: [{slotNumber: 3, spaceType: "LECTURE", level: 2}, ...]
+  // RoomSelectionController.dart
+
   Future<void> loadFromServer({
     required int totalBoxes,
-    required List<Map<String, dynamic>> installed,}) 
-  async {
+    required List<Map<String, dynamic>> installed,
+  }) async {
     // 초기화
     for (int i = 1; i <= totalBoxes; i++) {
       originalBoxImages[i] = null;
@@ -60,13 +69,13 @@ class RoomSelectionController extends GetxController {
     }
     pendingInstalls.clear();
 
-    // 반영
+    // 서버 반영
     for (final m in installed) {
       final sn = m['slotNumber'] as int;
       final st = m['spaceType'] as String;
-      final lv = m['level'] as int;
-      // spaces 폴더가 삭제되어 기본 이미지 사용
-      final img = 'assets/images/profile.jpg';
+      final lv = (m['level'] as int?) ?? 1; // level null/0 방지
+      final img = spaceImg(buildingType, st, lv); // ✅ 공용 함수 활용
+
       originalBoxImages[sn] = img;
       stagedBoxImages[sn] = img;
     }
@@ -83,7 +92,7 @@ class RoomSelectionController extends GetxController {
     if (!isEditMode.value) return;
 
     // 미리보기 이미지 (spaces 폴더가 삭제되어 기본 이미지 사용)
-    stagedBoxImages[slotNumber] = 'assets/images/profile.jpg';
+    stagedBoxImages[slotNumber] = spaceImg(buildingType, spaceType, level);
 
     // 서버 전송 대기 목록 갱신(덮어쓰기)
     pendingInstalls[slotNumber] = PendingInstall(

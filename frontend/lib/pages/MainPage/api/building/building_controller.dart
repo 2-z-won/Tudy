@@ -27,9 +27,7 @@ class BuildingController extends GetxController {
       final token = await getTokenFromStorage();
       if (userId == null || token == null) throw 'Not logged in';
 
-      final uri = Uri.parse(
-        Urls.userBuilding(userId, type.name),
-      );
+      final uri = Uri.parse(Urls.userBuilding(userId, type.name));
       final res = await http.get(
         uri,
         headers: {
@@ -39,7 +37,7 @@ class BuildingController extends GetxController {
       );
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
-         print('🏢 건물 조회 성공 (${type.name}): ${res.body}');
+        print('🏢 건물 조회 성공 (${type.name}): ${res.body}');
         final Map<String, dynamic> json = jsonDecode(res.body);
         infos[type] = BuildingInfo.fromJson(json);
         infos.refresh(); // 응답 이후에만 Rx 변경 👍
@@ -128,13 +126,22 @@ class BuildingController extends GetxController {
           '${Urls.apiUrl}users/$userId/buildings/${buildingType.name}/slots/$slotNumber/install',
         );
 
+        print('👉 POST $uri');
+        print(
+          'Headers: ${{'Authorization': 'Bearer $token', 'Content-Type': 'application/json'}}',
+        );
+        final body = jsonEncode({"spaceId": pending.spaceId});
+        print('Body: $body');
+
         final res = await http.post(
           uri,
           headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
           },
-          body: jsonEncode({"spaceId": pending.spaceId}), // ✅ 서버 요구사항: spaceId
+          body: jsonEncode({
+            "purchasedSlotId": pending.spaceId,
+          }), // ✅ 서버 요구사항: spaceId
         );
 
         if (res.statusCode < 200 || res.statusCode >= 300) {
@@ -149,4 +156,42 @@ class BuildingController extends GetxController {
       return false;
     }
   }
-}
+
+  /// 슬롯 업그레이드
+  /// POST /api/users/{userId}/buildings/{buildingType}/slots/{slotId}/upgrade
+    Future<bool> upgradeSlot({
+      required BuildingType buildingType,
+      required int slotId,
+    }) async {
+      try {
+        final userId = await getUserIdFromStorage();
+        final token = await getTokenFromStorage();
+        if (userId == null || token == null) throw 'Not logged in';
+
+        final uri = Uri.parse(
+          '${Urls.apiUrl}users/$userId/buildings/${buildingType.name}/slots/$slotId/upgrade',
+        );
+
+        final res = await http.post(
+          uri,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          // 업그레이드는 바디 필요 없음(서버 요구가 없으므로)
+        );
+
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          // 성공 시 최신 상태 갱신
+          await fetchBuilding(buildingType);
+          return true;
+        } else {
+          error.value = '업그레이드 실패 [${res.statusCode}] ${res.body}';
+          return false;
+        }
+      } catch (e) {
+        error.value = '업그레이드 오류: $e';
+        return false;
+      }
+    }
+  }

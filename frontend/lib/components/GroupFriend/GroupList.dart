@@ -126,7 +126,7 @@ class _GroupDropdownCardState extends State<GroupDropdownCard> {
                           final userName = fromUser?['name'] ?? fromUser?['userId'] ?? '이름 없음';
                           return JoinRequestRow(
                             name: userName,
-                            imageAsset: 'assets/images/profile.jpg',
+                            imageAsset: 'images/profile.jpg',
                             onApprove: () async {
                               await _requestController.approveRequest(
                                 request.id,
