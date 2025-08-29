@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/constants/colors.dart';
 import 'package:frontend/pages/Inside/RoomSelectController.dart';
 import 'package:frontend/pages/Inside/SpaceList/space_catalog.dart';
+import 'package:frontend/pages/Inside/space_image.dart';
 import 'package:frontend/pages/MainPage/api/building/building_controller.dart';
 import 'package:frontend/pages/MainPage/api/building/building_model.dart';
 import 'package:frontend/pages/MainPage/api/coin/coin_controller.dart';
@@ -36,112 +37,149 @@ class StudyRoomSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 잔액 조회 (업그레이드 표시용)
+    final coinsCtrl = Get.find<CoinsController>();
+    final coinType = coinsCtrl.coinTypeOf(buildingType);
+    final balance = coinsCtrl.amountOf(coinType);
+
     // Obx 제거 - observable 변수가 없음
     final purchasedCards = purchaseList.map((s) {
-        final def = _defOf(s.spaceType);
-        return {
-          'kind': 'purchased',
-          'slotId': s.id, // 고유 id (선택에 사용)
-          'spaceType': s.spaceType, // 그룹핑/카운팅용
+      final def = _defOf(s.spaceType);
+
+      // 업그레이드 가능 여부 계산 (가격 절반, 레벨 상한 미만, 잔액 충분)
+      final upgradeCost = def.price ~/ 2;
+      final canUpgrade =
+          (s.currentLevel < def.maxLevel) && (balance >= upgradeCost);
+
+      return {
+        'kind': 'purchased',
+        'slotId': s.id, // 고유 id (선택에 사용)
+        'spaceType': s.spaceType, // 그룹핑/카운팅용
+        'name': def.nameKor,
+        'image': spaceImg(buildingType, s.spaceType, s.currentLevel),
+        'price': def.price,
+        'installed': s.slotNumber != null, // 설치 여부 배지
+        // 업그레이드 표시용
+        'upgradeCost': upgradeCost,
+        'canUpgrade': canUpgrade,
+      };
+    }).toList();
+
+    final counts = <String, int>{};
+    for (final s in purchaseList) {
+      counts.update(s.spaceType, (v) => v + 1, ifAbsent: () => 1);
+    }
+
+    final lockedCards = <Map<String, dynamic>>[];
+    for (final def in catalog) {
+      final purchasedCount = counts[def.id] ?? 0;
+      final remain = (def.maxInstall - purchasedCount).clamp(0, def.maxInstall);
+      if (purchasedCount < def.maxInstall) {
+        lockedCards.add({
+          'kind': 'lock',
+          'slotId': null,
+          'spaceType': def.id,
           'name': def.nameKor,
-          'image': def.image,
+          'image': spaceImg(buildingType, def.id, 1),
           'price': def.price,
-          'installed': s.slotNumber != null, // 설치 여부 배지
-        };
-      }).toList();
-
-      final counts = <String, int>{};
-      for (final s in purchaseList) {
-        counts.update(s.spaceType, (v) => v + 1, ifAbsent: () => 1);
+          'installed': false,
+        });
       }
+    }
 
-      final lockedCards = <Map<String, dynamic>>[];
-      for (final def in catalog) {
-        final purchasedCount = counts[def.id] ?? 0;
-        final remain = (def.maxInstall - purchasedCount).clamp(
-          0,
-          def.maxInstall,
-        );
-        for (int i = 0; i < remain; i++) {
-          lockedCards.add({
-            'kind': 'lock',
-            'slotId': null, // 아직 구매 전이니 id 없음
-            'spaceType': def.id,
-            'name': def.nameKor,
-            'image': def.image,
-            'price': def.price,
-            'installed': false,
-          });
-        }
-      }
+    final visibleRooms = showOnlyUnlocked
+        ? [...purchasedCards] // 편집 모드: 구매된 것만
+        : [...purchasedCards, ...lockedCards]; // 일반 모드: 구매된 것 + 잠금
 
-      final visibleRooms = showOnlyUnlocked
-          ? [...purchasedCards] // 편집 모드: 구매된 것만
-          : [...purchasedCards, ...lockedCards]; // 일반 모드: 구매된 것 + 잠금
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: visibleRooms.map((room) {
+        final kind = room['kind'] as String; // 'purchased' | 'lock'
+        final slotId = room['slotId'] as int?;
+        final isSelected =
+            showOnlyUnlocked && slotId != null && slotId == selectedSlotId;
 
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: visibleRooms.map((room) {
-          final kind = room['kind'] as String; // 'purchased' | 'lock'
-          final slotId = room['slotId'] as int?;
-          final isSelected =
-              showOnlyUnlocked && slotId != null && slotId == selectedSlotId;
+        return Transform.translate(
+          offset: isSelected ? const Offset(0, -3) : Offset.zero,
+          child: GestureDetector(
+            onTap: () async {
+              if (kind == 'lock') {
+                final def = _defOf(room['spaceType'] as String);
 
-          return Transform.translate(
-            offset: isSelected ? const Offset(0, -3) : Offset.zero,
-            child: GestureDetector(
-              onTap: () async {
-                if (kind == 'lock') {
-                  // ✅ 구매 플로우
-                  final def = _defOf(room['spaceType'] as String);
-                  final ok = await _confirmPurchase(context, def);
-                  if (ok != true) return;
+                final coinsCtrl = Get.find<CoinsController>();
+                final coinType = coinsCtrl.coinTypeOf(
+                  buildingType,
+                ); // ACADEMIC_SAEDO | CAFE | GYM
+                final balance = coinsCtrl.amountOf(coinType);
 
-                  final buildingCtrl = Get.find<BuildingController>();
-                  final success = await buildingCtrl.purchaseSpace(
-                    buildingType: buildingType,
-                    spaceType: def.id, // ← 서버가 id 요구 시: spaceId로 변경
-                  );
-                  if (!success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          buildingCtrl.error.value.isEmpty
-                              ? '구매에 실패했어요.'
-                              : buildingCtrl.error.value,
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-
-                  // ✅ 서버에서 최신 슬롯 재조회 → 부모가 넘겨준 onRefresh 수행
-                  await onRefresh();
-
-                  final coinsCtrl = Get.find<CoinsController>();
-                  await coinsCtrl.refreshAfterAction(buildingType);
-
-                  // 선택 상태/편집 상태는 그대로 두거나 필요시 초기화
-                  ScaffoldMessenger.of(
+                if (balance < def.price) {
+                  await _showInsufficientDialog(
                     context,
-                  ).showSnackBar(const SnackBar(content: Text('구매가 완료됐어요!')));
+                    def,
+                    buildingType,
+                    balance,
+                  );
                   return;
                 }
-                // 구매 카드이고, 편집 모드에서만 선택 가능
-                if (showOnlyUnlocked && slotId != null) {
-                  onCardTap(isSelected ? null : slotId);
+
+                // ✅ 구매 플로우
+                final ok = await _confirmPurchase(context, def);
+                if (ok != true) return;
+
+                final buildingCtrl = Get.find<BuildingController>();
+                final success = await buildingCtrl.purchaseSpace(
+                  buildingType: buildingType,
+                  spaceType: def.id, // ← 서버가 id 요구 시: spaceId로 변경
+                );
+                if (!success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        buildingCtrl.error.value.isEmpty
+                            ? '구매에 실패했어요.'
+                            : buildingCtrl.error.value,
+                      ),
+                    ),
+                  );
+                  return;
                 }
-              },
-              child: _buildRoomCard(room),
-            ),
-          );
-        }).toList(),
-      );
+
+                // ✅ 서버에서 최신 슬롯 재조회 → 부모가 넘겨준 onRefresh 수행
+                await onRefresh();
+                await coinsCtrl.refreshAfterAction(buildingType);
+
+                // 선택 상태/편집 상태는 그대로 두거나 필요시 초기화
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('구매가 완료됐어요!')));
+                return;
+              }
+              // 구매 카드이고, 편집 모드에서만 선택 가능
+              if (showOnlyUnlocked && slotId != null) {
+                onCardTap(isSelected ? null : slotId);
+              }
+            },
+            child: _buildRoomCard(context, room),
+          ),
+        );
+      }).toList(),
+    );
   }
 
-  Widget _buildRoomCard(Map<String, dynamic> room) {
+  Widget _buildRoomCard(BuildContext context, Map<String, dynamic> room) {
     final isLock = room['kind'] == 'lock';
     final installed = room['installed'] as bool;
+    final canUpgrade = (room['canUpgrade'] as bool?) ?? false;
+
+    // 업그레이드 시 필요한 정보
+    final slotId = room['slotId'] as int?;
+    final spaceType = room['spaceType'] as String?;
+    final def = spaceType == null ? null : _defOf(spaceType);
+    final upgradeCost = (room['upgradeCost'] as int?) ?? 0;
+
+    // ✅ 편집 모드에서는 업그레이드 금지
+    final isEditing = controller.isEditMode.value;
+
     return Padding(
       padding: const EdgeInsets.only(right: 10),
       child: Column(
@@ -189,6 +227,58 @@ class StudyRoomSelector extends StatelessWidget {
                   ),
                 ),
               ],
+
+              // ✅ 업그레이드 가능 시 UPGRADE 배지 (탭 가능)
+              // ✅ 편집 모드(isEditing)일 때는 표시/동작 금지
+              if (!isLock &&
+                  !isEditing &&
+                  canUpgrade &&
+                  slotId != null &&
+                  def != null) ...[
+                Positioned.fill(
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final ok = await _confirmUpgrade(
+                          context,
+                          def,
+                          upgradeCost,
+                          buildingType,
+                        );
+                        if (ok != true) return;
+
+                        final buildingCtrl = Get.find<BuildingController>();
+                        final success = await buildingCtrl.upgradeSlot(
+                          buildingType: buildingType,
+                          slotId: slotId,
+                        );
+                        if (!success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                buildingCtrl.error.value.isEmpty
+                                    ? '업그레이드에 실패했어요.'
+                                    : buildingCtrl.error.value,
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+
+                        await onRefresh();
+                        final coinsCtrl = Get.find<CoinsController>();
+                        await coinsCtrl.refreshAfterAction(buildingType);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('업그레이드 완료!')),
+                        );
+                      },
+                      child: const _UpgradeBadge(),
+                    ),
+                  ),
+                ),
+              ],
+
               if (isLock) ...[
                 Positioned(
                   left: 0,
@@ -252,6 +342,126 @@ class StudyRoomSelector extends StatelessWidget {
       },
       transitionBuilder: (ctx, anim, secondaryAnim, child) {
         // 곡선 지정 (살짝 “튀어오르는” 느낌은 easeOutBack 추천)
+        final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutBack);
+        return FadeTransition(
+          opacity: anim,
+          child: ScaleTransition(scale: curved, child: child),
+        );
+      },
+    );
+  }
+
+  Future<bool?> _showInsufficientDialog(
+    BuildContext context,
+    SpaceDef def,
+    BuildingType buildingType,
+    int balance,
+  ) {
+    return showGeneralDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      barrierLabel: 'insufficient',
+      barrierColor: Colors.black.withOpacity(0.35),
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (ctx, anim, secondary) {
+        return Center(
+          child: _InsufficientDialogBody(
+            def: def,
+            buildingType: buildingType,
+            balance: balance,
+          ),
+        );
+      },
+      transitionBuilder: (ctx, anim, secondary, child) {
+        final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutBack);
+        return FadeTransition(
+          opacity: anim,
+          child: ScaleTransition(scale: curved, child: child),
+        );
+      },
+    );
+  }
+
+  // ✅ 업그레이드 확인 다이얼로그
+  Future<bool?> _confirmUpgrade(
+    BuildContext context,
+    SpaceDef def,
+    int upgradeCost,
+    BuildingType buildingType,
+  ) {
+    final coinsCtrl = Get.find<CoinsController>();
+    final coinImg = coinsCtrl.imagePathOf(coinsCtrl.coinTypeOf(buildingType));
+
+    return showGeneralDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      barrierLabel: 'upgrade',
+      barrierColor: Colors.black.withOpacity(0.35),
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (ctx, anim, secondary) {
+        return Center(
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            insetPadding: EdgeInsets.zero,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Image.asset('images/button/purchase_bg.png', fit: BoxFit.none),
+                Positioned.fill(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // 업그레이드 비용
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(coinImg, width: 20, height: 20),
+                          const SizedBox(width: 1),
+                          Text(
+                            "$upgradeCost 코인으로",
+                            style: const TextStyle(
+                              fontFamily: 'Galmuri11',
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "${def.nameKor}을(를) 업그레이드할까요?",
+                        style: const TextStyle(
+                          fontFamily: 'Galmuri11',
+                          color: Colors.black87,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 18),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          PressableButton(
+                            onTap: () => Navigator.of(context).pop(false),
+                            label: '취소',
+                            imagePath: "images/button/cancel_purchase.png",
+                          ),
+                          const SizedBox(width: 10),
+                          PressableButton(
+                            onTap: () => Navigator.of(context).pop(true),
+                            label: '업그레이드',
+                            imagePath: "images/button/purchase.png",
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (ctx, anim, secondary, child) {
         final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutBack);
         return FadeTransition(
           opacity: anim,
@@ -337,7 +547,7 @@ class _PurchaseDialogBody extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           // ✅ 원본 배경 이미지 (그대로)
-          Image.asset('assets/images/button/purchase_bg.png', fit: BoxFit.none),
+          Image.asset('images/button/purchase_bg.png', fit: BoxFit.none),
 
           // ✅ 이미지 위에 내용
           Positioned.fill(
@@ -349,7 +559,7 @@ class _PurchaseDialogBody extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      "assets/images/coin/ACADEMIC_SAEDO.png",
+                      "images/coin/ACADEMIC_SAEDO.png",
                       width: 20,
                       height: 20,
                     ),
@@ -383,15 +593,115 @@ class _PurchaseDialogBody extends StatelessWidget {
                     PressableButton(
                       onTap: () => Navigator.of(context).pop(false),
                       label: '취소',
-                      imagePath: "assets/images/button/cancel_purchase.png",
+                      imagePath: "images/button/cancel_purchase.png",
                     ),
                     const SizedBox(width: 10),
                     PressableButton(
                       onTap: () => Navigator.of(context).pop(true),
                       label: '구매',
-                      imagePath: "assets/images/button/purchase.png",
+                      imagePath: "images/button/purchase.png",
                     ),
                   ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InsufficientDialogBody extends StatelessWidget {
+  final SpaceDef def;
+  final BuildingType buildingType;
+  final int balance;
+  const _InsufficientDialogBody({
+    required this.def,
+    required this.buildingType,
+    required this.balance,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final coinsCtrl = Get.find<CoinsController>();
+    final coinType = coinsCtrl.coinTypeOf(buildingType);
+    final coinImg = coinsCtrl.imagePathOf(coinType);
+    final shortfall = (def.price - balance).clamp(0, def.price);
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: EdgeInsets.zero,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.asset('images/button/purchase_bg.png', fit: BoxFit.none),
+          Positioned.fill(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 제목
+                const Text(
+                  '구매 불가',
+                  style: TextStyle(
+                    fontFamily: 'Galmuri11',
+                    color: Colors.black87,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // 가격/보유/부족
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(coinImg, width: 20, height: 20),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${def.price} 필요',
+                      style: const TextStyle(
+                        fontFamily: 'Galmuri11',
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '보유: $balance',
+                  style: const TextStyle(
+                    fontFamily: 'Galmuri11',
+                    color: Colors.black54,
+                  ),
+                ),
+                if (shortfall > 0) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '부족: $shortfall',
+                    style: const TextStyle(
+                      fontFamily: 'Galmuri11',
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 12),
+                Text(
+                  '${def.nameKor}을(를) 구매할 수 없어요.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Galmuri11',
+                    color: Colors.black87,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+                PressableButton(
+                  onTap: () => Navigator.of(context).pop(true),
+                  label: '확인',
+                  imagePath:
+                      'images/button/cancel_purchase.png', // 확인용 버튼 이미지로 바꿔도 OK
                 ),
               ],
             ),
@@ -467,6 +777,34 @@ class _PressableButtonState extends State<PressableButton> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// 간단한 UPGRADE 배지 위젯 (표시만)
+// 간단한 UPGRADE 배지 위젯
+class _UpgradeBadge extends StatelessWidget {
+  const _UpgradeBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFF6F8BFF),
+        borderRadius: BorderRadius.circular(2),
+        border: Border.all(color: Colors.white, width: 1),
+      ),
+      child: const Text(
+        'UPGRADE',
+        style: TextStyle(
+          fontFamily: 'Galmuri11',
+          fontSize: 12,
+          color: Colors.white,
+          height: 1.0,
+        ),
+        textAlign: TextAlign.center,
       ),
     );
   }

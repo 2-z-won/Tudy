@@ -423,7 +423,7 @@ class _FallingSprite extends StatelessWidget {
     switch (t) {
       case DropType.dumbbell:
         return _tryAsset(
-          'assets/images/insideMiniGame/dumbbell.png',
+          'images/insideMiniGame/dumbbell.png',
           fallback: const Text(
             '🏋️',
             textAlign: TextAlign.center,
@@ -432,7 +432,7 @@ class _FallingSprite extends StatelessWidget {
         );
       case DropType.beer:
         return _tryAsset(
-          'assets/images/insideMiniGame/beer.png',
+          'images/insideMiniGame/beer.png',
           fallback: const Text(
             '🍺',
             textAlign: TextAlign.center,
@@ -441,7 +441,7 @@ class _FallingSprite extends StatelessWidget {
         );
       case DropType.cola:
         return _tryAsset(
-          'assets/images/insideMiniGame/cola.png',
+          'images/insideMiniGame/cola.png',
           fallback: const Text(
             '🥤',
             textAlign: TextAlign.center,
@@ -450,7 +450,7 @@ class _FallingSprite extends StatelessWidget {
         );
       case DropType.chicken:
         return _tryAsset(
-          'assets/images/insideMiniGame/chicken.png',
+          'images/insideMiniGame/chicken.png',
           fallback: const Text(
             '🍗',
             textAlign: TextAlign.center,

@@ -208,7 +208,7 @@ class _UpDownGamePageState extends State<UpDownGamePage> {
                     // ===== 게임 시작 버튼 (라운드 중에는 숨김) =====
                     if (!_inGame)
                       PixelImageButton(
-                        asset: 'assets/images/ui/btn_red.png',
+                        asset: 'images/ui/btn_red.png',
                         label: '게임 시작',
                         onTap: _startGame,
                         height: 48,
@@ -253,7 +253,7 @@ class _UpDownGamePageState extends State<UpDownGamePage> {
                       const SizedBox(height: 12),
 
                       PixelImageButton(
-                        asset: 'assets/images/ui/btn_green.png',
+                        asset: 'images/ui/btn_green.png',
                         label: '정답 제출',
                         onTap: playGame,
                         height: 48,

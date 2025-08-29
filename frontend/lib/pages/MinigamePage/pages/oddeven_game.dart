@@ -237,7 +237,7 @@ class _OddEvenGamePageState extends State<OddEvenGamePage>
                       children: [
                         Expanded(
                           child: PixelImageButton(
-                            asset: 'assets/images/ui/btn_red.png',
+                            asset: 'images/ui/btn_red.png',
                             label: '짝수',
                             onTap: _isFlipping ? null : () => playGame(true),
                           ),
@@ -245,7 +245,7 @@ class _OddEvenGamePageState extends State<OddEvenGamePage>
                         const SizedBox(width: 12),
                         Expanded(
                           child: PixelImageButton(
-                            asset: 'assets/images/ui/btn_blue.png',
+                            asset: 'images/ui/btn_blue.png',
                             label: '홀수',
                             onTap: _isFlipping ? null : () => playGame(false),
                           ),
