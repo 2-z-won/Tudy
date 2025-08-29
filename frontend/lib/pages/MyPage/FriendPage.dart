@@ -36,10 +36,15 @@ class _GroupPageState extends State<Friendpage> {
 
   Future<void> loadUserId() async {
     final uid = await getUserIdFromStorage(); // utils/auth_util.dart 함수
+    print('🔍 FriendPage - 로드된 userId: $uid');
+    
     setState(() {
       userId = uid;
     });
-    _requestController.fetchRequests(uid!);
+    
+    print('🔍 FriendPage - 친구 신청 목록 조회 시작');
+    await _requestController.fetchRequests(uid!);
+    print('🔍 FriendPage - 친구 목록 조회 시작');
     await _friendListcontroller.fetchFriendsAndGoals(uid);
   }
 

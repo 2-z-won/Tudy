@@ -123,6 +123,32 @@ public class BuildingService {
     }
     
     /**
+     * 공간 업그레이드 (slotId로)
+     */
+    public UserBuildingSlot upgradeSpaceById(User user, BuildingType buildingType, Long slotId) {
+        UserBuildingSlot slot = userBuildingSlotRepository.findById(slotId)
+                .orElseThrow(() -> new IllegalArgumentException("슬롯을 찾을 수 없습니다."));
+        
+        // 사용자와 건물 타입이 일치하는지 확인
+        if (!slot.getUser().getId().equals(user.getId()) || !slot.getBuildingType().equals(buildingType)) {
+            throw new IllegalArgumentException("해당 슬롯에 접근할 권한이 없습니다.");
+        }
+        
+        if (!slot.canUpgrade()) {
+            throw new IllegalStateException("업그레이드할 수 없습니다.");
+        }
+        
+        // 코인 차감
+        coinService.subtractCoins(user, slot.getSpaceType().getUpgradePrice());
+        
+        // 업그레이드
+        slot.upgrade();
+        userBuildingSlotRepository.save(slot);
+        
+        return slot;
+    }
+    
+    /**
      * 외관 업그레이드
      */
     public UserBuilding upgradeExterior(User user, BuildingType buildingType) {

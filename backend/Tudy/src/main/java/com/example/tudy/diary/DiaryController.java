@@ -19,8 +19,9 @@ public class DiaryController {
     @GetMapping
     @Operation(summary = "Get diary by date")
     public ResponseEntity<DiaryResponseDTO> getDiary(
+            @RequestParam String userId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(diaryService.getDiaryByDate(date));
+        return ResponseEntity.ok(diaryService.getDiaryByDate(userId, date));
     }
 
     @PostMapping

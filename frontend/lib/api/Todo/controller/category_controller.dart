@@ -139,8 +139,8 @@ class CategoryController extends GetxController {
       print("📤 카테고리 생성 요청 → $body");
 
       final token = await getTokenFromStorage();
-      final response = await http.post(
-        Uri.parse('${Urls.apiUrl}categories'),
+              final response = await http.post(
+          Uri.parse('${Urls.apiUrl}categories'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',

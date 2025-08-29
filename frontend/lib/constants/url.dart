@@ -33,9 +33,10 @@ class Urls {
   static String get goalsUrl => '${apiUrl}goals/';
   static String get groupsUrl => '${apiUrl}groups/';
   static String get friendsUrl => '${apiUrl}friends/';
-  static String get categoriesUrl => '${apiUrl}categories/';
+  static String get categoriesUrl => '${apiUrl}categories';
   static String get coinsUrl => '${apiUrl}coins/';
-  static String get sessionsUrl => '${apiUrl}sessions/';
+  static String get sessionsUrl => '${apiUrl}sessions';
+  static String get diaryUrl => '${apiUrl}diary';
   static String get buildingsUrl => '${apiUrl}users/';
 
   // 도우미 메서드들

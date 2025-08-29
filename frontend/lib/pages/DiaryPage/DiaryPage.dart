@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:frontend/components/Calendar/CustomWeekCalendar.dart';
 import 'package:frontend/constants/colors.dart';
 import 'package:frontend/api/diary_api.dart';
+import 'package:frontend/utils/auth_util.dart';
 
 class DiaryPage extends StatefulWidget {
   const DiaryPage({super.key});
@@ -90,7 +91,13 @@ class _DiaryPageState extends State<DiaryPage> {
 
     _loadingDates.add(dateKey);
     try {
-      final dto = await DiaryApi.getDiary(date: formatApi(date));
+      final token = await getTokenFromStorage();
+      final userId = await getUserIdFromStorage();
+      final dto = await DiaryApi.getDiary(
+        date: formatApi(date),
+        token: token, // 토큰 추가!
+        userId: userId, // 사용자 ID 추가!
+      );
 
       if (!mounted) return;
       setState(() {
@@ -99,6 +106,8 @@ class _DiaryPageState extends State<DiaryPage> {
           'content': dto?.content ?? '',
         };
       });
+    } catch (e) {
+      print('🔥 일기 로드 중 에러: $e');
     } finally {
       _loadingDates.remove(dateKey);
     }
@@ -113,18 +122,35 @@ class _DiaryPageState extends State<DiaryPage> {
     _saving = true;
     try {
       final date = DateFormat('yyyy.MM.dd').parse(dateKey);
+      final token = await getTokenFromStorage();
+      
+      print('🔍 일기 저장 시도 - 날짜: $dateKey, 이모지: $emoji');
+      print('🔍 토큰: ${token?.substring(0, 20)}...');
+      
+      final userId = await getUserIdFromStorage();
       final dto = await DiaryApi.upsertDiary(
         date: formatApi(date),
         emoji: emoji,
         content: content,
+        token: token, // 토큰 추가!
+        userId: userId, // 사용자 ID 추가!
       );
-      if (dto == null) return false;
+      
+      if (dto == null) {
+        print('🔥 일기 저장 실패 - 응답이 null');
+        return false;
+      }
+
+      print('✅ 일기 저장 성공 - 이모지: ${dto.emoji}, 내용: ${dto.content}');
 
       if (!mounted) return true;
       setState(() {
         diaryMap[dateKey] = {'emoji': dto.emoji, 'content': dto.content};
       });
       return true;
+    } catch (e) {
+      print('🔥 일기 저장 중 에러: $e');
+      return false;
     } finally {
       _saving = false;
     }

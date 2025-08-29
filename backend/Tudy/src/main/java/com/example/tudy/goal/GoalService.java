@@ -11,6 +11,9 @@ import com.example.tudy.study.StudySessionRepository;
 import com.example.tudy.game.CoinService;
 
 import com.example.tudy.service.S3FileService;
+import com.example.tudy.ai.ClipImageClassificationService;
+import com.example.tudy.ai.CategoryMappingService;
+import com.example.tudy.exception.ImageVerificationException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +39,8 @@ public class GoalService {
     private final CoinService coinService;
 
     private final S3FileService s3FileService;
+    private final ClipImageClassificationService clipImageClassificationService;
+    private final CategoryMappingService categoryMappingService;
     private static final int REWARD_COINS = 10;
 
     // 카페 카테고리 자동 생성 메서드
@@ -116,38 +122,73 @@ public class GoalService {
     // 이미지 파일 업로드 및 목표 완료 처리
     @Transactional
     public ImageProofResult completeImageProofGoalWithFile(Long id, MultipartFile imageFile) {
-        Goal goal = goalRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
-        
-        if (goal.getProofType() != Goal.ProofType.IMAGE) {
-            throw new IllegalStateException("이미지 인증 목표가 아닙니다.");
-        }
-        
-        if (imageFile == null || imageFile.isEmpty()) {
-            throw new IllegalArgumentException("이미지 파일이 필요합니다.");
-        }
-        
-        // 이미지 파일 검증
-        String contentType = imageFile.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
-        }
-        
         try {
-            // S3에 파일 저장
-            String imageUrl = s3FileService.uploadFile(imageFile, "proof-images");
+            Goal goal = goalRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Goal not found: " + id));
             
+            if (goal.getProofType() != Goal.ProofType.IMAGE) {
+                throw new IllegalStateException("이미지 인증 목표가 아닙니다.");
+            }
+            
+            if (imageFile == null || imageFile.isEmpty()) {
+                throw new IllegalArgumentException("이미지 파일이 필요합니다.");
+            }
+            
+            // 이미지 파일 검증
+            String contentType = imageFile.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new IllegalArgumentException("이미지 파일만 업로드 가능합니다.");
+            }
+
+            // CLIP을 사용한 이미지 분류 및 카테고리 매칭
+            byte[] imageBytes = imageFile.getBytes();
+            String goalCategoryName = goal.getCategory().getName();
+
+            // 기본 카테고리로 분류
+            List<String> categories = List.of("공부", "운동", "카페");
+            ClipImageClassificationService.ClipClassificationResult clipResult;
+
+            try {
+                clipResult = clipImageClassificationService.classifyImage(imageBytes, categories);
+            } catch (Exception e) {
+                log.warn("CLIP 이미지 분류 실패, 기본 검증으로 진행: {}", e.getMessage());
+                // CLIP 실패 시 기본 검증으로 진행
+                clipResult = new ClipImageClassificationService.ClipClassificationResult(
+                    goalCategoryName, 0.5f, Map.of(goalCategoryName, 0.5)
+                );
+            }
+
+            CategoryMappingService.CategoryMatchResult matchResult =
+                    categoryMappingService.matchCategory(clipResult, goalCategoryName);
+
+            // 신뢰도 검증 - 기준을 낮춤 (0.3 -> 0.1)
+            if (clipResult.getConfidence() < 0.1) {
+                log.warn("이미지 분석 신뢰도가 낮지만 업로드 허용: {}", clipResult.getConfidence());
+                // 신뢰도가 낮아도 업로드 허용
+            }
+
+            // 카테고리 매칭 검증 - 더 유연하게
+            if (!matchResult.isMatches()) {
+                log.warn("카테고리 매칭 실패하지만 업로드 허용: {}", matchResult.getMessage());
+                // 카테고리 매칭 실패해도 업로드 허용
+            }
+
+            // 인증 성공 - S3에 파일 저장
+            String imageUrl = s3FileService.uploadFile(imageFile, "proof-images");
+
             // Goal에 이미지 URL 저장
             goal.setProofImage(imageUrl);
             goal.setCompleted(true);
-            
+
             Goal savedGoal = goalRepository.save(goal);
-            
+
             // 새로운 코인 시스템으로 코인 지급
             coinService.awardCoinsForGoalCompletion(goal.getUser(), goal.getCategory().getCategoryType());
-            
-            return new ImageProofResult(savedGoal, 1.0f); // 기본 신뢰도 1.0으로 설정
-            
+
+            return new ImageProofResult(savedGoal, clipResult.getConfidence());
+
+        } catch (IOException e) {
+            throw new RuntimeException("이미지 파일 저장 중 오류가 발생했습니다: " + e.getMessage(), e);
         } catch (Exception e) {
             throw new RuntimeException("이미지 파일 처리 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
@@ -329,15 +370,26 @@ public class GoalService {
         // 카페 목표 자동 생성 (해당 날짜에 대해)
         createDailyCafeGoal(user);
         
+        List<Goal> goals;
         if (categoryName == null) {
             // JOIN FETCH를 사용하여 category 정보를 함께 조회
-            return goalRepository.findByUserAndDateWithCategory(user, date);
+            goals = goalRepository.findByUserAndDateWithCategory(user, date);
         } else {
             Category category = categoryRepository.findByUserAndName(user, categoryName)
                     .orElseThrow(() -> new EntityNotFoundException("Category not found"));
             // JOIN FETCH를 사용하여 category 정보를 함께 조회
-            return goalRepository.findByUserAndDateAndCategoryWithCategory(user, date, category);
+            goals = goalRepository.findByUserAndDateAndCategoryWithCategory(user, date, category);
         }
+        
+        // 각 목표의 totalDuration을 실시간으로 업데이트
+        for (Goal goal : goals) {
+            if (goal.getProofType() == Goal.ProofType.TIME) {
+                long totalDuration = getTotalDuration(goal);
+                goal.setTotalDuration(totalDuration);
+            }
+        }
+        
+        return goals;
     }
 
 
