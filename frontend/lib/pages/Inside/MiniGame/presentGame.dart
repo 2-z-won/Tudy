@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class SeminarGameApp extends StatelessWidget {
   const SeminarGameApp({super.key});
@@ -69,7 +70,9 @@ class LevelSelectPage extends StatelessWidget {
                 children: [
                   TextButton(
                     style: TextButton.styleFrom(foregroundColor: Colors.white),
-                    onPressed: () {},
+                    onPressed: () {
+                      Get.back();
+                    },
                     child: const Text('나가기'),
                   ),
                   const Spacer(),
@@ -185,7 +188,9 @@ class LevelIntroPage extends StatelessWidget {
                 children: [
                   TextButton(
                     style: TextButton.styleFrom(foregroundColor: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      Get.back();
+                    },
                     child: const Text('나가기'),
                   ),
                   const Spacer(),
@@ -465,7 +470,9 @@ class _GamePageState extends State<GamePage> {
                 children: [
                   TextButton(
                     style: TextButton.styleFrom(foregroundColor: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      Get.back();
+                    },
                     child: const Text('나가기'),
                   ),
                   const Spacer(),
@@ -594,7 +601,7 @@ class _GamePageState extends State<GamePage> {
                 Padding(
                   padding: EdgeInsets.only(bottom: 150),
                   child: Text(
-                    '${round} ${successCount >= round ? "성공 !!" : "실패 .."}',
+                    '$round ${successCount >= round ? "성공 !!" : "실패 .."}',
                     style: TextStyle(
                       fontFamily: 'Galmuri11',
                       fontSize: 28,

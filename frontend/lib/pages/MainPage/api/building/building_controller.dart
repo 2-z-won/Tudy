@@ -159,39 +159,39 @@ class BuildingController extends GetxController {
 
   /// 슬롯 업그레이드
   /// POST /api/users/{userId}/buildings/{buildingType}/slots/{slotId}/upgrade
-  Future<bool> upgradeSlot({
-    required BuildingType buildingType,
-    required int slotId,
-  }) async {
-    try {
-      final userId = await getUserIdFromStorage();
-      final token = await getTokenFromStorage();
-      if (userId == null || token == null) throw 'Not logged in';
+    Future<bool> upgradeSlot({
+      required BuildingType buildingType,
+      required int slotId,
+    }) async {
+      try {
+        final userId = await getUserIdFromStorage();
+        final token = await getTokenFromStorage();
+        if (userId == null || token == null) throw 'Not logged in';
 
-      final uri = Uri.parse(
-        '${Urls.apiUrl}users/$userId/buildings/${buildingType.name}/slots/$slotId/upgrade',
-      );
+        final uri = Uri.parse(
+          '${Urls.apiUrl}users/$userId/buildings/${buildingType.name}/slots/$slotId/upgrade',
+        );
 
-      final res = await http.post(
-        uri,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        // 업그레이드는 바디 필요 없음(서버 요구가 없으므로)
-      );
+        final res = await http.post(
+          uri,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          // 업그레이드는 바디 필요 없음(서버 요구가 없으므로)
+        );
 
-      if (res.statusCode >= 200 && res.statusCode < 300) {
-        // 성공 시 최신 상태 갱신
-        await fetchBuilding(buildingType);
-        return true;
-      } else {
-        error.value = '업그레이드 실패 [${res.statusCode}] ${res.body}';
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          // 성공 시 최신 상태 갱신
+          await fetchBuilding(buildingType);
+          return true;
+        } else {
+          error.value = '업그레이드 실패 [${res.statusCode}] ${res.body}';
+          return false;
+        }
+      } catch (e) {
+        error.value = '업그레이드 오류: $e';
         return false;
       }
-    } catch (e) {
-      error.value = '업그레이드 오류: $e';
-      return false;
     }
   }
-}

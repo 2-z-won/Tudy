@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class GymGameApp extends StatelessWidget {
   const GymGameApp({super.key});
@@ -32,7 +33,9 @@ class _TopBar extends StatelessWidget {
       children: [
         TextButton(
           style: TextButton.styleFrom(foregroundColor: Colors.white),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () {
+            Get.back();
+          },
           child: const Text('나가기'),
         ),
         const Spacer(),

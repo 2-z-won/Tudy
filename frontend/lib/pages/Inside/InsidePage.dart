@@ -436,6 +436,18 @@ class _InsidePageViewState extends State<InsidePageView> {
       currentOpenFloor: currentOpenFloor,
     );
 
+    // ✅ 서버에서 채워진 슬롯이 특정 타입이면 게임 아이콘 표시
+    final installedForThis = slots.firstWhereOrNull(
+      (s) => s.slotNumber == index,
+    );
+    final isGameSlot =
+        installedForThis != null &&
+        const {
+          'SEMINAR',
+          'LECTURE',
+          'EQUIPMENT',
+        }.contains(installedForThis.spaceType);
+
     return Obx(() {
       final imgPath = controller.stagedBoxImages[index]; // ✅ 여기!
       return GestureDetector(
@@ -472,6 +484,39 @@ class _InsidePageViewState extends State<InsidePageView> {
                 fit: BoxFit.fill, // 비율 무시하고 꽉 채우기
                 filterQuality: FilterQuality.none,
               ),
+
+              // ✅ 게임 아이콘(편집 모드가 아니고, 잠금도 아니고, 대상 타입일 때만)
+              if (!locked && isGameSlot && !controller.isEditMode.value) ...[
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (controller.isEditMode.value) return;
+                      Get.toNamed(
+                        '/presentGame',
+                        arguments: {
+                          'building': building,
+                          'slotNumber': index,
+                          'spaceType': installedForThis.spaceType,
+                        },
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.45),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        Icons.sports_esports,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
 
               // 잠금 오버레이
               if (locked) ...[
