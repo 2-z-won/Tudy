@@ -11,8 +11,8 @@ import java.util.List;
 public interface StudySessionRepository extends JpaRepository<StudySession, Long> {
     List<StudySession> findByUser(User user);
 
-    @Query("select ss.user.major as major, sum(ss.duration) as total from StudySession ss where ss.duration is not null group by ss.user.major order by total desc")
-    List<Object[]> totalDurationByMajor();
+    @Query("select ss.user.college as college, sum(ss.duration) as total from StudySession ss where ss.duration is not null group by ss.user.college order by total desc")
+    List<Object[]> totalDurationByCollege();
 
     List<StudySession> findByGoal(Goal goal);
 
