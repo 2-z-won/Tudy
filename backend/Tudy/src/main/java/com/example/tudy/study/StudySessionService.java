@@ -40,8 +40,8 @@ public class StudySessionService {
         return studySessionRepository.findTotalDurationByGoalId(goalId);
     }
 
-    public Map<String, Long> rankingByMajor() {
-        return studySessionRepository.totalDurationByMajor().stream()
+    public Map<String, Long> rankingByCollege() {
+        return studySessionRepository.totalDurationByCollege().stream()
                 .collect(Collectors.toMap(r -> (String) r[0], r -> (Long) r[1]));
     }
 }
