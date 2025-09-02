@@ -6,16 +6,16 @@ import 'package:get/get.dart';
 import 'package:frontend/pages/MainPage/MainPage.dart';
 import 'package:frontend/router/main_router.dart';
 import 'package:frontend/constants/colors.dart';
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await dotenv.load(fileName: ".env");
   Get.put(MoneyController());
   Get.put(LoginController());
   Get.put(CategoryController());
-  
+
   runApp(const MyApp());
 }
 

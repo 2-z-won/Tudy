@@ -60,7 +60,7 @@ class _TodoDetailFormState extends State<TodoDetailForm>
       setState(() {
         _imageFile = File(picked.path);
       });
-      
+
       // 이미지 업로드 실행
       await _uploadImage(picked.path);
     } else {
@@ -81,19 +81,19 @@ class _TodoDetailFormState extends State<TodoDetailForm>
         proof = Get.put(GoalProofController());
         print('🔍 새로운 GoalProofController 생성됨');
       }
-      
+
       print('🔍 이미지 업로드 시작: goalId=${widget.goal.id}, path=$imagePath');
       final success = await proof.uploadProofImage(
         goalId: widget.goal.id,
         filePath: imagePath,
       );
-      
+
       if (success) {
         print('🔍 이미지 업로드 성공!');
         // 성공 시 UI 갱신 또는 메시지 표시
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('이미지 인증이 완료되었습니다!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('이미지 인증이 완료되었습니다!')));
       } else {
         print('🔍 이미지 업로드 실패: ${proof.error.value}');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -102,9 +102,9 @@ class _TodoDetailFormState extends State<TodoDetailForm>
       }
     } catch (e) {
       print('🔍 이미지 업로드 중 에러: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('이미지 업로드 오류: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('이미지 업로드 오류: $e')));
     }
   }
 
@@ -144,7 +144,7 @@ class _TodoDetailFormState extends State<TodoDetailForm>
   @override
   void initState() {
     super.initState();
-    
+
     // GoalProofController 미리 등록
     try {
       Get.find<GoalProofController>();
@@ -153,7 +153,7 @@ class _TodoDetailFormState extends State<TodoDetailForm>
       print('🔍 새로운 GoalProofController 등록');
       Get.put(GoalProofController());
     }
-    
+
     // 헤더, 상단Row(카테고리+목표), 기간 섹션, 인증 섹션, 진행률 섹션, 버튼 = 6개
     _inCtrl = AnimationController(
       vsync: this,
@@ -485,12 +485,17 @@ class _TodoDetailFormState extends State<TodoDetailForm>
                                                               )],
                                                       size: 24,
                                                     )
-                                                  : Row(children: [Image.file(
-                                                      _imageFile!,
-                                                      width: 100,
-                                                      height: 100,
-                                                      fit: BoxFit.cover,
-                                                    ),Text("인증하기")],)
+                                                  : Row(
+                                                      children: [
+                                                        Image.file(
+                                                          _imageFile!,
+                                                          width: 100,
+                                                          height: 100,
+                                                          fit: BoxFit.cover,
+                                                        ),
+                                                        Text("인증하기"),
+                                                      ],
+                                                    ),
                                             ),
                                           ),
                                         ],

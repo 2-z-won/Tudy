@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 /// ─────────────────────────────────────────────
 /// 신규 미니게임: 강의실 퀴즈
@@ -319,7 +320,9 @@ class _ClassroomGamePageState extends State<ClassroomGamePage> {
                 children: [
                   TextButton(
                     style: TextButton.styleFrom(foregroundColor: Colors.white),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      Get.back();
+                    },
                     child: const Text('나가기'),
                   ),
                   const Spacer(),
@@ -351,7 +354,7 @@ class _ClassroomGamePageState extends State<ClassroomGamePage> {
                   SizedBox(
                     height: 96,
                     child: Image.asset(
-                      'assets/images/present.png',
+                      'images/present.png',
                       filterQuality: FilterQuality.none,
                     ),
                   ),

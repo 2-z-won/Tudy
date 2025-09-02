@@ -62,11 +62,14 @@ class CoinsController extends GetxController {
           'Accept': 'application/json',
         },
       );
+      print('🪙 GET $uri');
+      print('📥 status: ${res.statusCode}');
+      print('📦 body: ${res.body}');
 
       if (res.statusCode >= 200 && res.statusCode < 300) {
         // 예: {"balance":1000}
-        final data = jsonDecode(res.body) as Map<String, dynamic>;
-        final updated = Coin.fromJson(coinType, data);
+        final balance = jsonDecode(res.body) as int;
+        final updated = Coin(coinType: coinType, amount: balance);
         _upsertAndSort(updated);
 
         // 선택 타입이 비어있으면 기본을 세팅
@@ -112,7 +115,7 @@ class CoinsController extends GetxController {
 
   String amountTextOf(String type) => _fmt.format(amountOf(type));
 
-  String imagePathOf(String type) => 'assets/images/coin/$type.png';
+  String imagePathOf(String type) => 'images/coin/$type.png';
 
   List<String> get otherTypes => coins
       .map((c) => c.coinType)

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pages/Inside/CardSelector.dart';
+import 'package:frontend/pages/Inside/ExploreInside.dart';
 import 'package:frontend/pages/Inside/RoomSelectController.dart';
 import 'package:frontend/pages/Inside/SpaceList/space_catalog.dart';
 import 'package:frontend/pages/MainPage/api/building/building_controller.dart';
@@ -30,9 +31,9 @@ class _InsidePageViewState extends State<InsidePageView> {
 
     final args = Get.arguments as Map? ?? {};
     building = args['building'] as BuildingType;
-    info     = args['info'] as BuildingInfo;
+    info = args['info'] as BuildingInfo;
 
-    floors     = info.config.floors;
+    floors = info.config.floors;
     totalSlots = floors * 2;
 
     // GetX 컨트롤러들이 등록되어 있는지 확인하고 가져오기
@@ -42,7 +43,7 @@ class _InsidePageViewState extends State<InsidePageView> {
       print('🔥 BuildingController를 찾을 수 없습니다: $e');
       buildingCtrl = Get.put(BuildingController());
     }
-    
+
     try {
       coinsCtrl = Get.find<CoinsController>();
     } catch (e) {
@@ -58,7 +59,9 @@ class _InsidePageViewState extends State<InsidePageView> {
     } catch (e) {
       // 컨트롤러가 없으면 무시
     }
-    controller = Get.put(RoomSelectionController(totalSlots));
+    controller = Get.put(
+      RoomSelectionController(totalSlots: totalSlots, buildingType: building),
+    );
 
     // ② 비동기 초기화 시작 (await는 여기서 안 함)
     _bootstrap();
@@ -68,7 +71,7 @@ class _InsidePageViewState extends State<InsidePageView> {
     try {
       // 로그인/유저 준비
       final uid = await getUserIdFromStorage();
-      if (!mounted) return;        // 페이지 떠났으면 중단
+      if (!mounted) return; // 페이지 떠났으면 중단
       if (uid == null) {
         debugPrint('❌ 저장된 사용자 ID가 없습니다.');
         return;
@@ -79,14 +82,16 @@ class _InsidePageViewState extends State<InsidePageView> {
         totalBoxes: totalSlots,
         installed: info.slots
             .where((s) => s.slotNumber != null)
-            .map((s) => {
-                  'slotNumber': s.slotNumber!,
-                  'spaceType' : s.spaceType,
-                  'level'     : s.currentLevel,
-                })
+            .map(
+              (s) => {
+                'slotNumber': s.slotNumber!,
+                'spaceType': s.spaceType,
+                'level': s.currentLevel,
+              },
+            )
             .toList(),
       );
-      
+
       print('✅ InsidePage 초기화 완료');
     } catch (e, stackTrace) {
       print('🔥 InsidePage 초기화 중 에러 발생: $e');
@@ -101,7 +106,6 @@ class _InsidePageViewState extends State<InsidePageView> {
     }
     super.dispose();
   }
-
 
   Future<void> refreshFromServer() async {
     await buildingCtrl.fetchBuilding(building);
@@ -125,13 +129,16 @@ class _InsidePageViewState extends State<InsidePageView> {
 
   @override
   Widget build(BuildContext context) {
-   
     final screenWidth = MediaQuery.of(context).size.width;
-    final boxWidth = screenWidth * 0.47; // 화면 너비의 45%
+    final boxWidth = screenWidth * 0.472; // 화면 너비의 45%
     final boxHeight = boxWidth / 2;
     final double availableWidth = MediaQuery.of(context).size.width - 20;
 
-    
+    const bottomMap = {
+      BuildingType.CAFE: 111.0,
+      BuildingType.GYM: 78.0,
+      BuildingType.LIBRARY: 30.0,
+    };
 
     print('boxWidth: $boxWidth');
     print('boxHeight: $boxHeight');
@@ -139,13 +146,22 @@ class _InsidePageViewState extends State<InsidePageView> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('images/background.png', fit: BoxFit.cover),
+            child: Image.asset(
+              'images/inside/${building.name}_background.png',
+              fit: BoxFit.cover,
+            ),
           ),
-          Center(
+          Positioned(
+            right: 0,
+            left: 0,
+            bottom: 230 + (bottomMap[building] ?? 0),
             child: Obx(() {
               final latest = buildingCtrl.infos[building] ?? info;
-               final boxNumbers = List.generate(floors * 2, (index) => index + 1);
-               
+              final boxNumbers = List.generate(
+                floors * 2,
+                (index) => index + 1,
+              );
+
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -161,7 +177,7 @@ class _InsidePageViewState extends State<InsidePageView> {
                           controller,
                           latest.slots,
                         ),
-                        // SizedBox(width: 0.5),
+                        SizedBox(width: 0.5),
                         _buildBox(
                           boxNumbers[start + 1],
                           boxWidth,
@@ -172,10 +188,22 @@ class _InsidePageViewState extends State<InsidePageView> {
                       ],
                     );
                   }).reversed,
-                  SizedBox(height: 230),
                 ],
               );
             }),
+          ),
+          Positioned(
+            right: 0,
+            left: 0,
+            bottom: 150 + (bottomMap[building] ?? 0),
+            child: IgnorePointer(
+              ignoring: true,
+              child: Image.asset(
+                'images/inside/${building.name}_exterior.png',
+                width: double.infinity, // 가로를 화면 너비에 맞추기
+                fit: BoxFit.contain,
+              ),
+            ),
           ),
           Positioned(
             top: 15,
@@ -193,6 +221,7 @@ class _InsidePageViewState extends State<InsidePageView> {
                         controller.cancelEdit(); // ✅ 편집 취소 + 종료
                       } else {
                         // TODO: 일반 모드에서 나가기 동작 (e.g., Get.back();)
+                        Get.back();
                       }
                     },
                     child: Obx(
@@ -296,29 +325,56 @@ class _InsidePageViewState extends State<InsidePageView> {
               children: [
                 Obx(() {
                   final isEdit = controller.isEditMode.value;
-                  return GestureDetector(
-                    onTap: () {
-                      if (!isEdit) {
-                        controller.enterEditMode(); // 일반 모드에서만 편집 모드 진입
-                      }
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 5.0, right: 5.0),
-                      child: isEdit
-                          ? const Text(
-                              '편집중...',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.settings_rounded,
-                              size: 24,
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 5.0, right: 5.0),
+                    child: isEdit
+                        // 편집 중일 때 → "편집중..."
+                        ? const Text(
+                            '편집중...',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
                               color: Colors.black,
                             ),
-                    ),
+                          )
+                        // 일반 모드일 때 → edit, enter 버튼 두 개 표시
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  controller.enterEditMode(); // 편집 모드 진입
+                                },
+                                child: Image.asset(
+                                  'images/inside/icon/edit.png',
+                                  width: 50,
+                                  height: 50,
+                                ),
+                              ),
+                              const SizedBox(width: 8), // 버튼 사이 간격
+                              GestureDetector(
+                                onTap: () {
+                                  // 현재 화면 기준 시작 위치를 적당히 넘겨주고 진입
+                                  final floors =
+                                      info.config.floors; // 이미 위에서 쓰던 값
+                                  Get.to(
+                                    () => InsideExplorePage(
+                                      buildingType: building,
+                                      floors: floors,
+                                      startFloor: 1, // 필요하면 현재 관심층으로 바꿔도 됨
+                                      startCol: 1, // 1=왼쪽, 2=오른쪽
+                                    ),
+                                  );
+                                },
+                                child: Image.asset(
+                                  'images/inside/icon/enter.png',
+                                  width: 50,
+                                  height: 50,
+                                ),
+                              ),
+                            ],
+                          ),
                   );
                 }),
 
@@ -350,6 +406,20 @@ class _InsidePageViewState extends State<InsidePageView> {
     );
   }
 
+  // ====== 헬퍼: 슬롯의 층 계산 & 잠금 여부 ======
+  int _floorOfSlot(int slotNumber, {required int slotsPerFloor}) {
+    return ((slotNumber - 1) ~/ slotsPerFloor) + 1;
+  }
+
+  bool _isLockedSlot({
+    required int slotNumber,
+    required int slotsPerFloor,
+    required int currentOpenFloor,
+  }) {
+    final f = _floorOfSlot(slotNumber, slotsPerFloor: slotsPerFloor);
+    return f > currentOpenFloor;
+  }
+
   Widget _buildBox(
     int index,
     double width,
@@ -357,12 +427,35 @@ class _InsidePageViewState extends State<InsidePageView> {
     RoomSelectionController controller,
     List<Slot> slots,
   ) {
+    // 현재 열린 층까지만 설치 허용
+    final slotsPerFloor = info.config.slotsPerFloor;
+    final currentOpenFloor = info.building.currentFloor;
+    final locked = _isLockedSlot(
+      slotNumber: index,
+      slotsPerFloor: slotsPerFloor,
+      currentOpenFloor: currentOpenFloor,
+    );
+
+    // ✅ 서버에서 채워진 슬롯이 특정 타입이면 게임 아이콘 표시
+    final installedForThis = slots.firstWhereOrNull(
+      (s) => s.slotNumber == index,
+    );
+    final isGameSlot =
+        installedForThis != null &&
+        const {
+          'SEMINAR',
+          'LECTURE',
+          'EQUIPMENT',
+        }.contains(installedForThis.spaceType);
+
     return Obx(() {
       final imgPath = controller.stagedBoxImages[index]; // ✅ 여기!
       return GestureDetector(
         onTap: () {
+          if (locked) return; // 잠긴 슬롯은 터치 무시
           if (!controller.isEditMode.value) return;
           final selectedId = controller.selectedSlotId.value;
+          print(selectedId);
           if (selectedId == null) return;
 
           // ✅ 선택된 구매 카드의 실제 데이터 찾기
@@ -380,25 +473,58 @@ class _InsidePageViewState extends State<InsidePageView> {
         child: Container(
           width: width,
           height: height,
-          margin: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            borderRadius: BorderRadius.circular(2),
-            border: Border.all(width: 1, color: Colors.black),
-          ),
+          margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2.7),
+          decoration: const BoxDecoration(),
           clipBehavior: Clip.hardEdge,
           child: Stack(
-            alignment: Alignment.center,
+            fit: StackFit.expand,
             children: [
-              if (imgPath != null) Image.asset(imgPath, fit: BoxFit.cover),
-              Positioned(
-                top: 5,
-                left: 5,
-                child: Text(
-                  '$index',
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                ),
+              Image.asset(
+                (imgPath ?? 'images/inside/empty.png'),
+                fit: BoxFit.fill, // 비율 무시하고 꽉 채우기
+                filterQuality: FilterQuality.none,
               ),
+
+              // ✅ 게임 아이콘(편집 모드가 아니고, 잠금도 아니고, 대상 타입일 때만)
+              if (!locked && isGameSlot && !controller.isEditMode.value) ...[
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (controller.isEditMode.value) return;
+                      Get.toNamed(
+                        '/presentGame',
+                        arguments: {
+                          'building': building,
+                          'slotNumber': index,
+                          'spaceType': installedForThis.spaceType,
+                        },
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.45),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        Icons.sports_esports,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
+              // 잠금 오버레이
+              if (locked) ...[
+                Container(color: Colors.black.withOpacity(0.45)),
+                const Center(
+                  child: Icon(Icons.lock, color: Colors.white, size: 28),
+                ),
+              ],
             ],
           ),
         ),

@@ -65,7 +65,7 @@ class MyBottomNavigation extends GetView<MyBottomNavigationController> {
                           width: size,
                           height: size,
                           child: Image.asset(
-                            'assets/images/pnu_logo.png', // ✅ 고정
+                            'images/pnu_logo.png', // ✅ 고정
                             fit: BoxFit.contain,
                           ),
                         ),

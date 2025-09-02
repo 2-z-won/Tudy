@@ -55,7 +55,7 @@ class _FriendDropdownCardState extends State<FriendDropdownCard> {
                               widget.imageUrl!.isNotEmpty)
                           ? Image.network(widget.imageUrl!, fit: BoxFit.cover)
                           : Image.asset(
-                              "assets/images/profile.jpg",
+                              "images/profile.jpg",
                               fit: BoxFit.cover,
                             ),
                     ),
